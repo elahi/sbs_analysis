@@ -1,0 +1,104 @@
+#################################################
+# Author: Robin Elahi
+# Date: 150716
+
+# Analysis of historical and modern gastropod body sizes
+# Hopkins Marine Station
+#################################################
+
+library(ggplot2)
+theme_set(theme_bw(base_size=12))
+library(dplyr)
+
+rm(list=ls(all=TRUE)) 
+
+# plotting functions
+source("./R/multiplotF.R")
+
+# load modern data
+mod <- read.csv("./data/SBSmaster_150716.csv", na.strings = c("NA", ""))
+glimpse(mod)
+unique(mod$Shaw_hab)
+summary(mod)
+unique(mod$notes)
+unique(mod$notes2)
+
+# quick look at size-frequencies
+qplot(size1mm, data = mod, geom = "density",  facets = ~ species, color = site)
+qplot(size1mm, data = mod, geom = "histogram",  facets = ~ species, color = site)
+
+# load historic data
+childs <- read.csv("./data/childs_raw.csv", na.strings = c("NA", ""))
+wara <- read.csv("./data/wara_raw.csv", na.strings = c("NA", ""))
+
+# need to expand these tables
+childs
+
+# use package "mirt"
+# frequency column needs to be rightmost
+crap <- childs %>% select(length_mm, count_A)
+crap
+sum(crap$count_A)
+library(mirt)
+crap2 <- expand.table(crap)
+
+# in one line
+childsA <- childs %>% select(length_mm, count_A) %>% expand.table()
+childsB <- childs %>% select(length_mm, count_B) %>% expand.table()
+childsC <- childs %>% select(length_mm, count_C) %>% expand.table()
+childsD <- childs %>% select(length_mm, count_D) %>% expand.table()
+
+mod %>% filter(sp == "LIKE") %>% glimpse()
+
+childsPast <- data.frame(size1mm = c(childsA, childsB, childsC, childsD), 
+                       nest1 = c(rep("zoneA", length(childsA)), 
+                                 rep("zoneB", length(childsB)), 
+                                 rep("zoneC", length(childsC)), 
+                                 rep("zoneD", length(childsD))))
+childsPast
+qplot(size1mm, data = childsPast, geom = "density", color = nest1)
+qplot(size1mm, data = childsPast, geom = "histogram")
+
+
+childsPres <- mod %>% filter(sp == "LIKE") %>% select(size1mm, nest1)
+
+childsPast$era <- "1947"
+childsPres$era <- "2014"
+
+childsDF <- rbind(childsPast, childsPres)
+
+qplot(size1mm, data = childsDF,  geom = "density", color = era, facets = ~ nest1)
+
+qplot(size1mm, data = childsDF,  geom = "density", color = era)
+qplot(size1mm, data = childsDF,  geom = "histogram", facets = ~ era)
+
+qplot(size1mm, data = childsDF[childsDF$nest1 != "zoneD", ],  
+      geom = "density", color = era)
+
+### now do Wara
+waraB <- wara %>% select(length_mm, count_B) %>% expand.table()
+waraD <- wara %>% select(length_mm, count_D) %>% expand.table()
+
+mod %>% filter(sp == "CHFU") %>% glimpse()
+
+waraPast <- data.frame(size1mm = c(waraB, waraD), 
+                         site = c(rep("Wara.B", length(waraB)), 
+                                   rep("Wara.D", length(waraD))))
+
+waraPres <- mod %>% filter(sp == "CHFU") %>% select(size1mm, site)
+unique(waraPres$site)
+
+waraPast$era <- "1963"
+waraPres$era <- "2014"
+waraDF <- rbind(waraPast, waraPres)
+qplot(size1mm, data = waraDF,  geom = "density", color = era, facets = ~ site)
+
+qplot(size1mm, data = waraDF,  geom = "density", color = era, 
+      xlab = "Size (mm)")
+
+# KS-tests: overall
+ks.test(waraPast$size1mm, waraPres$size1mm)
+
+ks.test(childsPast$size1mm, childsPres$size1mm)
+
+
