@@ -9,7 +9,7 @@ Extracted papers with appropriate data, reasonable replication, and adequate sit
 
 
 Littorina keenae - 1947, by Childs  
-Lottia digitalis - 1950, by Hexter
+Lottia digitalis - 1950, by Hexter  
 Tegula funebralis - 1962, by Wara  
 
 Then we relocated sites and collected size-frequency data in 2014-2015.  
