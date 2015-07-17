@@ -6,7 +6,7 @@
 # Hopkins Marine Station
 
 # Change Log
-# 150717: added data for Lottia digitalis, area A (Hexter 1950)
+# 150717: added data for Lottia digitalis, area A and area B (Hexter 1950)
 #################################################
 
 library(ggplot2)
@@ -105,24 +105,31 @@ qplot(size1mm, data = waraDF,  geom = "density", color = era,
 
 #################################################
 # Lottia digitalis; Hexter 1950
-hexter <- mod %>% filter(sp == "LODI") %>% select(size1mm, nest1, date)
+hexter <- mod %>% filter(sp == "LODI") %>% select(size1mm, site, nest1, date, era)
+hexter <- droplevels(hexter)
 glimpse(hexter)
 
-qplot(size1mm, data = hexter,  geom = "density", color = date, 
-      xlab = "Size (mm)")
+qplot(size1mm, data = hexter,  geom = "density", color = era, 
+      facets = site ~ nest1, xlab = "Size (mm)")
+
+with(hexter, table(era, nest1, site))
+with(hexter, table(era, site))
 
 # truncate to > 5.95mm?
 hexSub <- hexter %>% filter(size1mm > 5.95)
-qplot(size1mm, data = hexSub,  geom = "density", color = date, 
+with(hexSub, table(era, nest1, site))
+with(hexSub, table(era, site))
+
+qplot(size1mm, data = hexSub,  geom = "density", color = era, 
       xlab = "Size (mm)")
-qplot(size1mm, data = hexSub,  geom = "histogram", fill = date, 
+qplot(size1mm, data = hexSub,  geom = "histogram", fill = era, 
       xlab = "Size (mm)")
 
 summary(hexSub)
 
-# use raw data (no truncation)
-hexPast <- hexSub %>% filter(date == "7/1/50")
-hexPres <- hexSub %>% filter(date == "7/16/15")
+# use subsetted data (with truncation)
+hexPast <- hexSub %>% filter(era == "past")
+hexPres <- hexSub %>% filter(era == "present")
 
 # Try plotting percentages
 ggplot(hexPast,  aes(x = size1mm)) +
@@ -185,20 +192,20 @@ fig1b <- ggplot(childsSubPres,  aes(x = size1mm)) +
 fig1c <- ggplot(hexPast,  aes(x = size1mm)) +
   geom_histogram(aes(y = ..count../sum(..count..)), binwidth = 1, 
                  color = "black", fill = "gray") +
-  scale_x_continuous(limits = c(5, 19)) + 
-  scale_y_continuous(limits = c(0, 0.32)) + 
+  scale_x_continuous(limits = c(5, 25)) + 
+  scale_y_continuous(limits = c(0, 0.22)) + 
   labs(title = "C") + ULClabel + xlab("Size (mm)") + ylab("Frequency (%)") +
-  annotate("text", label = "Lottia digitalis\n1950\nn = 104", 
-           x = 17, y = 0.25, size = 2.2)
+  annotate("text", label = "Lottia digitalis\n1950\nn = 390", 
+           x = 20, y = 0.15, size = 2.2)
 
 fig1d <- ggplot(hexPres,  aes(x = size1mm)) +
   geom_histogram(aes(y = ..count../sum(..count..)), binwidth = 1, 
                  color = "black", fill = "gray") +
-  scale_x_continuous(limits = c(5, 19)) + 
-  scale_y_continuous(limits = c(0, 0.32)) + 
+  scale_x_continuous(limits = c(5, 25)) + 
+  scale_y_continuous(limits = c(0, 0.22)) + 
   labs(title = "D") + ULClabel + xlab("Size (mm)") + ylab("Frequency (%)") +
-  annotate("text", label = "Lottia digitalis\n2015\nn = 209", 
-           x = 17, y = 0.25, size = 2.2)
+  annotate("text", label = "Lottia digitalis\n2015\nn = 378", 
+           x = 20, y = 0.15, size = 2.2)
 
 
 fig1e <- ggplot(waraPast,  aes(x = size1mm)) +
@@ -207,7 +214,7 @@ fig1e <- ggplot(waraPast,  aes(x = size1mm)) +
   scale_x_continuous(limits = c(2, 32)) + 
   scale_y_continuous(limits = c(0, 0.31)) + 
   labs(title = "E") + ULClabel + xlab("Size (mm)") + ylab("Frequency (%)") +
-  annotate("text", label = "Tegula funebralis\n1963\nn = 817", 
+  annotate("text", label = "Chlorostoma funebralis\n1963\nn = 817", 
            x = 25, y = 0.25, size = 2.2)
 
 summary(waraPres)
@@ -217,7 +224,7 @@ fig1f <- ggplot(waraPres,  aes(x = size1mm)) +
   scale_x_continuous(limits = c(2, 32)) + 
   scale_y_continuous(limits = c(0, 0.31)) + 
   labs(title = "F") + ULClabel + xlab("Size (mm)") + ylab("Frequency (%)") +
-  annotate("text", label = "Tegula funebralis\n2014\nn = 5995", 
+  annotate("text", label = "Chlorostoma funebralis\n2014\nn = 5995", 
            x = 25, y = 0.25, size = 2.2)
 
 
