@@ -12,11 +12,9 @@ library(dplyr)
 
 rm(list=ls(all=TRUE)) 
 
-# plotting functions
-source("./R/multiplotF.R")
-
 # load modern data, along with historic data for Lottia (Hexter)
-mod <- read.csv("./data/SBSmaster_150717.csv", na.strings = c("NA", ""))
+mod <- read.csv("./data/SBSmaster_150717.csv", na.strings = c("NA"))
+summary(mod)
 
 # load historic data
 childs <- read.csv("./data/childs_raw.csv", na.strings = c("NA", ""))
@@ -97,11 +95,35 @@ waraPast <- data.frame(row = "",
                          notes2 = ""
 )
 
+detach("package:mirt", unload = TRUE)
 #################################################
 # Combine all three
+library(dplyr)
 sbsMaster <- rbind(mod, childsPast, waraPast)
 glimpse(sbsMaster)
+summary(sbsMaster)
 sbsMaster$row <- seq(1:length(sbsMaster$sp))
 
-write.csv(sbsMaster, './output/sbsMaster.csv')
+# Subset the three species with historical size-frequency distributions 
+sbsMaster2 <- filter(sbsMaster, sp == "LIKE" | 
+                       sp == "CHFU" |
+                       sp == "LODI")
+
+sbsMaster2 <- droplevels(sbsMaster2)
+summary(sbsMaster2)
+
+# remove CHFU that were hermit crabs or brunnei
+unique(sbsMaster2$notes)
+with(sbsMaster2, table(notes))
+
+sbsMaster3 <- sbsMaster2 %>% filter(notes != "hermit crab" &
+                                      notes != "brunnei"&
+                                      notes != "(hc)" &
+                                      notes != "2 snails - calliostoma and brunnei")
+
+sbsMaster3 <- droplevels(sbsMaster3)
+unique(sbsMaster3$notes)
+with(sbsMaster3, table(notes))
+
+write.csv(sbsMaster3, './output/sbsMaster.csv')
 
