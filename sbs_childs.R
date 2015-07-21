@@ -22,10 +22,56 @@ source("./R/multiplotF.R")
 
 # load prepped data
 dat <- read.csv("./output/sbsMaster.csv", na.strings = c("NA"))
+# change ft to meters
+range(dat$tideHTm, na.rm = TRUE)
+dat$tideHTm <- dat$tideHTm/3.28084
 
 chil <- droplevels(filter(dat, sp == "LIKE"))
 summary(chil)
 unique(chil$nest2)
+
+############################################
+# create new factor with tidal heights
+factorList <- unique(chil$nest1)
+factorList
+unique(chil$tideHTm)
+
+factorList2 <- c("2.4m", "4.3m", "5.8m", "7.3m")
+factorList2
+tideHT <- plyr::mapvalues(chil$nest1, from = factorList, to = factorList2)
+
+# reorder the levels
+tideHT2 <- factor(tideHT, levels = c("7.3m", "5.8m", "4.3m", "2.4m"))
+chil$tideHT <- tideHT2
+############################################
+### plot
+
+# histogram
+ggplot(chil,  aes(x = size1mm)) +
+  geom_histogram(aes(y = ..count../sum(..count..)), binwidth = 1, 
+                 color = "black", fill = "gray") +
+  facet_grid(tideHT ~ era, scales = "free_y") + 
+  xlab("Size (mm)") + ylab("Frequency (%)") 
+
+# density
+ggplot(chil,  aes(x = size1mm)) +
+  geom_density(aes(color = era)) +
+  facet_wrap(~ tideHT, scales = "fixed", nrow = 4) + 
+  xlab("Size (mm)") + ylab("Probability density") 
+
+ggsave("./figs/sbs_fig2.pdf", width = 3, height = 6)
+
+
+
+
+# save as 7 x 3.5 pdf
+pdf("./figs/sbs_fig1.pdf", 7, 3.5)
+multiplot(fig1a, fig1b, fig1c, fig1d, fig1e, fig1f, cols = 3)
+dev.off()	
+
+
+
+############################################
 
 # create random effect
 names(chil)
@@ -43,9 +89,6 @@ anova(mod1)
 mod1 <- lm(size1mm ~ era*nest1, 
              data = chil)
 anova(mod1)
-
-### quick boxplot
-qplot(era, size1mm, data = chil, facets = ~ nest1, geom = "boxplot") 
 
 
 

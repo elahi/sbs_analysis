@@ -21,6 +21,11 @@ source("./R/multiplotF.R")
 
 # load modern data
 dat <- read.csv("./output/sbsMaster.csv", na.strings = "NA")
+summary(dat)
+
+# change ft to meters
+range(dat$tideHTm, na.rm = TRUE)
+dat$tideHTm <- dat$tideHTm/3.28084
 
 ###############################################################
 # Littorina keenae 
@@ -62,6 +67,10 @@ hexPres <- hexSub %>% filter(era == "present")
 ####################################################
 ####################################################
 # Figure 1
+
+range(childsPres$tideHTm, na.rm = TRUE)
+range(waraPres$tideHTm, na.rm = TRUE)
+range(hexPres$tideHTm, na.rm = TRUE)
 
 ULClabel <- theme(plot.title = element_text(hjust = -0.08, vjust = 1, 
                                             size = rel(1)))
@@ -139,7 +148,8 @@ fig1f <- ggplot(waraPres,  aes(x = size1mm)) +
   scale_y_continuous(limits = c(0, 0.31)) + 
   labs(title = "F") + ULClabel + xlab("Size (mm)") + ylab("Frequency (%)") +
   annotate("text", label = "Chlorostoma funebralis\n2014\nn = 5995", 
-           x = 25, y = 0.25, size = 2.2)
+           x = 25, y = 0.25, size = 2.2) 
+
 
 ###############################
 # save as 7 x 3.5 pdf
