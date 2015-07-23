@@ -57,17 +57,13 @@ ggplot(chil,  aes(x = size1mm)) +
 ggplot(chil,  aes(x = size1mm)) +
   geom_density(aes(color = era)) +
   facet_wrap(~ tideHT, scales = "fixed", nrow = 4) + 
-  xlab("Size (mm)") + ylab("Probability density") 
+  xlab("Size (mm)") + ylab("Probability density") +
+  theme(legend.justification = c(1, 1), legend.position = c(0.97, 0.23),
+        legend.text = element_text(size = 6), legend.title = element_text(size = 6)) +
+  ggtitle("Littorina keenae")
 
-ggsave("./figs/sbs_fig2.pdf", width = 3, height = 6)
+ggsave("./figs/sbs_fig2.pdf", width = 3.5, height = 7)
 
-
-
-
-# save as 7 x 3.5 pdf
-pdf("./figs/sbs_fig1.pdf", 7, 3.5)
-multiplot(fig1a, fig1b, fig1c, fig1d, fig1e, fig1f, cols = 3)
-dev.off()	
 
 
 
@@ -75,15 +71,16 @@ dev.off()
 
 # create random effect
 names(chil)
-randF <- function(x) return(as.factor(paste(x$nest1, x$nest2, sep="_")))
+head(chil)
+randF <- function(x) return(as.factor(paste(x$era, x$nest1, x$nest2, sep="_")))
 
 chil$rand1 <- randF(chil)
 unique(chil$rand1)
 
 ### quick model
-mod1 <- lmer(size1mm ~ era*nest1 + (1|rand1), 
+mod1 <- lmer(size1mm ~ era*nest1 + (era|rand1), 
              data = chil)
-mod1
+;mod1
 anova(mod1)
 
 mod1 <- lm(size1mm ~ era*nest1, 
