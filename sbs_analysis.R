@@ -27,10 +27,20 @@ summary(dat)
 range(dat$tideHTm, na.rm = TRUE)
 dat$tideHTm <- dat$tideHTm/3.28084
 
+# create numeric lat-long columns
+dat$lat2 <- as.numeric(substr(dat$lat, 1, 8))
+dat$long2 <- as.numeric(paste("-", substr(dat$long, 1, 9), sep = ""))
+unique(dat$lat2)
+unique(dat$long2)
+
+dat$LL <- with(dat, paste(lat2, long2, sep = ","))
+unique(dat$LL)
+
 ###############################################################
 # Littorina keenae 
 childsDF <- droplevels(filter(dat, sp == "LIKE"))
 summary(childsDF)
+unique(childsDF$LL)
 
 childsPast <- childsDF %>% filter(era == "past")
 childsPres <- childsDF %>% filter(era == "present")
@@ -41,19 +51,43 @@ childsSub <- childsDF[childsDF$nest1 != "zoneD", ]
 childsSubPres <- childsSub %>% filter(era == "present")
 childsSubPast <- childsSub %>% filter(era == "past")
 
+# lat longs
+childsLL <- childsPres %>% group_by(site) %>% 
+  summarise(species = first(species), nest1 = first(nest1), 
+            meanLat = first(lat2), meanLong = first(long2), 
+            LL = first(LL))
+childsLL
 ###############################################################
 # Chlorostoma funebralis
 waraDF <- droplevels(filter(dat, sp == "CHFU"))
 summary(waraDF)
-waraDF <- droplevels(waraDF[complete.cases(waraDF$size1mm), ])
+
+# waraDF <- droplevels(waraDF[complete.cases(waraDF$size1mm), ])
 
 waraPast <- waraDF %>% filter(era == "past")
 waraPres <- waraDF %>% filter(era == "present")
+
+unique(waraPres$LL)
+unique(waraPres$nest1)
+
+waraPres$transect <- with(waraPres, paste(site, nest1, sep = "_"))
+
+# lat longs
+waraLL <- waraPres %>% group_by(transect) %>% 
+  summarise(site = first(site), species = first(species), 
+            lat = first(lat2), long = first(long2), 
+            LL = first(LL)) %>%
+  arrange(lat, long)
+  
+waraLL
+write.csv(waraLL, 'waraLL.csv')
 
 ###############################################################
 # Lottia digitalis
 hexDF <- droplevels(filter(dat, sp == "LODI"))
 summary(hexDF)
+unique(hexDF$LL)
+
 # truncate to > 5.95mm
 hexSub <- hexDF %>% filter(size1mm > 5.95)
 with(hexSub, table(era, nest1, site))
