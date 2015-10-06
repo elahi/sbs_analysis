@@ -47,51 +47,45 @@ iButtonTempF <- function(fls) {
 	
 	for (f in 1:length(fls)) {
 		
+	  ##########################
 		# extract iButtonID
-	  fls[1]
-	  paste("../data/iButtonFiles/", fls[1], sep = "")
-	  
-	  read.csv("../data/iButtonFiles/030000002E2C9421.csv")
-	  
-	  
-		ibutton <- read.csv(file = paste("../data/iButtonFiles/", fls[3], sep = ""), 
-		                    skip = 1, nrow = 1, header = TRUE, stringsAsFactors = FALSE)
+	  paste("../data/iButtonFiles/", fls[f], sep = "")
+	 
+		ibutton <- read.csv(file = paste("../data/iButtonFiles/", fls[f], sep = ""), 
+		                    skip = 1, nrow = 1, header = FALSE, stringsAsFactors = FALSE)
 		ibutton
 		
-		# at which value do the 6 0s start?
-		startZeros <- regexpr("000000", ibutton)[1] # position 39
-		iButtonIDstart <- startZeros + 6 # position where iButtonID starts 
-		iButtonID <- substr(ibutton, start = iButtonIDstart, stop = iButtonIDstart + 5) 
-		# iButton ID is 6 digits long, so end 5 digits after start
+		# at which value does the registration number start?
+		startZeros <- regexpr(": ", ibutton)[1] # position 35
 		
-		# assign treatmentID
-		treatmentIDstart <- regexpr("/", fls[f]) + 1
-		treatmentIDend <- regexpr(".csv", fls[f]) - 1
-		treatmentID <- substr(fls[f], treatmentIDstart, treatmentIDend)
+		# position where iButtonID starts 
+		iButtonIDstart <- startZeros + 2 
+		
+		# extract iButtonID	
+		iButtonID <- substr(ibutton, start = iButtonIDstart, stop = nchar(ibutton)) 
+		
+		##########################
+		# Extract spreadsheet ID
+		# All the names are 20 characters
+		nchar(fileNames)
+		csvID <- substr(fileNames[f], start = 1, stop = 16)
 
-		# extract temperature Data
-		tempDat <- read.csv(fls[f], skip = 14)
+		##########################
+		# Extract temperature Data
+		tempDat <- read.csv(file = paste("../data/iButtonFiles/", fls[f], sep = ""), 
+		                    skip = 14)
 		# convert time stamps to POSIX object
 		dateTimeR <- as.POSIXct(strptime(substr(tempDat$Date.Time, 1, 20), 
 			format = '%d/%m/%y %I:%M:%S %p'))
 		tempDat$dateTimeR <- dateTimeR
 
-		# set minimum and maximum date.time for data inclusion
-		startTime <- as.POSIXct(strptime("28/02/15 01:00:00 PM", 
-			format = '%d/%m/%y %I:%M:%S %p'))
-		endTime <- as.POSIXct(strptime("05/03/15 02:00:00 PM", 
-			format = '%d/%m/%y %I:%M:%S %p'))
-		# subset appropriate data
-		tempDat2 <- tempDat[tempDat$dateTimeR > startTime & 
-			tempDat$dateTimeR < endTime, ]
-
 		# output data
-		tempDat3 <- data.frame(iButtonID, treatmentID, 
-			tempDat2$dateTimeR, tempDat2$Value)
-		names(tempDat3)[3:4] <- c("dateR", "tempC")
+		tempDat2 <- data.frame(iButtonID,csvID, 
+			tempDat$dateTimeR, tempDat$Value)
+		names(tempDat2)[3:4] <- c("dateR", "tempC")
 
 		# return data
-		emptyMat <- rbind(emptyMat, tempDat3)
+		emptyMat <- rbind(emptyMat, tempDat2)
 	}
 	return(emptyMat)
 }
