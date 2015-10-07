@@ -2,9 +2,15 @@
 # Author: Robin Elahi
 # Date: 151005
 
-# Script to compile iButton temperature files
+# Function to compile iButton temperature files
 # into one csv file
 #################################################
+
+# The following function assumes the following directory structure
+# Main project folder
+#   - data - iButtonFiles (csv files to be collated)
+#   - R - this file (process_iButtonFiles.R)
+#   - script to further massage the master temperature data
 
 # Raw iButton files are placed in a directory called "iButtonFiles", 
 # within 'data' directory
@@ -19,15 +25,12 @@ dir(path = ".")
 # What if I want the directory above?
 dir(path = "..")
 
-# What if I want a different directory one level above?
-dir(path = "../data")
-
 # Now choose the appropriate folder, in this case "iButtonFiles"
-dir(path = "../data/iButtonFiles")
+dir(path = "./data/iButtonFiles")
 
 ######################################################
 # Need a list of file names from the iButtonFiles
-fileNames <- dir(path = "../data/iButtonFiles", recursive = TRUE, 
+fileNames <- dir(path = "./data/iButtonFiles", recursive = TRUE, 
                pattern = ".csv") 
 
 ######################################################
@@ -49,9 +52,9 @@ iButtonTempF <- function(fls) {
 		
 	  ##########################
 		# extract iButtonID
-	  paste("../data/iButtonFiles/", fls[f], sep = "")
+	  paste("./data/iButtonFiles/", fls[f], sep = "")
 	 
-		ibutton <- read.csv(file = paste("../data/iButtonFiles/", fls[f], sep = ""), 
+		ibutton <- read.csv(file = paste("./data/iButtonFiles/", fls[f], sep = ""), 
 		                    skip = 1, nrow = 1, header = FALSE, stringsAsFactors = FALSE)
 		ibutton
 		
@@ -72,11 +75,11 @@ iButtonTempF <- function(fls) {
 
 		##########################
 		# Extract temperature Data
-		tempDat <- read.csv(file = paste("../data/iButtonFiles/", fls[f], sep = ""), 
+		tempDat <- read.csv(file = paste("./data/iButtonFiles/", fls[f], sep = ""), 
 		                    skip = 14)
 		# convert time stamps to POSIX object
 		dateTimeR <- as.POSIXct(strptime(substr(tempDat$Date.Time, 1, 20), 
-			format = '%d/%m/%y %I:%M:%S %p'))
+			format = '%m/%d/%y %I:%M:%S %p'))
 		tempDat$dateTimeR <- dateTimeR
 
 		# output data
