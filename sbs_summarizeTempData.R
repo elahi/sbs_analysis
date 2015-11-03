@@ -68,6 +68,46 @@ ggplot(master, aes(dateR, tempC, color = position)) +
   ylab("Temperature (C)") + xlab("Date")	+
   geom_smooth(se = TRUE, size = 1) + facet_wrap(~ code)
 
+ggplot(master, aes(dateR, tempC, color = iButtonID)) + 
+  geom_line() +
+  ylab("Temperature (C)") + xlab("Date")	+
+  facet_wrap(~ position)
+
+###########################
+# There were two extra loggers for WaraD, which were deployed later
+# Need to remove the first two days of logging (were sitting in the lab)
+waraD_extra <- master %>% filter(position == "WaraD_mid2" | 
+                                position == "WaraD_low2")
+
+ggplot(waraD_extra, aes(dateR, tempC, color = iButtonID)) + 
+  geom_line() +
+  ylab("Temperature (C)") + xlab("Date")	+
+  facet_wrap(~ position)
+
+# Remove pre 10AM August 2
+str(waraD_extra1$dateR)
+waraD_extra1 <- waraD_extra %>% filter(dateR > "2015-08-01 10:00:00")
+
+ggplot(waraD_extra1, aes(dateR, tempC, color = iButtonID)) + 
+  geom_line() +
+  ylab("Temperature (C)") + xlab("Date")	+
+  facet_wrap(~ position)
+
+# Now remove these two positions from master
+master2 <- master %>% filter(position != "WaraD_mid2" & 
+                                          position != "WaraD_low2")
+
+# Add in the corrected positions
+master3 <- rbind(master2, waraD_extra1)
+
+ggplot(master3, aes(dateR, tempC, color = iButtonID)) + 
+  geom_line() +
+  ylab("Temperature (C)") + xlab("Date")	+
+  facet_wrap(~ position)
+
+# rename master file
+master <- master3
+
 ###########################
 #Make daily summaries for each iButton
 names(master)
@@ -97,7 +137,29 @@ position_daily <- master %>%
 
 write.csv(position_daily, "./output/temp_daily_position.csv")
 
+###########################
+#Make daily summaries for each species 
+unique(master$code)
 
+species_daily <- master %>%
+  group_by(code, day) %>%
+  summarise(mean_tempC = mean(tempC, na.rm=T),
+            max_tempC = max(tempC, na.rm=T),
+            min_tempC = min(tempC, na.rm=T)) %>% 
+  ungroup()
 
+write.csv(position_daily, "./output/temp_daily_species.csv")
 
+###########################
+#Make hourly summaries for each species 
+unique(master$code)
+
+species_daily <- master %>%
+  group_by(code, day) %>%
+  summarise(mean_tempC = mean(tempC, na.rm=T),
+            max_tempC = max(tempC, na.rm=T),
+            min_tempC = min(tempC, na.rm=T)) %>% 
+  ungroup()
+
+write.csv(position_daily, "./output/temp_daily_species.csv")
 
