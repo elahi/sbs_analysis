@@ -108,6 +108,13 @@ ggplot(master3, aes(dateR, tempC, color = iButtonID)) +
 # rename master file
 master <- master3
 
+### Violin plots (?)
+ggplot(master, aes(code, tempC)) + 
+  geom_violin() + 
+  ylab("Temperature (C)") + xlab("Species") + 
+  theme(legend.position = "none") + coord_flip()
+
+
 ###########################
 #Make daily summaries for each iButton
 names(master)
