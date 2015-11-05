@@ -15,7 +15,7 @@ getwd()
 # Load packages
 library(ggplot2)
 theme_set(theme_classic(base_size = 8))
-
+library(dplyr)
 ###########################
 # Load daily iButton data from output folder
 dat <- read.csv("./output/temp_daily_iButton.csv", header = TRUE)
@@ -68,11 +68,12 @@ ggplot(dat, aes(day, min_tempC, color = iButtonID)) +
   ylab("Temperature (C)") + xlab("Date") + 
   facet_wrap(~ position) + theme(legend.position = "none")
 
-# Max temperatures
-ggplot(dat, aes(day, max_tempC, color = iButtonID)) + 
+# Mean temperatures
+names(dat)
+ggplot(dat, aes(day, mean_tempC, color = position)) + 
   geom_line(size = 1, alpha = 0.8) + 
   ylab("Temperature (C)") + xlab("Date") + 
-  facet_wrap(~ position) + theme(legend.position = "none")
+  facet_wrap(~ code) + theme(legend.position = "none")
 
 ###########################
 # Now plot summarized data for each species
@@ -99,10 +100,27 @@ ggplot(dat, aes(day, min_tempC)) +
   ylab("Temperature (C)") + xlab("Date") + 
   facet_wrap(~ code) + theme(legend.position = "none")
 
-### Violin plots (?)
+# Relevel the species codes
+dat$code <- factor(dat$code, levels = rev(c('LIKE', 'LODI', 'CHFU')), 
+                   ordered = TRUE)
+
+# Figure out how many daily records per species, and mean tidal height
+dat %>% group_by(code) %>% summarise(totalN = n(), 
+                                     meanHT = mean(tidalHT, na.rm = TRUE), 
+                                     sdHT = sd(tidalHT, na.rm = TRUE))
+
+### Violin plot
 ggplot(dat, aes(code, mean_tempC)) + 
-  geom_violin() + 
+  geom_violin(fill = "gray") + 
+  geom_boxplot(width = 0.3, notch = TRUE, color = "black") + 
   ylab("Temperature (C)") + xlab("Species") + 
-  theme(legend.position = "none") + coord_flip()
+  theme(legend.position = "none") + 
+  scale_x_discrete("", labels = c("CHFU" = "Chlorostoma funebralis\nn=344", 
+                                  "LODI" = "Lottia digitalis\nn=258", 
+                                  "LIKE" = "Littorina keenae\nn=344")) +
+  coord_flip()
+
+ggsave("./figs/temp_violin_spp.pdf", width = 3.5, height = 3.5)
+
 
 
