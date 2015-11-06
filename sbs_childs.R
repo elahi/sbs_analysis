@@ -47,12 +47,17 @@ factorList <- unique(chil$nest1)
 factorList
 unique(chil$tideHTm)
 
+# original tidal heights
 factorList2 <- c("2.7m", "3.8m", "5.9m", "7.3m")
+
+# or new tidal heights (from temp loggers)
+factorList2 <- rev(c("7.2m", "6.0m", "3.9m", "2.8m"))
+
 factorList2
 tideHT <- plyr::mapvalues(chil$nest1, from = factorList, to = factorList2)
 
 # reorder the levels
-tideHT2 <- factor(tideHT, levels = c("7.3m", "5.9m", "3.8m", "2.7m"))
+tideHT2 <- factor(tideHT, levels = c("7.2m", "6.0m", "3.9m", "2.8m"))
 chil$tideHT <- tideHT2
 
 ############################################
@@ -79,15 +84,16 @@ ggplot(chil,  aes(x = size1mm)) +
   xlab("Size (mm)") + ylab("Frequency (%)") 
 
 # density
-ggplot(chil,  aes(x = size1mm)) +
-  geom_density(aes(color = era)) +
+ggplot(chil,  aes(x = size1mm, fill = era)) +
+  geom_density(alpha = 0.5) +
   facet_wrap(~ tideHT, scales = "fixed", nrow = 4) + 
   xlab("Size (mm)") + ylab("Probability density") +
-  theme(legend.justification = c(1, 1), legend.position = c(0.97, 0.23),
-        legend.text = element_text(size = 6), legend.title = element_text(size = 6)) +
-  ggtitle("Littorina keenae")
+  scale_fill_manual(breaks = c("past", "present"), 
+                    values = c("darkgray", "white")) + 
+  theme(legend.position = "none") + 
+  theme(strip.background = element_blank()) 
 
-ggsave("./figs/sbs_fig2.pdf", width = 3.5, height = 7)
+ggsave("./figs/childs_density.pdf", width = 3.5, height = 7)
 
 ############################################
 
