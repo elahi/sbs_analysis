@@ -106,8 +106,8 @@ yearly_long %>% filter(year > 1943 & year < 2015) %>%
   geom_point() + geom_line() + 
   geom_smooth(method = "lm") + 
   ggtitle("Annual Sea Surface Temperature\n1944 - 2014") + 
-  xlab(expression(paste("Temperature (", degree, "C)"))) + 
-  ylab("Year") + 
+  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  xlab("Year") + 
   theme(legend.position = "none")
 
 ggsave("./figs/hms_sst_yearly.pdf", width = 3.5, height = 3.5)
