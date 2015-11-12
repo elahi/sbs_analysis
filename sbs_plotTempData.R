@@ -169,7 +169,7 @@ p3 <- ggplot(dat, aes(code, min_tempC)) +
   ULClabel + labs(title = "C")
 
 # save as pdf
-pdf("./figs/temp_spp_3panel.pdf", width = 3.5, height = 7)
+pdf("./figs/temp_spp_3panel.pdf", width = 3.5, height = 3.5)
 multiplot(p1, p2, p3, cols = 1)
 dev.off()
 
