@@ -61,13 +61,13 @@ ggplot(dat, aes(day, mean_tempC, color = position)) +
   facet_wrap(~ position) + theme(legend.position = "none")
 
 # Max temperatures
-ggplot(dat, aes(day, max_tempC, color = iButtonID)) + 
+ggplot(dat, aes(day, max_tempC, color = position)) + 
   geom_line(size = 1, alpha = 0.8) + 
   ylab("Temperature (C)") + xlab("Date") + 
   facet_wrap(~ position) + theme(legend.position = "none")
 
 # Min temperatures
-ggplot(dat, aes(day, min_tempC, color = iButtonID)) + 
+ggplot(dat, aes(day, min_tempC, color = position)) + 
   geom_line(size = 1, alpha = 0.8) + 
   ylab("Temperature (C)") + xlab("Date") + 
   facet_wrap(~ position) + theme(legend.position = "none")
@@ -108,10 +108,17 @@ ggplot(dat, aes(day, min_tempC)) +
 dat$code <- factor(dat$code, levels = rev(c('LIKE', 'LODI', 'CHFU')), 
                    ordered = TRUE)
 
-# Figure out how many daily records per species, and mean tidal height
+# Figure out how many daily records per species, 
+# and mean tidal height
 dat %>% group_by(code) %>% summarise(totalN = n(), 
                                      meanHT = mean(tidalHT, na.rm = TRUE), 
                                      sdHT = sd(tidalHT, na.rm = TRUE))
+
+# Get mean tidal heights for each of nested samples
+dat %>% group_by(code, nest2) %>% 
+  summarise(totalN = n(), 
+            meanHT = mean(tidalHT, na.rm = TRUE),
+            sdHT = sd(tidalHT, na.rm = TRUE))
 
 ### Violin plot
 ggplot(dat, aes(code, mean_tempC)) + 
@@ -169,7 +176,7 @@ p3 <- ggplot(dat, aes(code, min_tempC)) +
   ULClabel + labs(title = "C")
 
 # save as pdf
-pdf("./figs/temp_spp_3panel.pdf", width = 3.5, height = 3.5)
+pdf("./figs/temp_spp_3panel.pdf", width = 3.5, height = 7)
 multiplot(p1, p2, p3, cols = 1)
 dev.off()
 

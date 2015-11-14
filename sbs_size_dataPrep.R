@@ -5,7 +5,8 @@
 # Analysis of historical and modern gastropod body sizes
 # Hopkins Marine Station
 
-# Data preparation
+# Prepare gastropod size-freq distributions for
+# plotting and analysis
 #################################################
 
 library(dplyr)

@@ -5,9 +5,8 @@
 # Temporal shifts in gastropod size-frequency distributions are
 # consistent with climate warming
 
-# Analysis of historical and modern gastropod body sizes
+# Plots of historical and modern gastropod body sizes
 # Hopkins Marine Station
-
 #################################################
 
 library(ggplot2)
@@ -18,6 +17,9 @@ rm(list=ls(all=TRUE))
 
 # plotting functions
 source("./R/multiplotF.R")
+
+# Set WD
+setwd("~/github/sbs_analysis")
 
 # load modern data
 dat <- read.csv("./output/sbsMaster.csv", na.strings = "NA")
