@@ -114,6 +114,7 @@ ggplot(master, aes(code, tempC)) +
   ylab("Temperature (C)") + xlab("Species") + 
   theme(legend.position = "none") + coord_flip()
 
+write.csv(master, "./output/temp_raw_iButton.csv")
 
 ###########################
 #Make daily summaries for each iButton

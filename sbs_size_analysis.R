@@ -40,6 +40,16 @@ unique(dat$long2)
 dat$LL <- with(dat, paste(lat2, long2, sep = ","))
 unique(dat$LL)
 
+# Sampling dates
+like_sampling <- c(1947,  2014, 2014-1947)
+lodi_sampling <- c(1950,  2015, 2015-1950)
+chfu_sampling <- c(1963,  2014, 2014-1963)
+samplingDF <- data.frame(like_sampling, lodi_sampling, chfu_sampling)
+
+apply(samplingDF[3,], 1, mean)
+apply(samplingDF[3,], 1, sd)
+
+
 ###############################################################
 ### Mixed-model analysis of overall change in size
 ###############################################################
@@ -149,7 +159,8 @@ summary(bestMod)
 summaryStats <- statDat %>% group_by(species, sp, era) %>% 
   summarise(meanSize = mean(size1mm, na.rm = TRUE), 
             sdSize = sd(size1mm, na.rm = TRUE), 
-            medianSize = median(size1mm,  na.rm = TRUE))
+            medianSize = median(size1mm,  na.rm = TRUE), 
+            maxSize = max(size1mm, na.rm = TRUE))
 
 write.csv(summaryStats, "./output/size_summaryStats.csv")
 
@@ -157,8 +168,6 @@ write.csv(summaryStats, "./output/size_summaryStats.csv")
 summaryStats
 
 library(tidyr)
-spread(summaryStats, era, c(meanSize, sdSize, medianSize) )
-
 spread(summaryStats, era, meanSize)
 
 # Summarize percent change
@@ -172,8 +181,14 @@ perChange_median <- summaryStats %>%
   spread(key = era, value = medianSize) %>%
   mutate(perChange = (present - past)/past *100)
 
+perChange_max <- summaryStats %>% 
+  select(species, sp, era, maxSize) %>%
+  spread(key = era, value = maxSize) %>%
+  mutate(perChange = (present - past)/past *100)
+
 perChange_mean
 perChange_median
+perChange_max
 
 ###############################################################
 ### Violin plots by species and era
