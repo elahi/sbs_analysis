@@ -122,14 +122,13 @@ summary(lmeMod2)
 
 AIC(lmeMod1, lmeMod2)
 
-
 summary(lmeMod1)
 round(summary(lmeMod1)$tTable, 3)
 anova(lmeMod1)
 plot(lmeMod1)
 
 ###############################
-### Model selection: Era x Species
+### Model selection: Species + Tidal Height
 # Set up candidate model list
 Cand.mod <- list()
 
@@ -139,35 +138,15 @@ Cand.mod[[1]] <- lme(fixed = mean_tempC ~ sp + tidalHT,
                      na.action = na.omit, method = "ML", 
                      correlation = corCAR1(), 
                      data = dat)
-
-Cand.mod[[2]] <- lme(fixed = mean_tempC ~ tidalHT, 
-                     random = list(~ 1 | sampleArea), 
-                     na.action = na.omit, method = "ML", 
-                     correlation = corCAR1(), 
-                     data = dat)
-
-Cand.mod[[3]] <- lme(fixed = mean_tempC ~ sp, 
-                     random = list(~ 1 | sampleArea), 
-                     na.action = na.omit, method = "ML", 
-                     correlation = corCAR1(), 
-                     data = dat)
-
-Cand.mod[[4]] <- lme(fixed = mean_tempC ~ 1, 
-                     random = list(~ 1 | sampleArea), 
-                     na.action = na.omit, method = "ML", 
-                     correlation = corCAR1(), 
-                     data = dat)
-
-ggplot(data = statDat, aes(tidalHT, mean_tempC, color = sp, shape = sp)) + 
-  geom_point(alpha = 0.5)
-
-
+Cand.mod[[2]] <- update(Cand.mod[[1]], ~. - sp)
+Cand.mod[[3]] <- update(Cand.mod[[1]], ~. - tidalHT)
+Cand.mod[[4]] <- update(Cand.mod[[1]], ~. - tidalHT - sp)
 
 #create a vector of names to trace back models in set
 mod_numbers <- paste("Cand.mod", 1:length(Cand.mod), sep=" ")	
 
-mod_text <- c("Era x Species", "Era + Species", "Era", 
-              "Species", "Null model")
+mod_text <- c("Species + Tidal Height", "Tidal height", "Species", 
+              "Null model")
 
 #generate AICc table with numbers
 mod.aicctab <- aictab(cand.set= Cand.mod, modnames=mod_numbers, sort=TRUE, 
@@ -185,43 +164,141 @@ print(mod.aicctab, digits=2, LL=TRUE)
 aic_table <- data.frame(cbind(data.frame(mod.aicctab)[1], 
                               round(data.frame(mod.aicctab)[2:8], 3)))
 
-write.csv(aic_table, "./output/size_AIC.csv")
+write.csv(aic_table, "./output/temp_AIC.csv")
 
-bestMod <- update(Cand.mod[[2]], REML = TRUE)
-summary(bestMod)
+fullMod <- update(Cand.mod[[1]], method = "REML")
+summary(fullMod)
+plot(fullMod)
 
-# Summarize sizes for each species x era
+###############################
+### Model selection:Species only
+### MEAN SIZE
+###############################
+# Set up candidate model list
+Cand.mod <- list()
 
-summaryStats <- statDat %>% group_by(species, sp, era) %>% 
-  summarise(meanSize = mean(size1mm, na.rm = TRUE), 
-            sdSize = sd(size1mm, na.rm = TRUE), 
-            medianSize = median(size1mm,  na.rm = TRUE), 
-            maxSize = max(size1mm, na.rm = TRUE))
+# final full model 
+Cand.mod[[1]] <- lme(fixed = mean_tempC ~ sp, 
+                     random = list(~ 1 | sampleArea, ~ 1 | position), 
+                     na.action = na.omit, method = "ML", 
+                     correlation = corCAR1(), 
+                     data = dat)
+Cand.mod[[2]] <- update(Cand.mod[[1]], ~. - sp)
 
-write.csv(summaryStats, "./output/size_summaryStats.csv")
+anova(Cand.mod[[1]], Cand.mod[[2]])
 
-# Calculate percent change for each species
-summaryStats
+#create a vector of names to trace back models in set
+mod_numbers <- paste("Cand.mod", 1:length(Cand.mod), sep=" ")	
 
-library(tidyr)
-spread(summaryStats, era, meanSize)
+mod_text <- c("Species", "Null model")
 
-# Summarize percent change
-perChange_mean <- summaryStats %>% 
-  select(species, sp, era, meanSize) %>%
-  spread(key = era, value = meanSize) %>%
-  mutate(perChange = (present - past)/past *100)
+#generate AICc table with numbers
+mod.aicctab <- aictab(cand.set= Cand.mod, modnames=mod_numbers, sort=TRUE, 
+                      second.ord=FALSE) # second.ord =TRUE means AICc is used (not AIC)
 
-perChange_median <- summaryStats %>% 
-  select(species, sp, era, medianSize) %>%
-  spread(key = era, value = medianSize) %>%
-  mutate(perChange = (present - past)/past *100)
+print(mod.aicctab, digits=2, LL=TRUE)
 
-perChange_max <- summaryStats %>% 
-  select(species, sp, era, maxSize) %>%
-  spread(key = era, value = maxSize) %>%
-  mutate(perChange = (present - past)/past *100)
+#generate AICc table with names
+mod.aicctab <- aictab(cand.set= Cand.mod, modnames= mod_text, sort=TRUE, 
+                      second.ord=FALSE) # second.ord =TRUE means AICc is used (not AIC)
 
-perChange_mean
-perChange_median
-perChange_max
+print(mod.aicctab, digits=2, LL=TRUE)
+
+# Format the data frame for nicer printing
+aic_table <- data.frame(cbind(data.frame(mod.aicctab)[1], 
+                              round(data.frame(mod.aicctab)[2:8], 3)))
+
+write.csv(aic_table, "./output/temp_mean_AIC.csv")
+plot(Cand.mod[[1]])
+
+
+
+
+
+
+
+
+
+###############################
+### Model selection:Species only
+### MAX SIZE
+###############################
+# Set up candidate model list
+Cand.mod <- list()
+
+# final full model 
+Cand.mod[[1]] <- lme(fixed = max_tempC ~ sp, 
+                     random = list(~ 1 | sampleArea, ~ 1 | position), 
+                     na.action = na.omit, method = "ML", 
+                     correlation = corCAR1(), 
+                     data = dat)
+Cand.mod[[2]] <- update(Cand.mod[[1]], ~. - sp)
+
+anova(Cand.mod[[1]], Cand.mod[[2]])
+
+#create a vector of names to trace back models in set
+mod_numbers <- paste("Cand.mod", 1:length(Cand.mod), sep=" ")	
+
+mod_text <- c("Species", "Null model")
+
+#generate AICc table with numbers
+mod.aicctab <- aictab(cand.set= Cand.mod, modnames=mod_numbers, sort=TRUE, 
+                      second.ord=FALSE) # second.ord =TRUE means AICc is used (not AIC)
+
+print(mod.aicctab, digits=2, LL=TRUE)
+
+#generate AICc table with names
+mod.aicctab <- aictab(cand.set= Cand.mod, modnames= mod_text, sort=TRUE, 
+                      second.ord=FALSE) # second.ord =TRUE means AICc is used (not AIC)
+
+print(mod.aicctab, digits=2, LL=TRUE)
+
+# Format the data frame for nicer printing
+aic_table <- data.frame(cbind(data.frame(mod.aicctab)[1], 
+                              round(data.frame(mod.aicctab)[2:8], 3)))
+
+write.csv(aic_table, "./output/temp_max_AIC.csv")
+plot(Cand.mod[[1]])
+
+
+###############################
+### Model selection:Species only
+### MIN SIZE
+###############################
+# Set up candidate model list
+Cand.mod <- list()
+
+# final full model 
+Cand.mod[[1]] <- lme(fixed = min_tempC ~ sp, 
+                     random = list(~ 1 | sampleArea, ~ 1 | position), 
+                     na.action = na.omit, method = "ML", 
+                     correlation = corCAR1(), 
+                     data = dat)
+Cand.mod[[2]] <- update(Cand.mod[[1]], ~. - sp)
+
+anova(Cand.mod[[1]], Cand.mod[[2]])
+
+#create a vector of names to trace back models in set
+mod_numbers <- paste("Cand.mod", 1:length(Cand.mod), sep=" ")	
+
+mod_text <- c("Species", "Null model")
+
+#generate AICc table with numbers
+mod.aicctab <- aictab(cand.set= Cand.mod, modnames=mod_numbers, sort=TRUE, 
+                      second.ord=FALSE) # second.ord =TRUE means AICc is used (not AIC)
+
+print(mod.aicctab, digits=2, LL=TRUE)
+
+#generate AICc table with names
+mod.aicctab <- aictab(cand.set= Cand.mod, modnames= mod_text, sort=TRUE, 
+                      second.ord=FALSE) # second.ord =TRUE means AICc is used (not AIC)
+
+print(mod.aicctab, digits=2, LL=TRUE)
+
+# Format the data frame for nicer printing
+aic_table <- data.frame(cbind(data.frame(mod.aicctab)[1], 
+                              round(data.frame(mod.aicctab)[2:8], 3)))
+
+write.csv(aic_table, "./output/temp_min_AIC.csv")
+plot(Cand.mod[[1]])
+
