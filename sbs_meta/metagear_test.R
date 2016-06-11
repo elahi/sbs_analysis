@@ -19,8 +19,8 @@ library(metafor)
 
 # first load Bioconductor resources needed to install the EBImage package 
 # and accept/download all of its dependencies
-source("https://bioconductor.org/biocLite.R")
-biocLite("EBImage")
+#source("https://bioconductor.org/biocLite.R")
+#biocLite("EBImage")
 # Now can load
 library(metagear)
 
@@ -54,7 +54,17 @@ data(example_references_metagear)
 names(example_references_metagear)
 
 
+##### EXTRACTING DATA FROM IMAGES #####
+library(EBImage)
+library(metagear)
 
+#
+aFig <- figure_read("sbs_meta/extract_data/Roy2003_fig2_Aspirata.png", display = TRUE)
+
+rawData <- figure_barPlot("sbs_meta/extract_data/Roy2003_fig2_Aspirata.jpg")
+
+figure_detectAllPoints(aFig, sensitivity = 0.2,
+                       point_shape = "circle", point_size = 5)
 
 
 ##### JOACHIM'S EXAMPLES #####
