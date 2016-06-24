@@ -34,12 +34,13 @@ Fish data? E.g., SBC, Channel Islands
 
 #### Next steps
 
-1. Implement WOS search in metagear
+0. Extract Hopkins data into meta-analysis format
+1. Decided on effect size, prelim comparison
+    - log ratio
+    - % change per year
+    - % change per degree C 
+2. Implement WOS search in metagear or other
 
-2. Scrape data from preliminary search using metagear
-    - start with Roy, Fenberg, Defeo
-    
-3. Extract ectotherm data from reviews (e.g., Gardner)
 
 
 
