@@ -5,10 +5,12 @@
 ##' @contact elahi.robin@gmail.com
 ##' @contributor 
 ##' 
-##' @date 2016-06-24
+##' @date 2016-07-28
 ##' 
 ##' @log Add a log here
 ################################################################################
+
+rm(list=ls(all=TRUE)) 
 
 ##### LOAD PACKAGES, DATA #####
 
@@ -16,36 +18,59 @@ library(dplyr)
 library(tidyr)
 library(readr)
 library(ggplot2)
+library(lubridate)
 
-# load modern data
-dat <- read.csv("./output/sbsMaster.csv", na.strings = "NA")
-summary(dat)
-head(dat)
+# load cleaned up data
+source("sbs_size_dataPrep2.R")
 
-head(dat)
+##### SUMMARISE DATA #####
+head(dat2)
 
-# change ft to meters
-range(dat$tideHTm, na.rm = TRUE)
-dat$tideHTm <- dat$tideHTm/3.28084
+# # http://www.r-tutor.com/elementary-statistics/interval-estimation/interval-estimate-population-mean-unknown-variance
+# survey %>% filter(!is.na(Height)) %>%
+#   summarise(size_mean = mean(Height, na.rm = TRUE), 
+#             size_sd = sd(Height, na.rm = TRUE),
+#             size_n = n(), 
+#             size_se = size_sd/sqrt(size_n), 
+#             size_CI = qt(0.975, df = size_n - 1) * size_se)
 
-# create numeric lat-long columns
-dat$lat2 <- as.numeric(substr(dat$lat, 1, 8))
-dat$long2 <- as.numeric(paste("-", substr(dat$long, 1, 9), sep = ""))
-unique(dat$lat2)
-unique(dat$long2)
 
-dat$LL <- with(dat, paste(lat2, long2, sep = ","))
-unique(dat$LL)
+### I want mean size by species-era-sampleArea
+summary(dat2)
+names(dat2)
+
+datMeans <- dat2 %>% filter(!is.na(size1mm)) %>% 
+  group_by(species, sp, era, year, sampleArea) %>% 
+  summarise(size_mean = mean(size1mm), 
+            size_sd = sd(size1mm),
+            size_n = n(), 
+            size_se = size_sd/sqrt(size_n), 
+            size_CI = qt(0.975, df = size_n - 1) * size_se) %>% 
+  ungroup()
+
+
+datMeans
+
 
 # Sampling dates
-like_sampling <- c(1947,  2014, 2014-1947)
-lodi_sampling <- c(1950,  2015, 2015-1950)
+LIKE <- c(1947,  2014, 2014-1947)
+LODI <- c(1950,  2015, 2015-1950)
 chfu_sampling <- c(1963,  2014, 2014-1963)
 samplingDF <- data.frame(like_sampling, lodi_sampling, chfu_sampling)
 
+
+
+# Mean and sd duration of three studies
 apply(samplingDF[3,], 1, mean)
 apply(samplingDF[3,], 1, sd)
 
+
+##'
+##'##'##'##'##'##'
+##'
+##'
+##'
+##'
 ##' Get lat-longs for each sampling location
 ##' 
 ##' 
@@ -83,10 +108,6 @@ llSummary %>% ungroup() %>%
             grandLong = mean(meanLong))
 
 
-##' x = length in 1915-1922 (mm)
-##' y = length in 2007 (mm)
-##' measurement = CI of x or y; mean
-##' dimension = relevant era (x or y)
 
 ##### SUMMARIZE MEAN LENGTHS #####
 

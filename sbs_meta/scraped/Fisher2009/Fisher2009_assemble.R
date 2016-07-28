@@ -70,7 +70,7 @@ head(fisherDat)
 ##### GET LAT LONGS #####
 
 siteDat <- read_csv("sbs_meta/scraped/Fisher2009/Fisher_2009_tableS1.csv")
-head(siteDat)
+siteDat
 
 exposure <- siteDat$Exposure
 exposure <- gsub(x = exposure, pattern = "Exposed coast", "exposed")
@@ -119,12 +119,13 @@ fisherDat %>%
 head(sampleSizeDat)
 
 fisherDat$exposure
-head(fisherDat)
+fisherDat
 
 ciDat; lengthDat
 
 # Get fisher data in long format
-lengthDatL <- lengthDat %>% gather(key = time_rep, value = length_mean, length_1915:length_2007)
+lengthDatL <- lengthDat %>% 
+  gather(key = time_rep, value = length_mean, length_1915:length_2007)
 ciDatL <- ciDat %>% gather(key = time_rep, value = length_CI, CI_1915:CI_2007)
 
 fisherDatL <- cbind(lengthDatL, ciDatL$length_CI)
@@ -151,23 +152,28 @@ fisherDatL <- fisherDatL %>%
   mutate(yearFinal = ifelse(year == 1915, yearColton, year), 
          site = paste(exposure, point, sep = "_"))
 
+# Modify sample size data
+repeat_this <- unique(fisherDatL$time_rep)
+rep(repeat_this, 3)
+sampleSizeDat2 <- sampleSizeDat %>%
+  mutate(time_rep = rep(repeat_this, 3)) %>% select(-Collector)
+
 # Get sample sizes by exposure
-fisherDatL <- sampleSizeDat %>% select(exposure, n_mean) %>%
-  inner_join(fisherDatL, ., by = "exposure") %>% 
+fisherDatL2 <- sampleSizeDat2 %>% select(exposure, time_rep, n_mean) %>%
+  inner_join(fisherDatL, ., by = c("exposure", "time_rep")) %>% 
   rename(sample_size = n_mean) %>% 
-  mutate(sample_size_units = "mean number of snails by exposure")
+  mutate(sample_size_units = "mean number of snails by exposure") 
 
 
 ##### FORMAT TABLE FOR META-ANALYSIS #####
-names(fisherDatL)
+names(fisherDatL2)
 
-df_final <- fisherDatL %>% select(-c(exposure, yearColton, point, year)) %>%
+df_final <- fisherDatL2 %>% select(-c(exposure, yearColton, point, year)) %>%
   rename(size_rep = length_mean, size_error = length_CI, year = yearFinal) %>%
   mutate(species = "Nucella_lapillus") %>%
   arrange(site, year)
 
 head(df_final)
-
 
 dfMeta <- data.frame(
   study = "Fisher2009", 
