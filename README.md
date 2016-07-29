@@ -34,7 +34,6 @@ Fish data? E.g., SBC, Channel Islands
 
 #### Next steps
 
-0. Extract Hopkins data into meta-analysis format
 1. Decided on effect size, prelim comparison
     - log ratio
     - % change per year

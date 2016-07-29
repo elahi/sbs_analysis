@@ -40,7 +40,7 @@ summary(dat2)
 names(dat2)
 
 datMeans <- dat2 %>% filter(!is.na(size1mm)) %>% 
-  group_by(species, sp, era, year, sampleArea) %>% 
+  group_by(species, sp, site, era, year, sampleArea) %>% 
   summarise(size_mean = mean(size1mm), 
             size_sd = sd(size1mm),
             size_n = n(), 
@@ -48,35 +48,30 @@ datMeans <- dat2 %>% filter(!is.na(size1mm)) %>%
             size_CI = qt(0.975, df = size_n - 1) * size_se) %>% 
   ungroup()
 
-
 datMeans
 
+### Summarise lat-longs and tidal heights
+envDat <- dat2 %>% filter(era == "present") %>%
+  group_by(species, site, era, sampleArea) %>%
+  summarise(lat_mean = mean(lat), 
+            long_mean = mean(long), 
+            tidalHeight = mean(tideHTm)) %>%
+  ungroup()
 
-# Sampling dates
-LIKE <- c(1947,  2014, 2014-1947)
-LODI <- c(1950,  2015, 2015-1950)
-chfu_sampling <- c(1963,  2014, 2014-1963)
-samplingDF <- data.frame(like_sampling, lodi_sampling, chfu_sampling)
+### Join snail data with env data
+names(envDat)
+names(datMeans)
+
+dm2 <- envDat %>% select(sampleArea, lat_mean:tidalHeight) %>%
+  inner_join(datMeans, .,  by = "sampleArea")
+
+dm2
+
+# Replace "." with "_" in species name
+dm2$species <- gsub("[.]", "_", dm2$species)
 
 
-
-# Mean and sd duration of three studies
-apply(samplingDF[3,], 1, mean)
-apply(samplingDF[3,], 1, sd)
-
-
-##'
-##'##'##'##'##'##'
-##'
-##'
-##'
-##'
-##' Get lat-longs for each sampling location
-##' 
-##' 
-unique(dat$sampleUnit)
-unique(dat$LL)
-unique(dat$site)
+##### BRIEF MAPPING INTERLUDE #####
 
 datLL <- dat %>% filter(era == "present") %>%
   select(sp, site, lat2, long2) %>% distinct()
@@ -107,169 +102,35 @@ llSummary %>% ungroup() %>%
   summarise(grandLat = mean(meanLat), 
             grandLong = mean(meanLong))
 
-
-
-##### SUMMARIZE MEAN LENGTHS #####
-
-# To extract the mean length in 1915, calculate mean x for the mean size and CI
-xDat <- dat %>% filter(dimension != "y") %>% 
-  group_by(point) %>% 
-  summarise(length_1915 = mean(x))
-
-# To extract the mean length in 2007, calculate mean y for the mean size and CI
-yDat <- dat %>% filter(dimension != "x") %>% 
-  group_by(point) %>% 
-  summarise(length_2007 = mean(y))
-
-lengthDat <- inner_join(xDat, yDat, by = "point")
-lengthDat
-
-##### SUMMARIZE CIs #####
-head(dat)
-
-# To extract the CI in 1915, calculate difference in x for the CI
-xCI <- dat %>% filter(dimension != "x") %>% select(point, x, measurement) %>%
-  spread(key = measurement, value = x) %>%
-  mutate(CI_1915 = abs(CI_x_right - mean)) %>%
-  select(point, CI_1915)
-
-# To extract the CI in 2007, calculate difference in y for the CI
-yCI <- dat %>% filter(dimension != "y") %>% select(point, y, measurement) %>%
-  mutate(measurement = ifelse(measurement == "CI_y_lower", 
-                               "CI_y_upper", 
-                               measurement)) %>% 
-  spread(key = measurement, value = y) %>%
-  mutate(CI_2007 = abs(CI_y_upper - mean)) %>%
-  select(point, CI_2007)
-
-ciDat <- inner_join(xCI, yCI, by = "point")
-
-##### COMBINE MEANS AND CIs #####
-ciDat; lengthDat
-
-fisherDat <- inner_join(lengthDat, ciDat, by = "point")
-head(fisherDat)
-
-##### GET LAT LONGS #####
-
-siteDat <- read_csv("sbs_meta/scraped/Fisher2009/Fisher_2009_tableS1.csv")
-head(siteDat)
-
-exposure <- siteDat$Exposure
-exposure <- gsub(x = exposure, pattern = "Exposed coast", "exposed")
-exposure <- gsub(x = exposure, pattern = "Semiexposed shore", "semi-exposed")
-exposure <- gsub(x = exposure, pattern = "Sheltered cove", "sheltered")
-unique(exposure)
-
-siteDat$exposure <- exposure
-
-# mean lat long for study
-siteDat %>% summarise(meanLat = mean(lat), meanLong = mean(long))
-
-# mean sample sizes by exposure category
-sampleSizeDat <- siteDat %>% gather(key = "Collector", value = "sampleSize", Nc:Nf) %>%
-  group_by(exposure, Collector) %>%
-  summarise(n_mean = mean(sampleSize), 
-            n_sd = sd(sampleSize), 
-            n_total = sum(sampleSize), 
-            nSites = n()) %>% 
-  ungroup()
-
-##### GET SITE DETAILS #####
-head(dat)
-
-site_details <- dat %>% select(point, exposure) %>% distinct()
-site_details
-
-fisherDat <- inner_join(fisherDat, site_details, by = "point")
-
-fisherDat %>% 
-  ggplot(aes(x = length_1915, y = length_2007, color = exposure)) +
-  geom_point() + 
-  geom_errorbar(aes(ymin = length_2007 - CI_2007, 
-                    ymax = length_2007 + CI_2007)) + 
-  geom_errorbarh(aes(xmin = length_1915 - CI_1915, 
-                     xmax = length_1915 + CI_1915)) + 
-  coord_fixed(ratio = 1) + 
-  scale_x_continuous(breaks = seq(18, 28, by = 2)) + 
-  scale_y_continuous(breaks = seq(18, 36, by = 2)) + 
-  geom_abline(slope = 1, intercept = 0, color = "black")
-
-##### DEAL WITH SAMPLE SIZES #####
-
-### Fisher does not provide sample sizes for each point, so I have to calculate average number of samples per exposure category, and merge that with the body size data
-
-head(sampleSizeDat)
-
-fisherDat$exposure
-head(fisherDat)
-
-ciDat; lengthDat
-
-# Get fisher data in long format
-lengthDatL <- lengthDat %>% gather(key = time_rep, value = length_mean, length_1915:length_2007)
-ciDatL <- ciDat %>% gather(key = time_rep, value = length_CI, CI_1915:CI_2007)
-
-fisherDatL <- cbind(lengthDatL, ciDatL$length_CI)
-fisherDatL <- inner_join(fisherDatL, site_details, by = "point")
-
-names(fisherDatL)[4] <- "length_CI"
-fisherDatL$year <- c(rep(1915, 19), rep(2007, 19))
-head(fisherDatL)
-
-# Get year (weighted average), by exposure
-mean(siteDat$Year, na.rm = TRUE)
-weighted.mean(siteDat$Year, siteDat$Nc, na.rm = TRUE)
-
-yearDat <- siteDat %>% group_by(exposure) %>%
-  summarise(yearColton = weighted.mean(Year, Nc, na.rm = TRUE))
-
-fisherDatL <- yearDat %>% 
-  inner_join(., fisherDatL, by = "exposure")
-
-head(fisherDatL)
-
-# Change Colton year, create site
-fisherDatL <- fisherDatL %>% 
-  mutate(yearFinal = ifelse(year == 1915, yearColton, year), 
-         site = paste(exposure, point, sep = "_"))
-
-# Get sample sizes by exposure
-fisherDatL <- sampleSizeDat %>% select(exposure, n_mean) %>%
-  inner_join(fisherDatL, ., by = "exposure") %>% 
-  rename(sample_size = n_mean) %>% 
-  mutate(sample_size_units = "mean number of snails by exposure")
-
-
 ##### FORMAT TABLE FOR META-ANALYSIS #####
-names(fisherDatL)
+names(dm2)
 
-df_final <- fisherDatL %>% select(-c(exposure, yearColton, point, year)) %>%
-  rename(size_rep = length_mean, size_error = length_CI, year = yearFinal) %>%
-  mutate(species = "Nucella_lapillus") %>%
-  arrange(site, year)
+df_final <- dm2  %>%
+  rename(size_rep = size_mean, size_error = size_CI, 
+         sample_size = size_n) %>%
+  arrange(species, site, year)
 
 head(df_final)
 
 
 dfMeta <- data.frame(
-  study = "Fisher2009", 
+  study = "Elahi2015", 
   studySub = NA, 
-  fig_table = "Figure_1", 
+  fig_table = "raw_data", 
   species = df_final$species, 
-  site = df_final$site, 
+  site = df_final$sampleArea, 
   size_rep = df_final$size_rep, 
   size_units = "mm", 
   size_error = df_final$size_error, 
   size_error_type = "CI", 
-  time_rep = df_final$time_rep, 
+  time_rep = NA, 
   time_error = NA, 
   year = df_final$year, 
   year_error = NA, 
   year_error_type = NA, 
   sample_size = df_final$sample_size, 
-  sample_size_units = df_final$sample_size_units
+  sample_size_units = "number of snails"
 )
 
 
-write.csv(dfMeta, "sbs_meta/output/dfMeta_Fisher2009.csv")
+write.csv(dfMeta, "sbs_meta/output/dfMeta_Elahi2015.csv")
