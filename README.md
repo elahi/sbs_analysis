@@ -21,14 +21,14 @@ Then we relocated sites and collected size-frequency data in 2014-2015.
     
 2. Plot size change/time against habitat thermal variability (predict positive relationship - such that higher thermal variability results in larger body size, especially maximum body size)
 
-3. Get satellite air temperature time-series for Pacific Grove; perhaps get satellite seawater temperature from HADSST
+3. Get satellite air temperature time-series for Pacific Grove and other studies
 
 
 ### Meta-analysis of body-size reductions
 
 Extract body size rate of change (delta size/delta time), relate to warming velocity and other covariates (e.g., human harvesting). 
 
-Get climate velocity for air and sea temperature
+Get climate velocity for air temperature
 
 Fish data? E.g., SBC, Channel Islands
 
