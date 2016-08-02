@@ -87,6 +87,9 @@ for(i in 2:length(study)){
   
 }
 
+# need to unload raster so that dplyr::select works again
+detach("package:raster", unload=TRUE)
+
 # Rename and calculate moving average (12-month)
 dfHad <- tserie.df %>% group_by(study) %>% 
   mutate(Moving_average_C = runmean(tserie.i, 12), 
@@ -95,7 +98,10 @@ dfHad <- tserie.df %>% group_by(study) %>%
   rename(Temperature_C = tserie.i) %>%
   inner_join(., dat, by = "study")
 
-dfHad
+dfHad %>% select(study, Date, Temperature_C, Year, hadLong, hadLat) %>% 
+  write.csv(., "sbs_meta/output/dfHad.csv")
+
+write.csv(dfHad, "sbs_meta/output/dfHad.csv")
 
 # Combine
 dfAnnual <- dfHad %>% group_by(study, Year) %>%
