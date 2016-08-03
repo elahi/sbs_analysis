@@ -43,8 +43,7 @@ dat %>% #filter(site != "CNM") %>%
   geom_errorbar(aes(ymax = size_rep + size_error, 
                     ymin = size_rep - size_error), width = 3)
 
-ggsave("sbs_meta/meta_figs/size_change_by_spp.png", height = 7,width = 7)
-
+# ggsave("sbs_meta/meta_figs/size_change_by_spp.png", height = 7,width = 7)
 
 ##### CALCULATE DELTA SIZE PER YEAR #####
 
@@ -53,106 +52,115 @@ dat2 <- dat %>% filter(site != "CNM" &
                          site != "Field") %>%
   arrange(study, site, year)
 
-# Get in long format
+# Get in wide format
 dat3 <- dat2 %>% group_by(species, site) %>% 
-  mutate(size_rep2 = lag(size_rep), 
-         size_error2 = lag(size_error), 
-         year2 = lag(year), 
-         sample_size2 = lag(sample_size)) %>%
+  mutate(size_rep2 = lead(size_rep), 
+         size_error2 = lead(size_error), 
+         year2 = lead(year), 
+         sample_size2 = lead(sample_size)) %>%
   ungroup() %>% filter(!is.na(size_rep2)) %>% 
   select(-c(X, size_error_type:time_error, size_units, 
             year_error:year_error_type, sample_size_units))
 
+head(dat3)
+
 dat4 <- dat3 %>% 
-  mutate(delta_year = year - year2, 
-         delta_size = size_rep - size_rep2, 
-         delta_size_yr = delta_size/delta_year)
+  mutate(delta_year = year2 - year, 
+         delta_size = size_rep2 - size_rep, 
+         delta_size_per = delta_size/size_rep * 100)
 
 dat4 %>% 
-  ggplot(aes(delta_year, delta_size_yr, color = species, shape = study)) + 
+  ggplot(aes(delta_year, delta_size_per, color = species, shape = study)) + 
   geom_point(alpha = 0.5, size = 3) + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray")
 
-##### GET HADISST FOR EACH SPECIES #####
+##### JOIN DELTA TEMPERATURE WITH SIZE DATA #####
+source("sbs_meta/meta_analysis/sbs_hadisst_process.R")
 
-dfHad <- read.csv("sbs_meta/output/dfHad.csv")
-head(dfHad)
+dat4
 
-# I need to extract the data for each species
-head(dat4)
-spYrs <- dat4 %>% select(study, species, year, year2) %>%
-  distinct() %>%
-  mutate(hadYr1 = floor(year2), 
-         hadYr2 = floor(year)) %>% 
-  group_by(study, species) %>% slice(1) %>%
-  ungroup() %>% filter(!is.na(hadYr2))
-spYrs
+dat5 <- inner_join(dat4, dfEra3, by = "species")
+
+dat6 <- dat5 %>% 
+  mutate(delta_size_per_C = delta_size_per/delta_C)
+
+dat6 %>% 
+  ggplot(aes(delta_C, delta_size_per, color = species, shape = study)) + 
+  theme_bw(base_size = 10) + 
+  geom_point(alpha = 0.5, size = 3) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") + 
+  facet_wrap(~ metric) + 
+  labs(x = "Change in temperature (C)", y = "Change in size (%)")
+
+ggsave("sbs_meta/meta_figs/deltaSizePer_v_deltaC.png", height = 3.5, width = 7)
+
+##### STATISTICAL ANALYSIS - LME4 #####
+library(lme4)
+library(nlme)
+
+lmerDat <- dat6 %>% filter(metric == "mean_C")
+
+## Delta size_per ~ delta C
+mod1 <- lmer(delta_size_per ~ delta_C + (1 | study) + (1 | species), 
+             lmerDat)
+summary(mod1)
+
+mod1 <- lme(delta_size_per ~ delta_C, 
+            data = lmerDat, 
+            random = ~ 1 | study)
+summary(mod1)
 
 
-species <- unique(spYrs$species)
-i = 1
+mod2 <- lmer(delta_size_per ~ 1 + (1 | study) + (1 | species), 
+             lmerDat)
+anova(mod1, mod2)
 
-species.i <- species[i]
-dat.i <- spYrs %>% filter(species == species.i)
-dat.i
+AIC(mod1, mod2)
 
-datHad.i <- inner_join(dfHad, dat.i, by = "study") %>% 
-  mutate(species1 = ifelse(Year >= hadYr1 & Year <= hadYr2, 
-                           "keep", "remove")) %>% 
-  filter(species1 == "keep") %>% select(-c(X, species1))
+# Create prediction dataframe
+tempRange <- with(lmerDat, range(delta_C))
+newdat_x <- seq(tempRange[1], tempRange[2], by = 0.1)
+newdat <- data.frame(delta_C = newdat_x)
+newdat$delta_size_per <- predict(mod1, level = 0, newdata = newdat)
 
-head(datHad.i)
+lmerDat %>% 
+  ggplot(aes(delta_C, delta_size_per, color = species, shape = study)) + 
+  theme_bw(base_size = 10) + 
+  geom_point(alpha = 0.5, size = 3) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") + 
+  labs(x = "Change in mean annual temperature (C)", y = "Change in size (%)") + 
+  theme(legend.justification = c(1, 0), legend.position = c(1, 0)) + 
+  theme(legend.key.size = unit(0.2, "cm"), legend.title = element_blank()) + 
+  guides(shape = FALSE)
 
-datHad <- datHad.i
-
-for(i in 2:length(species)){
+# geom_line(aes(color = NULL, shape = NULL), data = newdat) 
+ggsave("sbs_meta/meta_figs/deltaSizePer_v_meanDeltaC.png", height = 3.5, width = 3.5)
   
-  species.i <- species[i]
-  dat.i <- spYrs %>% filter(species == species.i)
-
-  datHad.i <- inner_join(dfHad, dat.i, by = "study") %>% 
-    mutate(species1 = ifelse(Year >= hadYr1 & Year <= hadYr2, 
-                             "keep", "remove")) %>% 
-    filter(species1 == "keep") %>% select(-c(X, species1))
   
-  datHad <- rbind(datHad, datHad.i) 
   
-}
-
-datHad2 <- datHad %>% group_by(species) %>% 
-  mutate(runMean1 = runmean(Temperature_C, 12), 
-         runMean10 = runmean(Temperature_C, 12*10),
-         Date = ymd(Date)) %>% 
-  ungroup()
-head(datHad2)
-
-datHad2 %>% 
-  ggplot(aes(Date, runMean1, col = species)) + 
-  geom_line() + 
-  geom_smooth(method = "lm") + 
-  facet_wrap(~ study + species)
-
-##### CALCULATE HADISST SUMMARY METRICS PER SPECIES #####
-
-# Combine
-dfAnnual <- datHad2 %>% group_by(study, species, Year) %>%
-  summarise(mean_C = mean(Temperature_C), 
-            max_C = max(Temperature_C), 
-            min_C = min(Temperature_C)) %>%
-  ungroup()
-
-dfAnnL <- gather(dfAnnual, key = metric, value = Temperature_C, 
-                 mean_C:min_C)
-glimpse(dfAnnL)
-
-dfAnnL %>% 
-  ggplot(aes(Year, Temperature_C, col = metric)) + 
-  geom_line(alpha = 0.5) +
-  facet_wrap(~ study + species) + 
-  geom_smooth(method = "lm")
-
-##### CALCULATE LINEAR RATE OF CHANGE PER SPECIES #####
-
-
+# Get average size change  
+lmerDat2 <- lmerDat %>% 
+  group_by(study, species) %>% 
+  summarise(mean_delta_size_per = mean(delta_size_per), 
+            sd_delta_size_per = sd(delta_size_per), 
+            n_delta_size_per = n(), 
+            delta_C = mean(delta_C))
+  
+lmerDat2 %>% 
+  ggplot(aes(delta_C, mean_delta_size_per, color = species, shape = study)) + 
+  theme_bw(base_size = 10) + 
+  geom_point(aes(size = n_delta_size_per)) + 
+  scale_size_continuous(range = c(3,6)) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") + 
+  labs(x = "Change in mean annual temperature (C)", y = "Change in size (%)") + 
+  geom_errorbar(aes(ymin = mean_delta_size_per - sd_delta_size_per, 
+                    ymax = mean_delta_size_per +  sd_delta_size_per)) + 
+  theme(legend.justification = c(0, 1), legend.position = c(0, 1)) + 
+  theme(legend.key.size = unit(0.3, "cm"), legend.title = element_blank()) + 
+  guides(shape = FALSE, size = FALSE)
+ggsave("sbs_meta/meta_figs/meanDeltaSizePer_v_meanDeltaC.png", height = 3.5, width = 3.5)
 
 
