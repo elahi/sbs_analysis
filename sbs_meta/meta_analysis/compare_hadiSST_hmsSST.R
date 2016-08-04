@@ -82,24 +82,32 @@ sstDat <- sstDat %>%
 sstDat
 
 sstDat2 <- sstDat %>% group_by(tempSource) %>%
-  mutate(runMean = runmean(tempC, 12)) %>% ungroup()
+  mutate(runMean = runmean(tempC, 12)) %>% ungroup() %>% 
+  filter(year > 1919)
 
-sstDat2 %>% filter(year > 1919) %>%
+sstDat2 %>%
   ggplot(aes(dateR, runMean, color = tempSource)) + 
   geom_line() + 
-  labs(x = "", y = "Temperature, C (12-month running mean)")
-ggsave("sbs_meta/meta_figs/sst_comparison_v_time.png")
+  labs(x = "", y = "Temperature (C)\n(12-month running mean)") + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1)) + 
+  theme(legend.title = element_blank())
+
+ggsave("sbs_meta/meta_figs/sst_comparison_v_time.png", height = 3.5, width = 5)
 
 
 # wide format
 
+sstDatW <- sstDat2 %>% select(tempSource, dateR, runMean, month) %>% 
+  spread(key = tempSource, value = runMean) 
 
+sstDatW %>% 
+  ggplot(aes(had_sst, hms_sst)) + 
+  geom_point(alpha = 0.5) + 
+  geom_smooth(method = "lm") + 
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "gray") + 
+  labs(x = "SST-HADI (C)", y = "SST-HMS (C)") + 
+  facet_wrap(~ month)
 
-sstDat2 %>% filter(year > 1919) %>%
-  spread(key = tempSource, value = runMean) %>% 
-  ggplot(aes(dateR, runMean, color = tempSource)) + 
-  geom_line() + 
-  labs(x = "", y = "Temperature, C (12-month running mean)")
-ggsave("sbs_meta/meta_figs/sst_comparison_v_time.png")
+ggsave("sbs_meta/meta_figs/had_v_hms_sst.png", height = 7, width = 7)
 
 
