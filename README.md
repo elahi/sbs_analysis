@@ -24,22 +24,6 @@ Then we relocated sites and collected size-frequency data in 2014-2015.
 3. Get satellite air temperature time-series for Pacific Grove and other studies
 
 
-### Meta-analysis of body-size reductions
-
-Extract body size rate of change (delta size/delta time), relate to warming velocity and other covariates (e.g., human harvesting). 
-
-Get climate velocity for air temperature
-
-Fish data? E.g., SBC, Channel Islands
-
-#### Next steps
-
-1. Decided on effect size, prelim comparison
-    - log ratio
-    - % change per year
-    - % change per degree C 
-2. Implement WOS search in metagear or other
-
 
 
 

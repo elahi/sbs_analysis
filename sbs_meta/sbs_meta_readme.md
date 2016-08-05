@@ -1,6 +1,14 @@
 Meta-analysis of snail body size change
 -----------------------------------------
 
+### Next steps
+
+1. compare rate of change in had vs hopkins sst data
+   - compare time series and 10-yr periods
+   
+2. try using the raw hms data for comparison
+   - noticed that had and hms agree for modern period, but not for historic
+
 ### Elahi 2015
 
 * Chlorostoma funebralis
