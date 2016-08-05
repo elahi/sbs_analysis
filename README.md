@@ -23,6 +23,13 @@ Then we relocated sites and collected size-frequency data in 2014-2015.
 
 3. Get satellite air temperature time-series for Pacific Grove and other studies
 
+4. Other potential studies to follow up on:
+    - Frank - Tegula
+    - Paine - Tegula
+    - Littorina in san diego
+
+5. Experiment?
+
 
 
 
