@@ -53,10 +53,14 @@ dat4 <- dat3 %>%
 
 dat4 %>% group_by(size_threshold, species, era) %>% tally()
 
+# Replace "." with " " in species name
+dat4$species <- gsub("[.]", " ", dat4$species)
+unique(dat4$species)
+
 # Reorder levels
-species <- factor(dat4$species, levels = c("Littorina.keenae",
-                                           "Lottia.digitalis", 
-                                           "Chlorostoma.funebralis"))
+species <- factor(dat4$species, levels = rev(c("Littorina keenae",
+                                           "Lottia digitalis", 
+                                           "Chlorostoma funebralis")))
 dat4$species <- species
 
 # Create subset of data above size threshold

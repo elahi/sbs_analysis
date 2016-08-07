@@ -11,53 +11,15 @@
 
 # rm(list=ls(all=TRUE)) 
 
-##' To minimize the possibility that we sampled the smallest size classes more efficiently than the historic investigators, I will identify a minimum size cut-off for each of the three species
-
-##### LOAD PACKAGES, DATA #####
-
-library(dplyr)
-library(tidyr)
-library(readr)
-library(ggplot2)
-theme_set(theme_bw(base_size = 12))
-library(lubridate)
+# load data
+source("03_identify_size_cutoff.R")
 
 # load cleaned up data
 source("02_sbs_size_dataPrep2.R")
-head(dat2)
-
-##### IDENTIFY SIZE CUT-OFF #####
-
-##' To be conservative, I will set the minimum size to be above the 5% quantile size for each species from the historic data
-
-cutoffDF <- dat2 %>% filter(era == "past") %>%
-  group_by(species) %>% 
-  summarise(size0.05 = quantile(size1mm, 0.05, na.rm = TRUE), 
-            size0.1 = quantile(size1mm, 0.1, na.rm = TRUE), 
-            size0.25 = quantile(size1mm, 0.25, na.rm = TRUE))
-  
-dat3 <- inner_join(dat2, cutoffDF, by = c("species"))
-
-dat3 %>% 
-  ggplot(aes(size1mm)) + 
-  geom_histogram(binwidth = 1, fill = "gray", col = "black") + 
-  facet_wrap(~ era + species, nrow = 2, scales = "free_y") + 
-  geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red") + 
-  labs(x = "Size (mm)", y = "Frequency")
-
-ggsave("figs/elahi_histo_cutoff.png", height = 5, width = 7)
-
-# Create column to identify whether the size is above the arbitrary cut-off
-dat4 <- dat3 %>%
-  mutate(size_threshold = ifelse(size1mm > size0.05, 
-                                 "keep", "remove"))
-
-dat4 %>% group_by(size_threshold, species, era) %>% tally()
+head(dat4)
+levels(dat4$species)
 
 ##### SUMMARISE DATA - COMPLETE DATASET #####
-
-### I want mean size by species-era-sampleArea
-
 datMeans <- dat4 %>% filter(!is.na(size1mm)) %>% 
   group_by(species, sp, site, era, year, sampleArea) %>% 
   summarise(size_mean = mean(size1mm), 
@@ -71,9 +33,6 @@ datMeans <- dat4 %>% filter(!is.na(size1mm)) %>%
 datMeans
 
 ##### SUMMARISE DATA - SUBSET OF DATASET #####
-
-dat5 <- dat4 %>% filter(size_threshold == "keep")
-
 datMeansSub <- dat5 %>% filter(!is.na(size1mm)) %>% 
   group_by(species, sp, site, era, year, sampleArea) %>% 
   summarise(size_mean = mean(size1mm), 
@@ -111,9 +70,7 @@ dm2 <- envDat %>% select(sampleArea, lat_mean:tidalHeight) %>%
   inner_join(dm, .,  by = "sampleArea")
 
 dm2
-
-# Replace "." with "_" in species name
-dm2$species <- gsub("[.]", "_", dm2$species)
+glimpse(dm2)
 
 ##### PLOT MEAN SIZES BY DATA SET #####
 
@@ -129,6 +86,38 @@ dm2 %>%
   labs(x = "Year", y = "Mean size (mm)")
 
 ggsave("figs/elahi_size_change_summary.png", height = 3.5, width = 7)
+
+##### PLOT MEAN SIZES TIDAL HEIGHT #####
+
+dodge <- position_dodge(0.1)
+
+dm2 %>% filter(studySub == "subset") %>% 
+  ggplot(aes(tidalHeight, size_mean, color = era, shape = species)) + 
+  geom_point(alpha = 0.6, size = 2) + 
+  #geom_line(aes(group = sampleArea), color = "gray", size = 0.5, position = dodge) + 
+  geom_errorbar(aes(ymax = size_mean + size_CI, 
+                    ymin = size_mean - size_CI), width = 0.2, alpha = 0.6) + 
+  labs(x = "Tidal height (m)", y = "Size (mm)") + 
+  theme(strip.background = element_blank()) + 
+  facet_wrap(~ species) + 
+  guides(shape = FALSE) + 
+  theme(legend.position = c(0, 0.0), legend.justification = c(0, 0)) + 
+  theme(legend.title = element_blank()) 
+
+ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 7)
+
+dm2 %>% filter(studySub == "subset") %>% 
+  ggplot(aes(tidalHeight, size_mean, color = era, shape = species)) + 
+  geom_point(alpha = 0.5, size = 2) + 
+  geom_errorbar(aes(ymax = size_mean + size_CI, 
+                    ymin = size_mean - size_CI), width = 0.2, alpha = 0.5) + 
+  labs(x = "Tidal height (m)", y = "Size (mm)") + 
+  theme(strip.background = element_blank()) + 
+  guides(shape = FALSE) + 
+  theme(legend.position = c(0.5, 1), legend.justification = c(0.5, 1)) + 
+  theme(legend.title = element_blank()) 
+ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 3.5)
+
 
 ##### PLOT MEAN CHANGE BY TIDAL HEIGHT #####
 
@@ -162,35 +151,4 @@ datSubW2 %>%
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") # + 
   geom_smooth(aes(color = NULL), method = "lm") 
 
-  
-  
-##### BRIEF MAPPING INTERLUDE #####
 
-datLL <- dat %>% filter(era == "present") %>%
-  select(sp, site, lat2, long2) %>% distinct()
-
-llSummary <- datLL %>% group_by(sp, site) %>%
-  summarise(meanLat = mean(lat2, na.rm = TRUE), 
-            meanLong = mean(long2, na.rm = TRUE)) 
-llSummary
-
-library(ggmap)
-
-hms1 <- get_map(location = c(lon = -121.9045, lat = 36.6218),
-                color = "color", source = "google",
-                maptype = "satellite", zoom = 18)
-
-hmsMap <- ggmap(hms1, extent = "device",
-                ylab = "Latitude", xlab = "Longitude")
-
-hmsMap + 
-  geom_point(aes(meanLong, meanLat, color = sp, 
-                 shape = sp), data = llSummary)
-
-hmsMap + 
-  geom_point(aes(long2, lat2, color = sp, 
-                 shape = sp), data = datLL)
-
-llSummary %>% ungroup() %>%
-  summarise(grandLat = mean(meanLat), 
-            grandLong = mean(meanLong))

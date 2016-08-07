@@ -78,23 +78,23 @@ theme_set(theme_bw(base_size = 8))
 
 no_legend <- theme(legend.position = "none")
 
-fig1a <- ggplot(childsPast,  aes(x = size1mm)) +
+fig1e <- ggplot(childsPast,  aes(x = size1mm)) +
   geom_histogram(aes(y = ..count../sum(..count..)), binwidth = 1, 
                  color = "black", fill = "gray") +
   scale_x_continuous(limits = c(1, 21)) + 
   scale_y_continuous(limits = c(0, 0.2)) + 
-  labs(title = "A") + ULClabel + xlab("Size (mm)") + ylab("Proportion") +
+  labs(title = "E") + ULClabel + xlab("Size (mm)") + ylab("Proportion") +
   annotate("text", label = "Littorina keenae\n1947\nn = 682", 
            x = 18, y = 0.16, size = 2.2) + 
   geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red")
   
 
-fig1b <- ggplot(childsPres,  aes(x = size1mm)) +
+fig1f <- ggplot(childsPres,  aes(x = size1mm)) +
   geom_histogram(aes(y = ..count../sum(..count..)), binwidth = 1, 
                  color = "black", fill = "gray") +
   scale_x_continuous(limits = c(1, 21)) + 
   scale_y_continuous(limits = c(0, 0.2)) + 
-  labs(title = "B") + ULClabel + xlab("Size (mm)") + ylab("Proportion") +
+  labs(title = "F") + ULClabel + xlab("Size (mm)") + ylab("Proportion") +
   annotate("text", label = "Littorina keenae\n2014\nn = 733", 
            x = 18, y = 0.16, size = 2.2) + 
   geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red")
@@ -120,23 +120,23 @@ fig1d <- ggplot(hexPres,  aes(x = size1mm)) +
   geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red")
 
 
-fig1e <- ggplot(waraPast,  aes(x = size1mm)) +
+fig1a <- ggplot(waraPast,  aes(x = size1mm)) +
   geom_histogram(aes(y = ..count../sum(..count..)), binwidth = 2, 
                  color = "black", fill = "gray") +
   scale_x_continuous(limits = c(2, 32)) + 
   scale_y_continuous(limits = c(0, 0.31)) + 
-  labs(title = "E") + ULClabel + xlab("Size (mm)") + ylab("Proportion") +
+  labs(title = "A") + ULClabel + xlab("Size (mm)") + ylab("Proportion") +
   annotate("text", label = "Chlorostoma funebralis\n1963\nn = 817", 
            x = 25, y = 0.25, size = 2.2) + 
   geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red")
 
 summary(waraPres)
-fig1f <- ggplot(waraPres,  aes(x = size1mm)) +
+fig1b <- ggplot(waraPres,  aes(x = size1mm)) +
   geom_histogram(aes(y = ..count../sum(..count..)), binwidth = 2, 
                  color = "black", fill = "gray") +
   scale_x_continuous(limits = c(2, 32)) + 
   scale_y_continuous(limits = c(0, 0.31)) + 
-  labs(title = "F") + ULClabel + xlab("Size (mm)") + ylab("Proportion") +
+  labs(title = "B") + ULClabel + xlab("Size (mm)") + ylab("Proportion") +
   annotate("text", label = "Chlorostoma funebralis\n2014\nn = 5995", 
            x = 25, y = 0.25, size = 2.2) + 
   geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red")
