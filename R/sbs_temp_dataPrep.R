@@ -1,23 +1,19 @@
-#################################################
-# Author: Robin Elahi
-# Date: 151102
+################################################################################
+##' @title Summarizing raw intertidal temperature data
+##'
+##' @author Robin Elahi
+##' @contact elahi.robin@gmail.com
+##' 
+##' @date 2015-11-02
+##' 
+##' @log 2016-08-07: tidying script
+################################################################################
 
-# Temporal shifts in gastropod size-frequency distributions are
-# consistent with climate warming
-
-# Summarizing raw temperature data
-# HMS
-#################################################
+# rm(list=ls(all=TRUE)) 
 
 library(ggplot2)
-theme_set(theme_classic(base_size = 8))
+theme_set(theme_bw(base_size = 12))
 library(dplyr)
-
-rm(list=ls(all=TRUE)) 
-
-# Set working directory to main project folder
-setwd("~/github/sbs_analysis")
-getwd()
 
 # Source functions
 # For plotting
@@ -32,7 +28,6 @@ unique(dat$csvID)
 head(dat)
 
 with(dat, iButtonID == csvID)
-
 
 ###########################
 # Merge the spreadsheetIDs to bagNames 
@@ -63,15 +58,15 @@ boxplot(tempC ~ code, data = master)
 
 ###########################
 # quick plots
-ggplot(master, aes(dateR, tempC, color = position)) + 
-  geom_point(size = 2, alpha = 0.2, pch = 21) + 
-  ylab("Temperature (C)") + xlab("Date")	+
-  geom_smooth(se = TRUE, size = 1) + facet_wrap(~ code)
 
-ggplot(master, aes(dateR, tempC, color = iButtonID)) + 
-  geom_line() +
-  ylab("Temperature (C)") + xlab("Date")	+
-  facet_wrap(~ position)
+master %>% filter(code == "LIKE") %>% 
+  ggplot(aes(position, tempC)) + 
+  geom_boxplot() + 
+  facet_wrap(~ code, scales = "free")
+
+master %>% filter(code == "LIKE") %>% 
+  ggplot(aes(dateR, tempC, color = nest2)) + 
+  geom_line() + facet_wrap(~ nest1) 
 
 ###########################
 # There were two extra loggers for WaraD, which were deployed later
@@ -103,10 +98,14 @@ master3 <- rbind(master2, waraD_extra1)
 ggplot(master3, aes(dateR, tempC, color = iButtonID)) + 
   geom_line() +
   ylab("Temperature (C)") + xlab("Date")	+
-  facet_wrap(~ position)
+  facet_wrap(~ position) + 
+  theme(legend.position = "none")
 
 # rename master file
-master <- master3
+master <- master3 %>% 
+  arrange(code, position, dateR)
+
+head(master)
 
 ### Violin plots (?)
 ggplot(master, aes(code, tempC)) + 
@@ -158,16 +157,22 @@ species_daily <- master %>%
 
 write.csv(position_daily, "./output/temp_daily_species.csv")
 
-###########################
-#Make hourly summaries for each species 
-unique(master$code)
+##### PLOTTING RAW DATA #####
 
-species_daily <- master %>%
-  group_by(code, day) %>%
-  summarise(mean_tempC = mean(tempC, na.rm=T),
-            max_tempC = max(tempC, na.rm=T),
-            min_tempC = min(tempC, na.rm=T)) %>% 
-  ungroup()
+head(master)
 
-write.csv(position_daily, "./output/temp_daily_species.csv")
+master %>% filter(code == "LIKE") %>% 
+  ggplot(aes(dateR, tempC, color = tidalHT)) + 
+  geom_line() + 
+  facet_grid(nest1 ~ nest2)
 
+childs <- master %>% filter(code == "LIKE")
+childs$nest1 <- factor(childs$nest1, levels = c("D", "C", "B", "A"))
+
+
+childs %>% 
+  ggplot(aes(dateR, tempC, color = tidalHT)) + 
+  theme_bw(base_size = 8) + 
+  geom_line() + 
+  facet_grid(nest1 ~ nest2)
+ggsave("figs/littorina_intertidal_temps.png", height = 7, width = 7)

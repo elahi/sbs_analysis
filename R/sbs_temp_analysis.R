@@ -1,15 +1,15 @@
-#################################################
-# Author: Robin Elahi
-# Date: 151116
+################################################################################
+##' @title Analyzing daily temperature data
+##'
+##' @author Robin Elahi
+##' @contact elahi.robin@gmail.com
+##' 
+##' @date 2015-11-02
+##' 
+##' @log 2016-08-07: tidying script
+################################################################################
 
-# Temporal shifts in gastropod size-frequency distributions are
-# consistent with climate warming
-
-# Analyzing daily temperature data
-#################################################
-
-# Set working directory to main project folder
-setwd("~/github/sbs_analysis")
+# rm(list=ls(all=TRUE)) 
 
 library(ggplot2)
 theme_set(theme_classic(base_size = 8))

@@ -1,21 +1,20 @@
-#################################################
-# Author: Robin Elahi
-# Date: 151102
+################################################################################
+##' @title Plotting summarized temperature data
+##'
+##' @author Robin Elahi
+##' @contact elahi.robin@gmail.com
+##' 
+##' @date 2015-11-02
+##' 
+##' @log 2016-08-07: tidying script
+################################################################################
 
-# Temporal shifts in gastropod size-frequency distributions are
-# consistent with climate warming
-
-# Plotting summarized temperature data
-#################################################
-
-# Set working directory to main project folder
-setwd("~/github/sbs_analysis")
-getwd()
+# rm(list=ls(all=TRUE)) 
 
 # Load packages
 library(ggplot2)
 theme_set(theme_classic(base_size = 8))
-library(plyr)
+# library(plyr)
 library(dplyr)
 
 source("./R/multiplotF.R")
