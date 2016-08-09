@@ -14,10 +14,11 @@
 # load data
 source("03_identify_size_cutoff.R")
 
-# load cleaned up data
-source("02_sbs_size_dataPrep2.R")
-head(dat4)
-levels(dat4$species)
+# load temperature
+source("05_summarise_intertidal_temps.R")
+
+# load lat long info with positions of nearest loggers
+sizeLL <- read.csv("output/sizeLL_edit.csv")
 
 ##### SUMMARISE DATA - COMPLETE DATASET #####
 datMeans <- dat4 %>% filter(!is.na(size1mm)) %>% 
@@ -85,7 +86,7 @@ dm2 %>%
                     ymin = size_mean - size_CI), width = 3) + 
   labs(x = "Year", y = "Mean size (mm)")
 
-ggsave("figs/elahi_size_change_summary.png", height = 3.5, width = 7)
+# ggsave("figs/elahi_size_change_summary.png", height = 3.5, width = 7)
 
 ##### PLOT MEAN SIZES TIDAL HEIGHT #####
 
@@ -104,7 +105,7 @@ dm2 %>% filter(studySub == "subset") %>%
   theme(legend.position = c(0, 0.0), legend.justification = c(0, 0)) + 
   theme(legend.title = element_blank()) 
 
-ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 7)
+# ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 7)
 
 dm2 %>% filter(studySub == "subset") %>% 
   ggplot(aes(tidalHeight, size_mean, color = era, shape = species)) + 
@@ -118,6 +119,24 @@ dm2 %>% filter(studySub == "subset") %>%
   theme(legend.title = element_blank()) 
 ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 3.5)
 
+##### PLOT MEAN SIZES BY TEMPERATURE #####
+names(sadL_means)
+names(dm2)
+
+dm3 <- inner_join(dm2, sadL_means, by = c("species", "sampleArea"))
+head(dm3)
+
+dm3 %>% filter(studySub == "subset" & species == "Littorina keenae") %>% 
+  ggplot(aes(mean, size_mean, color = era, shape = species)) + 
+  geom_point(alpha = 0.5, size = 2) + 
+  geom_errorbar(aes(ymax = size_mean + size_CI, 
+                    ymin = size_mean - size_CI), width = 0.2, alpha = 0.5) + 
+  labs(x = "Temperature", y = "Size (mm)") + 
+  theme(strip.background = element_blank()) + 
+  guides(shape = FALSE) + 
+  theme(legend.position = c(0.5, 1), legend.justification = c(0.5, 1)) + 
+  theme(legend.title = element_blank()) + 
+  facet_wrap(~ metric, scales = "free")
 
 ##### PLOT MEAN CHANGE BY TIDAL HEIGHT #####
 
@@ -151,4 +170,5 @@ datSubW2 %>%
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") # + 
   geom_smooth(aes(color = NULL), method = "lm") 
 
+  
 

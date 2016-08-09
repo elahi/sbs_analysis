@@ -57,9 +57,31 @@ dat$sampleArea <- as.factor(ifelse(dat$sp == "CHFU",
                                    paste(dat$site), 
                                    paste(dat$site, dat$nest1, sep = "_")))
 
+
+##### DEFINE SAMPLING UNITS FOR EACH SPECIES #####
+
+# Littorina keenae = nest1 + nest2 = sampleUnit
+dat %>% filter(sp == "LIKE") %>% group_by(sampleUnit) %>% tally()
+
+# Chlorostoma funebralis = nest1 + nest2 = sampleUnit
+dat %>% filter(sp == "CHFU") %>% group_by(sampleUnit) %>% tally() 
+dat %>% filter(sp == "CHFU") %>% distinct(site, nest1, nest2) %>% select(nest1:long) %>% 
+  head()
+
+# Lottia digitalis = site + nest1 + nest2 (quadrats within tidal heights)
+dat %>% filter(sp == "LODI") %>% group_by(sampleUnit) %>% tally()
+dat %>% filter(sp == "LODI") %>% group_by(site, nest1, nest2) %>% tally()
+
+# Fix Lottia in present data
+dat2 <- dat %>% 
+  mutate(sampleUnit = ifelse(era == "present" & sp == "LODI", 
+                             paste(site, nest1, nest2, sep = "_"), sampleUnit))
+
+unique(dat2$sampleUnit)
+
 ##### SIMPLIFY DATAFRAME #####
 
-dat2 <- dat %>% 
+dat2 <- dat2 %>% 
   select(-c(lat, long)) %>% 
   rename(lat = lat2, long = long2) %>% 
   mutate(year = lubridate::year(dmy(date)))

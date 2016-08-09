@@ -24,36 +24,12 @@ source("03_identify_size_cutoff.R")
 head(dat4)
 spCodes <- dat4 %>% select(species, sp) %>% distinct()
 
-# Load daily temperature data
-# Has daily mean, daily max, and daily min
-tempDat <- read.csv("output/temp_daily_position.csv") %>% 
-  select(-X) %>% 
-  rename(sp = code, daily_mean = mean_tempC, 
-         daily_max = max_tempC, 
-         daily_min = min_tempC)
+# Load temperature data
+source("05_summarise_intertidal_temps.R")
 
-head(tempDat)
+##### PLOTS ######
 
-tempDat2 <- tempDat %>% inner_join(., spCodes, by = "sp")
-head(tempDat2)
-
-# Get in long format
-tempDatL <- tempDat2 %>% gather(key = metric, value = tempC, daily_mean:daily_min)
-head(tempDatL)
-summary(tempDatL)
-
-# Get means of daily mean, max and min
-tempMeans <- tempDatL %>% 
-  group_by(species, position, tidalHT, aspect, slope, lon, lat, metric) %>% 
-  summarise(mean = mean(tempC), 
-            sd = sd(tempC),
-            n = n(), 
-            se = sd/sqrt(n), 
-            CI = qt(0.975, df = n - 1) * se, 
-            max = max(tempC), 
-            min = min(tempC)) %>% 
-  ungroup()
-
+## Plot means of daily mean, max and min
 tempMeans %>% 
   ggplot(aes(tidalHT, mean, shape = species, color = metric)) + 
   geom_point(alpha = 0.6, size = 2) + 
@@ -65,32 +41,11 @@ tempMeans %>%
   guides(shape = FALSE) + 
   theme(legend.position = "top") + 
   theme(legend.title = element_blank()) 
-ggsave("figs/elahi_temp_tidal.png", height = 3.5, width = 7)
 
-##### GET MEDIAN, MAX, MIN #####
+# ggsave("figs/elahi_temp_tidal.png", height = 3.5, width = 7)
 
-rawDat <- read.csv("output/temp_raw_iButton.csv") %>%
-  select(-X) %>% 
-  rename(sp = code)
-head(rawDat)
-head(tempDatL)
-
-rawDat2 <- rawDat %>% inner_join(., spCodes, by = "sp")
-
-
-tempMed <- rawDat2 %>% 
-  group_by(species, position, tidalHT, aspect, slope, lon, lat) %>% 
-  summarise(median = median(tempC), 
-            max = max(tempC), 
-            min = min(tempC)) %>% 
-  ungroup()
-
-tempMedL <- tempMed %>% gather(key = metric, value = tempC, median:min)
-
-unique(tempMedL$tidalHT)
-unique(tempMedL$position)
-
-tempMedL %>% 
+## Plot median, max, min
+tempMedL %>% filter(metric != "cv") %>% 
   ggplot(aes(tidalHT, tempC, shape = species, color = metric)) + 
   geom_point(alpha = 0.6, size = 2) + 
   labs(x = "Tidal height (m)", y = "Mean temperature (C)") + 
@@ -99,4 +54,17 @@ tempMedL %>%
   guides(shape = FALSE) + 
   theme(legend.position = "top") + 
   theme(legend.title = element_blank()) 
-ggsave("figs/elahi_temp_median_tidal.png", height = 3.5, width = 7)
+
+# ggsave("figs/elahi_temp_median_tidal.png", height = 3.5, width = 7)
+
+## Plot median, max, min
+tempMedL %>% filter(metric == "cv") %>% 
+  ggplot(aes(tidalHT, tempC, shape = species, color = metric)) + 
+  geom_point(alpha = 0.6, size = 2) + 
+  labs(x = "Tidal height (m)", y = "Mean temperature (C)") + 
+  theme(strip.background = element_blank()) + 
+  facet_wrap(~ species) + 
+  guides(shape = FALSE) + 
+  theme(legend.position = "top") + 
+  theme(legend.title = element_blank()) 
+

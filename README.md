@@ -26,10 +26,6 @@ Then we relocated sites and collected size-frequency data in 2014-2015.
         * fog (?)
         
 
-1. Plot snail body size (mean, max, cv) against habitat temperature (mean, max, range) for modern data
-    - need to decide which snail samples relate to which loggers (most difficult for Chlorostoma)
-    - use leaflet, do this by eye?
-    
 2. Plot size change/time against habitat thermal variability (predict positive relationship - such that higher thermal variability results in larger body size, especially maximum body size)
 
 3. Get satellite air temperature time-series for Pacific Grove and other studies
