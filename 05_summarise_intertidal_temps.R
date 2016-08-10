@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Plot intertidal temperatures
+##' @title Summarise intertidal temperatures
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -27,6 +27,7 @@ spCodes <- dat4 %>% select(species, sp) %>% distinct()
 # load lat long info with positions of nearest loggers
 sizeLL <- read.csv("output/sizeLL_edit.csv")
 head(sizeLL)
+
 sizeLL %>% select(sampleArea, position) %>% distinct()
 
 ##### RAW IBUTTON DATA #####
@@ -44,9 +45,6 @@ lodi <- sizeLL %>% filter(species == "Lottia digitalis") %>%
   select(sampleArea, position) %>% distinct()
 lodi
 
-sizeLL2 <-  sizeLL %>% #filter(species != "Chlorostoma funebralis") %>% 
-  select(sampleArea, position) %>% distinct()
-
 sampleAreas <- dat4 %>% filter(species != "Lottia digitalis") %>% 
   select(sampleArea) %>% distinct() %>% unlist(use.names = FALSE)
 
@@ -63,6 +61,9 @@ lpDF$sampleArea <- c(rep("Wara.B", 3),
                      rep("HighRock_zoneD", 2))
 
 link_sampleArea_position <- rbind(lpDF, lodi)
+
+sizeLL2 <-  sizeLL %>% #filter(species != "Chlorostoma funebralis") %>% 
+  select(sampleArea, position) %>% distinct()
 
 ##### DAILY SUMMARY PER POSITION #####
 
@@ -94,7 +95,6 @@ tempMeans <- pdL %>%
             se = sd/sqrt(n), 
             CI = qt(0.975, df = n - 1) * se) %>% 
   ungroup()
-
 
 ##### DAILY SUMMARY PER SAMPLE AREA #####
 names(rawDat)

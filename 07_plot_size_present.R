@@ -9,7 +9,7 @@
 ##' @log 
 ################################################################################
 
-rm(list=ls(all=TRUE)) 
+# rm(list=ls(all=TRUE)) 
 
 ##### LOAD PACKAGES, DATA #####
 
@@ -89,40 +89,38 @@ nest1Means %>%
 
 # ggsave("figs/elahi_maxsize_by_tide.png", height = 3.5, width = 5)
 
-##### JOIN TEMPERATURE DATA TO SIZE DATA BY POSITION #####
+##### JOIN TEMPERATURE DATA TO RAW SIZE DATA BY POSITION #####
+pres2 <- sizeLL %>% select(sampleUnit, position) %>% 
+  inner_join(pres, ., by = "sampleUnit")
 
-names(tempMeans)
-names(sizeLL)
-names(suMeans)
+# Now join tempMeans to size data by position
+pres3 <- tempMeans %>% select(position, aspect, slope, metric:CI) %>% 
+  inner_join(pres2, ., by = "position")
+
+head(pres3)
+
+pres3 %>% filter(metric == "daily_max") %>% 
+  ggplot(aes(mean, size1mm, color = species, 
+             shape = species)) +
+  geom_point(alpha = 0.25) + 
+  geom_smooth(method = "lm") + 
+  labs(x = "Temperature (C)", y = "Size (mm)") + 
+  theme(legend.position = "top") + 
+  theme(legend.title = element_blank()) 
+
+##### JOIN TEMPERATURE DATA TO SUMMARISED SIZE DATA BY POSITION #####
 
 # Join position to sampleUnit in size data
 sizeLL %>% select(sampleUnit, position) %>% head()
-names(pres)
-
-unique(pres$sampleUnit)
-unique(sizeLL$sampleUnit)
-glimpse(pres)
-glimpse(sizeLL)
-
-pres2 <- sizeLL %>% select(sampleUnit, position) %>% 
-  inner_join(pres, ., by = "sampleUnit")
 
 suMeans2 <- sizeLL %>% select(sampleUnit, position) %>% 
   inner_join(suMeans, ., by = "sampleUnit")
 
 # Now join tempMeans to size data by position
-
-names(pres2)
-names(tempMeans)
-names(tempMedL)
-
-pres3 <- tempMeans %>% select(position, aspect, slope, metric:min) %>% 
-  inner_join(pres2, ., by = "position")
-
 suMeans3 <- tempMeans %>% select(position, aspect, slope, metric:CI) %>% 
   inner_join(suMeans2, ., by = "position")
 
-##### JOIN TEMPERATURE DATA TO SIZE DATA BY POSITION #####
+##### PLOT SIZE BY TEMPERATURE #####
 head(suMeans3)
 unique(suMeans3$metric)
 
