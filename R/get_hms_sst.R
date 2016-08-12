@@ -83,7 +83,8 @@ sst_hms_combined <- rbind(sst_hms_corr, sst_hms_uncorr) %>% filter(!is.na(tempC)
 glimpse(sst_hms_combined)
 
 sst_monthly <- sst_hms_combined %>% group_by(hmsTemp, year, month) %>% 
-  summarise(monthly_mean = mean(tempC), 
+  summarise(monthly_mean = mean(tempC),
+            monthly_median = median(tempC), 
             monthly_max = max(tempC), 
             monthly_min = min(tempC), 
             monthly_sd = sd(tempC), 
@@ -92,7 +93,7 @@ sst_monthly <- sst_hms_combined %>% group_by(hmsTemp, year, month) %>%
   ungroup()
 
 sst_monthly %>% 
-  ggplot(aes(dateR, monthly_mean, color = hmsTemp)) + 
+  ggplot(aes(dateR, monthly_median, color = hmsTemp)) + 
   geom_line()
 
 sst_annual <- sst_monthly %>% group_by(hmsTemp, year) %>% 

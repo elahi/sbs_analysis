@@ -21,7 +21,7 @@ source("R/get_hms_sst.R")
 source("R/hms_sst_functions.R")
 
 # Get snail size data
-source("03_identify_size_cutoff.R")
+source("05_summarise_size_data.R")
 
 # Original data were single, daily measurements
 glimpse(sst_hms)
@@ -35,18 +35,21 @@ glimpse(sst_annual)
 # Childs sampled Littorina in 1947
 # So, start year is 1938
 
-elahi_sst_monthly <- sst_monthly %>% filter(year > 1937) %>% filter(hmsTemp == "corrected") %>%
+elahi_sst_monthly <- sst_monthly %>% filter(year > 1937) %>% 
+  filter(hmsTemp == "corrected") %>%
   select(-monthly_sd)
 
 elahi_sst <- elahi_sst_monthly %>% filter(year > 1937) %>% 
   group_by(year) %>% 
   summarise(mean_C = mean(monthly_mean), 
-            max_C = max(monthly_mean), 
-            min_C = min(monthly_mean), 
+            med_C = mean(monthly_median), 
+            max_C = mean(monthly_max), 
+            min_C = mean(monthly_min), 
             cv_C = mean(monthly_cv))
 
 # Get in long format
 monthly_sstL <- elahi_sst_monthly %>% gather(key = metric, value = tempC, monthly_mean:monthly_cv)
+
 sstL <- elahi_sst %>% gather(key = metric, value = tempC, mean_C:cv_C)
 
 # Get median, and upper and lower values per year
@@ -62,31 +65,35 @@ aql <- annual_quants %>% gather(key = quantileValue, value = tempC, quantile_0.1
 ##### GET YEARS OF SNAIL SAMPLES #####
 head(dat4)
 
-spYrs <- dat4 %>% select(species, year) %>% distinct() %>% 
+spYrs <- dat4 %>% ungroup() %>% select(species, year) %>% distinct() %>% 
   arrange(species, year) %>% 
   group_by(species) %>% 
   mutate(genus = unlist(strsplit(as.character(species), split = " +"))[1]) %>%
   ungroup()
-
+spYrs
 spYrs$genus <- factor(spYrs$genus, levels = c("Chlorostoma", "Lottia", "Littorina"))
 
 ##### PLOT ANNUAL TIME SERIES #####
 
-sstL %>% filter(metric != "cv_C") %>% 
+ggDat <- sstL %>% filter(metric != "cv_C" & metric != "mean_C")
+
+
+ggDat %>%
   ggplot(aes(year, tempC, color = metric)) + 
-  geom_line(alpha = 1) + 
-  # theme_bw(base_size = 10) + 
+  geom_point(alpha = 0.5) + 
+  #geom_smooth(method = "lm") + 
   scale_color_manual(values = c("red", "black", "blue")) + 
-  # geom_smooth(method = "lm")  + 
   ylab(expression(paste("Temperature (", degree, "C)"))) + 
   xlab("Year") + 
-  geom_point(aes(x = year, y = 10, shape = genus, color = NULL), data = spYrs, 
+  geom_point(aes(x = year, y = 10.5, shape = genus, color = NULL), data = spYrs, 
              alpha = 0.5, size = 3) + 
   guides(color = FALSE) + 
   theme(legend.title = element_blank()) + 
-  theme(legend.position = "top") 
-  #theme(legend.key.size = unit(0.2, "cm")) + 
-  #theme(legend.text = element_text(size = 8))
+  theme(legend.position = "top") + 
+  geom_smooth(data = subset(ggDat, 
+                          metric == "med_C" | metric == "max_C"), 
+            aes(year, tempC), 
+            method = "lm")
 
 ggsave("figs/hms_temperature.png", height = 3.5, width = 3.5)
 
