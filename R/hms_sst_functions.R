@@ -59,25 +59,37 @@ get_hms_two_periods <- function(temp_df = sst_hms, size_data, duration = 10) {
   
 }
 
-##### GET HADISST TIME SERIES #####
+##### GET HMS SST TIME SERIES #####
 
-get_had_series <- function(had_df = dfHad, size_data) {
+temp_df = sst_hms
+size_data = dat4
+durationPriorToStart = 10
+
+get_hms_sst_series <- function(temp_df = sst_hms, size_data, durationPriorToStart = 10) {
   
-  spYrs <- size_data %>% select(study, species, year, year2) %>%
-    distinct() %>%
-    mutate(hadYr1 = floor(year), 
-           hadYr2 = floor(year2)) %>% 
-    group_by(study, species) %>% slice(1) %>%
-    ungroup() %>% filter(!is.na(hadYr2))
+  nYrsPrior <- durationPriorToStart
+  
+  # is there a study column in the size_data?
+  if(!"study" %in% colnames(size_data)) {
+    size_data$study <- "Elahi2015"
+  }
+  
+  spYrs <- size_data %>% select(study, species, year) %>% distinct() %>% 
+    arrange(species, year) %>% 
+    mutate(era = rep(c("past", "present"), 3)) %>% 
+    spread(key = era, value = year) %>% 
+    mutate(temp_yr1 = floor(past - nYrsPrior),
+           temp_yr2 = floor(present))
   
   dat.i <- spYrs
+  temp_df <- temp_df %>% mutate(study = "Elahi2015")
   
-  datHad.i <- inner_join(had_df, dat.i, by = "study") %>% 
-    mutate(species1 = ifelse(Year >= hadYr1 & Year <= hadYr2, 
+  tempDat.i <- inner_join(temp_df, dat.i, by = "study") %>% 
+    mutate(species1 = ifelse(year >= temp_yr1 & year <= temp_yr2, 
                              "keep", "remove")) %>% 
-    filter(species1 == "keep") %>% select(-c(X, species1))
+    filter(species1 == "keep") %>% select(-c(species1))
   
-  return(datHad.i)
+  return(tempDat.i)
   
 }
 

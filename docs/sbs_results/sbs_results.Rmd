@@ -47,7 +47,7 @@ To test the hypothesis that consistent shifts in animal body size occurred over 
 
 We used a linear mixed-effects model (nlme package) to test the hypothesis that snail size frequency distributions differed between era (past vs present), and that this variation was mediated by tidal height. We treated sampling areas as random intercepts in the model. 
 
-```{r procDF, echo = FALSE, eval = TRUE}
+```{r aic1, echo = FALSE, eval = TRUE}
 aic1 <- read.csv("output/AIC_eraXspeciesXtidalht.csv") %>% select(-X)
 kable(aic1, caption = "Table 1. Model selection results for linear mixed effects models testing the fixed effects of era, species, and tidal height on snail body size")
 ```
@@ -96,7 +96,17 @@ Together, our results would be consistent with the 'third universal prediction' 
 
 We tested for temperature trends using regression with correlated errors.  
 
-![Figure 8. Sea surface temperatures at Hopkins Marine Station. Each point represent the monthly mean of each year. Red, black, and blue points represent maximum, median, and minimum values. Gray symbols next to the x-axis represent the years  during which snails were sampled](../../figs/hms_temperature.png)
+![Figure 8. Sea surface temperatures at Hopkins Marine Station. Each point represent the monthly mean of each year. Red, black, and blue points represent maximum, median, and minimum values. Gray symbols next to the x-axis represent the years during which snails were sampled](../../figs/hms_temperature.png)
+
+
+```{r gls_temp, echo = FALSE, eval = TRUE}
+gls_temp <- read.csv("output/gls_annual_summary2.csv") %>% select(-X)
+
+kable(gls_temp, caption = "Table 2. Summary of linear regressions testing temperature trends for each species")
+```
+
+Only maximum temperature displayed a positive trend over time for each species (P = 0.04 - 0.07). When the estimated rate (degrees per year) was multiplied by the duration of the regression, the estimated maximum temperature increases ranged from 0.54 - 0.65 C. Annual median and minimum temperatures did not change over time. 
+
 
 
 

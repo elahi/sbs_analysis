@@ -90,8 +90,8 @@ dat2 <- inner_join(dat2, tidalHTdf, by = "sampleArea")
 ##### TRANSFORM SIZES TO PERCENTAGE OF MAXIMUM SIZE BY SPECIES #####
 
 dat2 <- dat2 %>% group_by(species) %>% 
-  mutate(size_prop = size1mm/max(size1mm, na.rm = TRUE))
-head(dat3)
+  mutate(size_prop = size1mm/max(size1mm, na.rm = TRUE)) %>% 
+  ungroup()
 
 ##### SIMPLIFY DATAFRAME #####
 

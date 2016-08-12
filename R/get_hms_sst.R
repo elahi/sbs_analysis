@@ -64,6 +64,8 @@ tail(sst_hms)
 
 sst_hms %>% filter(tempC < 8)
 
+write.csv(sst_hms, "output/sst_hms.csv")
+
 ##### COMPARE CORRECTED AND UNCORRECTED TIME SERIES #####
 
 head(sst_hms)
