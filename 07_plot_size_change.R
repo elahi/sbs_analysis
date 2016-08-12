@@ -11,72 +11,14 @@
 
 # rm(list=ls(all=TRUE)) 
 
-# load data
-source("03_identify_size_cutoff.R")
+# Load data
+source("05_summarise_size_data.R")
 
-# load temperature
-source("05_summarise_intertidal_temps.R")
-
-# load lat long info with positions of nearest loggers
-sizeLL <- read.csv("output/sizeLL_edit.csv")
-
-##### SUMMARISE DATA - COMPLETE DATASET #####
-datMeans <- dat4 %>% filter(!is.na(size1mm)) %>% 
-  group_by(species, sp, site, era, year, sampleArea) %>% 
-  summarise(size_mean = mean(size1mm), 
-            size_sd = sd(size1mm),
-            size_n = n(), 
-            size_se = size_sd/sqrt(size_n), 
-            size_CI = qt(0.975, df = size_n - 1) * size_se, 
-            size_max = quantile(size1mm, 0.95)) %>% 
-  ungroup()
-
-datMeans
-
-##### SUMMARISE DATA - SUBSET OF DATASET #####
-datMeansSub <- dat5 %>% filter(!is.na(size1mm)) %>% 
-  group_by(species, sp, site, era, year, sampleArea) %>% 
-  summarise(size_mean = mean(size1mm), 
-            size_sd = sd(size1mm),
-            size_n = n(), 
-            size_se = size_sd/sqrt(size_n), 
-            size_CI = qt(0.975, df = size_n - 1) * size_se, 
-            size_max = quantile(size1mm, 0.95)) %>% 
-  ungroup()
-
-datMeansSub
-
-##### COMBINE 2 SUMMARIES #####
-
-datMeans2 <- datMeans %>% mutate(studySub = "complete")
-datMeansSub2 <- datMeansSub %>% mutate(studySub = "subset")
-
-dm <- rbind(datMeans2, datMeansSub2)
-
-##### JOIN ENVIRONMENT INFO #####
-
-### Summarise lat-longs and tidal heights
-envDat <- dat2 %>% filter(era == "present") %>%
-  group_by(species, site, era, sampleArea) %>%
-  summarise(lat_mean = mean(lat), 
-            long_mean = mean(long), 
-            tidalHeight = mean(tideHTm)) %>%
-  ungroup()
-
-### Join snail data with env data
-names(envDat)
-names(datMeans)
-
-dm2 <- envDat %>% select(sampleArea, lat_mean:tidalHeight) %>%
-  inner_join(dm, .,  by = "sampleArea")
-
-dm2
 glimpse(dm2)
+
+
 
 ##### PLOT MEAN SIZES BY DATA SET #####
-
-glimpse(dm2)
-
 dm2 %>% 
   ggplot(aes(year, size_mean, color = sampleArea)) + 
   geom_point() + geom_line(linetype = "dashed") + 
@@ -89,11 +31,14 @@ dm2 %>%
 # ggsave("figs/elahi_size_change_summary.png", height = 3.5, width = 7)
 
 ##### PLOT MEAN SIZES TIDAL HEIGHT #####
-
+# What do I want to plot?
+ggDat <- dm2 %>% filter(studySub == "subset")
+ggDat_gray <- ggDat %>% select(- species)
 dodge <- position_dodge(0.1)
 
-dm2 %>% filter(studySub == "subset") %>% 
+ggDat %>% 
   ggplot(aes(tidalHeight, size_mean, color = era, shape = species)) + 
+  # geom_point(data = ggDat_gray, color = "grey70") + 
   geom_point(alpha = 0.6, size = 2) + 
   #geom_line(aes(group = sampleArea), color = "gray", size = 0.5, position = dodge) + 
   geom_errorbar(aes(ymax = size_mean + size_CI, 
@@ -105,9 +50,9 @@ dm2 %>% filter(studySub == "subset") %>%
   theme(legend.position = c(0, 0.0), legend.justification = c(0, 0)) + 
   theme(legend.title = element_blank()) 
 
-# ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 7)
+ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 7)
 
-dm2 %>% filter(studySub == "subset") %>% 
+ggDat %>% 
   ggplot(aes(tidalHeight, size_mean, color = era, shape = species)) + 
   geom_point(alpha = 0.5, size = 2) + 
   geom_errorbar(aes(ymax = size_mean + size_CI, 
@@ -117,26 +62,46 @@ dm2 %>% filter(studySub == "subset") %>%
   guides(shape = FALSE) + 
   theme(legend.position = c(0.5, 1), legend.justification = c(0.5, 1)) + 
   theme(legend.title = element_blank()) 
-ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 3.5)
+
+# ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 3.5)
 
 ##### PLOT MEAN SIZES BY TEMPERATURE #####
-names(sadL_means)
-names(dm2)
 
-dm3 <- inner_join(dm2, sadL_means, by = c("species", "sampleArea"))
-head(dm3)
+ggDat <- dm3 %>% filter(studySub == "subset" & species == "Littorina keenae")
+names(ggDat)
 
-dm3 %>% filter(studySub == "subset" & species == "Littorina keenae") %>% 
+ggDat %>% filter(metric != "daily_cv" & metric != "daily_mean") %>% 
   ggplot(aes(mean, size_mean, color = era, shape = species)) + 
   geom_point(alpha = 0.5, size = 2) + 
   geom_errorbar(aes(ymax = size_mean + size_CI, 
-                    ymin = size_mean - size_CI), width = 0.2, alpha = 0.5) + 
-  labs(x = "Temperature", y = "Size (mm)") + 
+                    ymin = size_mean - size_CI), width = 0.05, alpha = 0.5) + 
+  geom_errorbarh(aes(xmax = mean + CI, 
+                    xmin = mean - CI), height = 0.1, alpha = 0.5) +
+  labs(x = "Mean temperature (C)", y = "Size (mm)") + 
   theme(strip.background = element_blank()) + 
   guides(shape = FALSE) + 
-  theme(legend.position = c(0.5, 1), legend.justification = c(0.5, 1)) + 
+  theme(legend.position = "top") + 
+  # theme(legend.position = c(0.5, 1), legend.justification = c(0.5, 1)) + 
   theme(legend.title = element_blank()) + 
   facet_wrap(~ metric, scales = "free")
+
+ggDat <- dm3 %>% filter(studySub == "subset" & metric == "daily_max")
+
+ggDat %>% #filter(species == "Littorina keenae") %>% 
+  ggplot(aes(mean, size_mean, color = era, shape = species)) + 
+  geom_point(alpha = 0.5, size = 2) + 
+  geom_errorbar(aes(ymax = size_mean + size_CI, 
+                    ymin = size_mean - size_CI), width = 0.05, alpha = 0.5) + 
+  geom_errorbarh(aes(xmax = mean + CI, 
+                     xmin = mean - CI), height = 0.1, alpha = 0.5) +
+  labs(x = "Mean daily maximum temperature (C)", y = "Size (mm)") + 
+  theme(strip.background = element_blank()) + 
+  guides(shape = FALSE) + 
+  theme(legend.position = "top") + 
+  theme(legend.title = element_blank()) + 
+  facet_wrap(~ species)
+
+ggsave("figs/elahi_size_temp_tidal.png", height = 3.5, width = 7)
 
 ##### PLOT MEAN CHANGE BY TIDAL HEIGHT #####
 

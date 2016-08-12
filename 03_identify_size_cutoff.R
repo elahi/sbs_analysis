@@ -38,7 +38,7 @@ cutoffDF <- dat2 %>% filter(era == "past") %>%
 dat3 <- inner_join(dat2, cutoffDF, by = c("species"))
 
 dat3 %>% 
-  ggplot(aes(size1mm)) + 
+  ggplot(aes(size)) + 
   geom_histogram(binwidth = 1, fill = "gray", col = "black") + 
   facet_wrap(~ era + species, nrow = 2, scales = "free_y") + 
   geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red") + 

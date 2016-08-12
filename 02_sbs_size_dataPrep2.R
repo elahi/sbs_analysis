@@ -79,6 +79,20 @@ dat2 <- dat %>%
 
 unique(dat2$sampleUnit)
 
+##### SUMMARISE TIDAL HEIGHT FOR EACH SAMPLE AREA #####
+
+tidalHTdf <- dat2 %>% filter(!is.na(tideHTm)) %>% 
+  group_by(sampleArea) %>% 
+  summarise(sample_area_tidal_ht = mean(tideHTm))
+
+dat2 <- inner_join(dat2, tidalHTdf, by = "sampleArea")
+
+##### TRANSFORM SIZES TO PERCENTAGE OF MAXIMUM SIZE BY SPECIES #####
+
+dat2 <- dat2 %>% group_by(species) %>% 
+  mutate(size_prop = size1mm/max(size1mm, na.rm = TRUE))
+head(dat3)
+
 ##### SIMPLIFY DATAFRAME #####
 
 dat2 <- dat2 %>% 

@@ -1,174 +1,118 @@
 ################################################################################
-##' @title Summarising snail size frequency data - change over time
+##' @title Analysing snail size size change data
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
 ##' 
-##' @date 2016-08-05
+##' @date 2016-08-10
 ##' 
 ##' @log 
 ################################################################################
 
 # rm(list=ls(all=TRUE)) 
 
-# load data
-source("03_identify_size_cutoff.R")
+# Load data
+source("05_summarise_size_data.R")
 
-# load temperature
-source("05_summarise_intertidal_temps.R")
+library(nlme)
+library(AICcmodavg)
 
-# load lat long info with positions of nearest loggers
-sizeLL <- read.csv("output/sizeLL_edit.csv")
+##' For size change, I have two main questions:
+##' 
+##' Do intertidal snails display a reduction in body size over ~ 50 years?
+##' 
+##' Does tidal height mediate change in size over time?
 
-##### SUMMARISE DATA - COMPLETE DATASET #####
-datMeans <- dat4 %>% filter(!is.na(size1mm)) %>% 
-  group_by(species, sp, site, era, year, sampleArea) %>% 
-  summarise(size_mean = mean(size1mm), 
-            size_sd = sd(size1mm),
-            size_n = n(), 
-            size_se = size_sd/sqrt(size_n), 
-            size_CI = qt(0.975, df = size_n - 1) * size_se, 
-            size_max = quantile(size1mm, 0.95)) %>% 
-  ungroup()
+##' H1: Body size declines over time
+##' Mechanism 1: temp-size theory, increased metabolism without a food consumption increase; assumes warming
 
-datMeans
+##' H2: Reductions in body size vary with tidal height
+##' Mechanism 1: extreme temperatures select for larger body sizes - e.g., higher in the intertidal
+##' Mechanism 2: depending on species thermal performance curve relative to tidal height, increases in minimum temperature increase size but increases in maximum temperature decrease size
 
-##### SUMMARISE DATA - SUBSET OF DATASET #####
-datMeansSub <- dat5 %>% filter(!is.na(size1mm)) %>% 
-  group_by(species, sp, site, era, year, sampleArea) %>% 
-  summarise(size_mean = mean(size1mm), 
-            size_sd = sd(size1mm),
-            size_n = n(), 
-            size_se = size_sd/sqrt(size_n), 
-            size_CI = qt(0.975, df = size_n - 1) * size_se, 
-            size_max = quantile(size1mm, 0.95)) %>% 
-  ungroup()
+###############################################################
+### Mixed-model analysis: species x era x tidal height
+###############################################################
 
-datMeansSub
+### Set up model structure
+# Fixed effects: species, temperature, tidal height
+# Random intercepts: sampling unit
+# Random slopes: ?
+# Each measurement is a single snail size
 
-##### COMBINE 2 SUMMARIES #####
+statDat <- dat5
+unique(statDat$sample_area_tidal_ht)
+glimpse(statDat)
 
-datMeans2 <- datMeans %>% mutate(studySub = "complete")
-datMeansSub2 <- datMeansSub %>% mutate(studySub = "subset")
+##### SIZE #####
 
-dm <- rbind(datMeans2, datMeansSub2)
+lmeMod1 <- lme(fixed = size1mm ~ era * species * sample_area_tidal_ht,
+               random = list(~ 1 | sampleArea), 
+               na.action = na.omit, method = "REML", 
+               data = statDat)
 
-##### JOIN ENVIRONMENT INFO #####
+summary(lmeMod1)
+round(summary(lmeMod1)$tTable, 3)
+anova(lmeMod1)
+plot(lmeMod1)
 
-### Summarise lat-longs and tidal heights
-envDat <- dat2 %>% filter(era == "present") %>%
-  group_by(species, site, era, sampleArea) %>%
-  summarise(lat_mean = mean(lat), 
-            long_mean = mean(long), 
-            tidalHeight = mean(tideHTm)) %>%
-  ungroup()
+##### SIZE - MODEL SELECTION #####
 
-### Join snail data with env data
-names(envDat)
-names(datMeans)
+# Set up candidate model list
+Cand.mod <- list()
 
-dm2 <- envDat %>% select(sampleArea, lat_mean:tidalHeight) %>%
-  inner_join(dm, .,  by = "sampleArea")
+# final full model 
+Cand.mod[[1]] <- lme(fixed = size1mm ~ era * species * sample_area_tidal_ht,
+                     random = list(~ 1 | sampleArea), 
+                     na.action = na.omit, method = "ML",  
+                     data = statDat)
 
-dm2
-glimpse(dm2)
+Cand.mod[[2]] <- update(Cand.mod[[1]], ~. - era:species:sample_area_tidal_ht)
 
-##### PLOT MEAN SIZES BY DATA SET #####
+Cand.mod[[3]] <- update(Cand.mod[[1]], ~ era * species)
 
-glimpse(dm2)
+Cand.mod[[4]] <- update(Cand.mod[[1]], ~ species * sample_area_tidal_ht)
 
-dm2 %>% 
-  ggplot(aes(year, size_mean, color = sampleArea)) + 
-  geom_point() + geom_line(linetype = "dashed") + 
-  facet_grid(studySub ~ species) + 
-  theme(legend.position = "none") + 
-  geom_errorbar(aes(ymax = size_mean + size_CI, 
-                    ymin = size_mean - size_CI), width = 3) + 
-  labs(x = "Year", y = "Mean size (mm)")
+Cand.mod[[5]] <- update(Cand.mod[[1]], ~ era * sample_area_tidal_ht)
 
-# ggsave("figs/elahi_size_change_summary.png", height = 3.5, width = 7)
+Cand.mod[[6]] <- update(Cand.mod[[1]], ~ species)
 
-##### PLOT MEAN SIZES TIDAL HEIGHT #####
+Cand.mod[[7]] <- update(Cand.mod[[1]], ~ era)
 
-dodge <- position_dodge(0.1)
+Cand.mod[[8]] <- update(Cand.mod[[1]], ~ sample_area_tidal_ht)
 
-dm2 %>% filter(studySub == "subset") %>% 
-  ggplot(aes(tidalHeight, size_mean, color = era, shape = species)) + 
-  geom_point(alpha = 0.6, size = 2) + 
-  #geom_line(aes(group = sampleArea), color = "gray", size = 0.5, position = dodge) + 
-  geom_errorbar(aes(ymax = size_mean + size_CI, 
-                    ymin = size_mean - size_CI), width = 0.2, alpha = 0.6) + 
-  labs(x = "Tidal height (m)", y = "Size (mm)") + 
-  theme(strip.background = element_blank()) + 
-  facet_wrap(~ species) + 
-  guides(shape = FALSE) + 
-  theme(legend.position = c(0, 0.0), legend.justification = c(0, 0)) + 
-  theme(legend.title = element_blank()) 
+Cand.mod[[9]] <- update(Cand.mod[[1]], ~ 1)
 
-# ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 7)
+#create a vector of names to trace back models in set
+mod_numbers <- paste("Cand.mod", 1:length(Cand.mod), sep=" ")	
 
-dm2 %>% filter(studySub == "subset") %>% 
-  ggplot(aes(tidalHeight, size_mean, color = era, shape = species)) + 
-  geom_point(alpha = 0.5, size = 2) + 
-  geom_errorbar(aes(ymax = size_mean + size_CI, 
-                    ymin = size_mean - size_CI), width = 0.2, alpha = 0.5) + 
-  labs(x = "Tidal height (m)", y = "Size (mm)") + 
-  theme(strip.background = element_blank()) + 
-  guides(shape = FALSE) + 
-  theme(legend.position = c(0.5, 1), legend.justification = c(0.5, 1)) + 
-  theme(legend.title = element_blank()) 
-ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 3.5)
+mod_text <- c("Era x Species x Tidal height", 
+              "All three 2-way intx", 
+              "Era x Species", "Species x Tidal height", "Era x Tidal height", 
+              "Species", "Era", "Tidal height", "Null model")
 
-##### PLOT MEAN SIZES BY TEMPERATURE #####
-names(sadL_means)
-names(dm2)
+#generate AICc table with numbers
+mod.aicctab <- aictab(cand.set= Cand.mod, modnames=mod_numbers, sort=TRUE, 
+                      second.ord=FALSE) # second.ord =TRUE means AICc is used (not AIC)
 
-dm3 <- inner_join(dm2, sadL_means, by = c("species", "sampleArea"))
-head(dm3)
+print(mod.aicctab, digits=2, LL=TRUE)
 
-dm3 %>% filter(studySub == "subset" & species == "Littorina keenae") %>% 
-  ggplot(aes(mean, size_mean, color = era, shape = species)) + 
-  geom_point(alpha = 0.5, size = 2) + 
-  geom_errorbar(aes(ymax = size_mean + size_CI, 
-                    ymin = size_mean - size_CI), width = 0.2, alpha = 0.5) + 
-  labs(x = "Temperature", y = "Size (mm)") + 
-  theme(strip.background = element_blank()) + 
-  guides(shape = FALSE) + 
-  theme(legend.position = c(0.5, 1), legend.justification = c(0.5, 1)) + 
-  theme(legend.title = element_blank()) + 
-  facet_wrap(~ metric, scales = "free")
+#generate AICc table with names
+mod.aicctab <- aictab(cand.set= Cand.mod, modnames= mod_text, sort=TRUE, 
+                      second.ord=FALSE) # second.ord =TRUE means AICc is used (not AIC)
 
-##### PLOT MEAN CHANGE BY TIDAL HEIGHT #####
+print(mod.aicctab, digits=2, LL=TRUE)
 
-datSub <- dm2 %>% filter(studySub == "subset") %>% 
-  select(-c(size_se:size_CI, studySub))
-datSub
+# Format the data frame for nicer printing
+aic_table <- data.frame(cbind(data.frame(mod.aicctab)[1], 
+                              round(data.frame(mod.aicctab)[2:8], 3)))
 
-# Get in wide format
-datSubW <- datSub %>% group_by(species, sampleArea) %>% 
-  mutate(size_mean2 = lead(size_mean), 
-         size_max2 = lead(size_max)) %>%
-  ungroup() %>% filter(!is.na(size_mean2)) %>% 
-  select(-c(era, year))
-datSubW
+write.csv(aic_table, "output/AIC_eraXspeciesXtidalht.csv")
 
-datSubW2 <- datSubW %>% 
-  mutate(delta_mean = size_mean2 - size_mean, 
-         delta_mean_per = delta_mean/size_mean * 100, 
-         delta_max = size_max2 - size_max, 
-         delta_max_per = delta_max/size_max * 100)
+fullMod <- update(Cand.mod[[1]], method = "REML")
+summary(fullMod)
+plot(fullMod)
+anova(fullMod)
 
-datSubW2 %>% 
-  ggplot(aes(tidalHeight, delta_mean_per, color = species)) + 
-  geom_point(alpha = 0.5, size = 3) + 
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") # + 
-  geom_smooth(method = "lm")
 
-datSubW2 %>% 
-  ggplot(aes(tidalHeight, delta_max_per, color = species)) + 
-  geom_point(alpha = 0.5, size = 3) + 
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") # + 
-  geom_smooth(aes(color = NULL), method = "lm") 
-
-  
 
