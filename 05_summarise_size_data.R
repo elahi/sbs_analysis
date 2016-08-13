@@ -26,11 +26,13 @@ source("05_summarise_intertidal_temps.R")
 datMeans <- dat4 %>% filter(!is.na(size1mm)) %>% 
   group_by(species, sp, site, era, year, sampleArea) %>% 
   summarise(size_mean = mean(size1mm), 
+            size_med = median(size1mm), 
             size_sd = sd(size1mm),
             size_n = n(), 
             size_se = size_sd/sqrt(size_n), 
             size_CI = qt(0.975, df = size_n - 1) * size_se, 
-            size_max = quantile(size1mm, 0.95)) %>% 
+            size_95 = quantile(size1mm, 0.95), 
+            size_max = max(size1mm)) %>% 
   ungroup()
 
 datMeans
@@ -39,11 +41,13 @@ datMeans
 datMeansSub <- dat5 %>% filter(!is.na(size1mm)) %>% 
   group_by(species, sp, site, era, year, sampleArea) %>% 
   summarise(size_mean = mean(size1mm), 
+            size_med = median(size1mm), 
             size_sd = sd(size1mm),
             size_n = n(), 
             size_se = size_sd/sqrt(size_n), 
             size_CI = qt(0.975, df = size_n - 1) * size_se, 
-            size_max = quantile(size1mm, 0.95)) %>% 
+            size_95 = quantile(size1mm, 0.95), 
+            size_max = max(size1mm)) %>% 
   ungroup()
 
 datMeansSub
@@ -79,6 +83,35 @@ names(dm2)
 
 dm3 <- inner_join(dm2, sadL_means, by = c("species", "sampleArea"))
 head(dm3)
+
+##### ESTIMATE CHANGE IN SIZE #####
+
+datSub <- dm2 %>% filter(studySub == "subset") %>% 
+  select(-c(size_se:size_CI, studySub))
+datSub
+
+# Get in wide format
+datSubW <- datSub %>% group_by(species, sampleArea) %>% 
+  mutate(size_mean2 = lead(size_mean), 
+         size_med2 = lead(size_med), 
+         size_max2 = lead(size_max), 
+         size_95_2 = lead(size_95)) %>%
+  ungroup() %>% filter(!is.na(size_mean2)) %>% 
+  select(-c(era, year))
+datSubW
+
+
+datSubW2 <- datSubW %>% 
+  mutate(delta_mean = size_mean2 - size_mean, 
+         delta_mean_per = delta_mean/size_mean * 100, 
+         delta_max = size_max2 - size_max, 
+         delta_max_per = delta_max/size_max * 100,
+         delta_med = size_med2 - size_med, 
+         delta_med_per = delta_med/size_med * 100, 
+         delta_95 = size_95_2 - size_95, 
+         delta_95_per = delta_95/size_95 * 100)
+
+write.csv(datSubW2, "output/size_change_datSubW2.csv")
 
 ##### ##### ##### ##### ##### ##### 
 ##### ##### ##### ##### ##### ##### 

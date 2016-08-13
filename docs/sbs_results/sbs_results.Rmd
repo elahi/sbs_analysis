@@ -1,8 +1,9 @@
 ---
-title: "Testing the generality of the temperature-size rule in space and time: a case study using intertidal snails"
+title: 'Testing the generality of the temperature-size rule in space and time: a case
+  study using intertidal snails'
 author: "Robin Elahi"
 date: "August 11, 2016"
-output: html_document
+output: pdf_document
 ---
 
 
@@ -15,8 +16,12 @@ knitr::opts_knit$set(root.dir = "../../")
 ```
 
 ```{r r_packages}
+# tidyverse
+library(dplyr); library(ggplot2); library(tidyr); library(readr)
+theme_set(theme_bw(base_size = 12))
+
 library(knitr)
-library(dplyr)
+
 ```
 
 
@@ -105,9 +110,92 @@ gls_temp <- read.csv("output/gls_annual_summary2.csv") %>% select(-X)
 kable(gls_temp, caption = "Table 2. Summary of linear regressions testing temperature trends for each species")
 ```
 
-Only maximum temperature displayed a positive trend over time for each species (P = 0.04 - 0.07). When the estimated rate (degrees per year) was multiplied by the duration of the regression, the estimated maximum temperature increases ranged from 0.54 - 0.65 C. Annual median and minimum temperatures did not change over time. 
+Only maximum temperature displayed a positive trend over time for each species (P = 0.04 - 0.07). Annual median and minimum temperatures did not change over time. When the estimated rate (degrees per year) was multiplied by the duration of the regression, the change in estimated maximum temperature ranged from 0.54 - 0.65 C. We used this value to calculate the change in median size (mm) per degree C. 
+
+For comparison, we estimated the slope of the relationship between present day size and maximum habitat temperature (Figure 6). 
 
 
+```{r size_change_temporal, echo = FALSE, eval = TRUE}
+size_change <- read.csv("output/size_change_datSubW2.csv") %>% select(-X)
+size_change2 <- size_change %>% 
+  select(species, site, sampleArea, delta_mean:delta_95_per)
 
+size_changeL <- size_change2 %>% gather(key = delta_x, value = delta_value, 
+                                        delta_mean:delta_95_per)
 
+gls_temp2 <- gls_temp %>% filter(metric == "max_C") %>% select(species, change_temp_C)
 
+size_changeL2 <- inner_join(size_changeL, gls_temp2, by = "species") %>%
+  mutate(delta_value_perC = delta_value/change_temp_C)
+
+size_change_means <- size_changeL2 %>%
+  group_by(species, delta_x) %>% 
+  summarise(mean = mean(delta_value_perC), 
+            sd = sd(delta_value_perC),
+            n = n(), 
+            se = sd/sqrt(n), 
+            CI = qt(0.975, df = n - 1) * se) %>% 
+  ungroup()
+
+```
+
+```{r size_change_spatial}
+
+scs <- read.csv("output/size_change_max_temp_summary2.csv") %>% select(-X)
+
+sct <- size_change_means %>% filter(delta_x == "delta_med") %>% 
+  select(species, mean, se) %>% 
+  rename(mmPerC = mean, 
+         mmPerC_se = se) %>%
+  mutate(estimate = "temporal")
+
+scs <- scs %>% select(species, value:std_error) %>% 
+  rename(mmPerC = value, 
+         mmPerC_se = std_error) %>%
+  mutate(estimate = "spatial")
+
+size_change_comparison <- rbind(sct, scs)
+
+# Reorder levels
+size_change_comparison$species <- factor(size_change_comparison$species, 
+                                         levels = rev(c("Littorina keenae",
+                                           "Lottia digitalis", 
+                                           "Chlorostoma funebralis")))
+
+```
+
+```{r plot_size_change_comparison}
+theme_set(theme_bw(base_size = 12))
+
+size_change_comparison %>%
+  ggplot(aes(species, mmPerC, color = species, shape = species)) + 
+  geom_point() + 
+  geom_errorbar(aes(ymax = mmPerC + mmPerC_se, 
+                    ymin = mmPerC - mmPerC_se), width = 0.1) + 
+  facet_wrap(~ estimate) + 
+  theme(legend.title = element_blank()) + 
+  ylab(expression(paste("Size change (mm per ", degree, "C)"))) + 
+  xlab("") + 
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank()) + 
+  theme(strip.background = element_blank()) + 
+  theme(legend.position = "top") + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray70")
+```
+
+Figure 9. Spatial and temporal estimates of size change per degree C. Spatial estimates were based on mixed effects models for each species (size ~ mean daily maximum temperature). Temporal estimates were estimated as change in median size between eras (for each sampling area), divided by change in temperature estimated from the linear regression between maximum temperatures (Fig. 8). 
+
+To provide some aerial temperature context for these intertidal snails,  I retrieved long-term air temperature records from  [NCDC station # 5795, Monterey](http://169.237.140.1/calludt.cgi/WXDESCRIPTION?MAP=&STN=MONTEREY.C#001). Although these data are several (xx) km inland from the rocky intertidal study sites in Pacific Grove, these are the best available time-series to my knowledge. 
+
+The data available were daily maximum, minimum, and observed temperature at a given time. I analyzed it similarly to the HMS seawater data. Briefly, I calculated the monthly maximum, median, and minimum values of daily maximum, minimum, and observed values. These monthly values were then averaged, and used in regression analyses (accounting for temporal autocorrelation, as above). 
+
+```{r gls_weather, echo = FALSE, eval = TRUE}
+gls_weather <- read.csv("output/weather_annual_summary2.csv") %>% select(-X)
+
+kable(gls_weather, caption = "Table 3. Summary of linear regressions testing air temperature trends in Monterey, California")
+```
+
+The only significant temporal trends were for daily maximum temperatures, which actually decreased over time (Figure 10). 
+
+![Figure 10. Maximum air temperatures at the Monterey weather station. Each point represent the mean of monthly temperatures for each year. Red, black, and blue points represent maximum, median, and minimum values estimated for each month (original data were daily estimates). Gray symbols next to the x-axis represent the years during which snails were sampled](../../figs/air_temperature_max.png)

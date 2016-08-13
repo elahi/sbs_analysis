@@ -16,7 +16,7 @@ source("05_summarise_size_data.R")
 
 library(nlme)
 library(AICcmodavg)
-library(lme4)
+# library(lme4)
 
 ##' For present day snails only:
 ##' Does habitat temperature predict variation in snail body size?
@@ -84,6 +84,38 @@ summary(lmeMod3)
 round(summary(lmeMod3)$tTable, 3)
 anova(lmeMod3)
 plot(lmeMod3)
+
+# Extract slope for each species (mm per degree C)
+df = dat_max %>% filter(species == "Littorina keenae")
+dep_var = "size1mm"
+ind_var = "mean"
+
+get_lme_results <- function(df, dep_var, ind_var) {
+  
+  # Run lme model
+  lme.i <- lme(as.formula(paste(dep_var, "~", ind_var, sep = " ")), 
+               random = list(~ 1 | sampleUnit), 
+               na.action = na.omit, 
+               data = df, method = "REML")
+  
+  # Get dataframe
+  lme_results.i <- round(as.data.frame(summary(lme.i)$tTable), 4)
+  names(lme_results.i) <- c("value", "std_error", "df", "t_value", "p_value")
+  
+  # Estimate the total change in temperature over the study duration
+  lme_results.i <- lme_results.i %>%
+    mutate(coef_name = c("intercept", "slope"))
+  
+  return(lme_results.i)
+}
+
+max_temp_summary <- dat_max %>% group_by(species) %>% 
+  do(get_lme_results(df = ., dep_var = "size1mm", ind_var = "mean")) %>%
+  ungroup()
+
+max_temp_summary2 <- max_temp_summary %>% filter(coef_name == "slope") %>%
+  select(-coef_name)
+write.csv(max_temp_summary2, "output/size_change_max_temp_summary2.csv")
 
 ##### DAILY MIN TEMPERATURE #####
 dat_min <- pres3 %>% filter(metric == "daily_min")
