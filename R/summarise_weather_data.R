@@ -20,7 +20,7 @@ library(ggplot2)
 theme_set(theme_bw(base_size = 12))
 library(lubridate)
 
-head(sst_hms)
+#head(sst_hms)
 
 weather <- read.csv(file = "data/climate_monterey/monterey_weather.txt", 
                     skip = 53, header = TRUE, stringsAsFactors = FALSE)
@@ -58,24 +58,28 @@ wL %>% filter(climate_var != "precip") %>%
 
 ##### GET MONTHLY MEANS #####
 
-wMonthly <- wL %>% filter(!is.na(value)) %>%
-  group_by(climate_var, year, month) %>% 
-  summarise(monthly_mean = mean(value),
-            monthly_median = median(value), 
-            monthly_max = max(value), 
-            monthly_min = min(value), 
-            monthly_sd = sd(value), 
-            monthly_cv = monthly_sd/monthly_mean * 100) %>%
-  mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
-  ungroup()
+
+##' The HMS SST data were daily measurements, and I calculated monthly max, median and min. These weather data provide max, observed (at a given time), and minimum temperatures daily (2010-2015 do not have observed daily temperatures)
+##' 
+
+##' For comparison the HMS SST data, for each month I will calculate the monthly medians for daily max, obs, and min temperatures. 
 
 wMonthly <- wL %>% filter(!is.na(value)) %>%
   group_by(climate_var, year, month) %>% 
-  summarise(maximum = max(value),
-            mean = mean(value), 
-            median = median(value), 
-            minimum = min(value)) %>%
+  summarise(median = median(value)) %>%
   mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
+  ungroup()
+
+# This is what I did for the HMS SST Data
+wMonthly <- wL %>% filter(!is.na(value)) %>%
+  group_by(climate_var, year, month) %>%
+  summarise(mean = mean(value),
+            median = median(value),
+            maximum = max(value),
+            minimum = min(value),
+            sd = sd(value),
+            cv = sd/mean * 100) %>%
+  mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>%
   ungroup()
 
 wMonthly %>% 
@@ -89,10 +93,10 @@ wMonthly %>%
   facet_wrap(~ climate_var, scales = "free")
 
 ##### GET ANNUAL TIME SERIES #####
-
 # I want a time-series starting 10 years prior to the first historic sampling year
 # Childs sampled Littorina in 1947
 # So, start year is 1938
+
 names(wMonthly)
 
 wAnnual <- wMonthly %>% 

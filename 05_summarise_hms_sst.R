@@ -10,7 +10,7 @@
 ##' @log Add a log here
 ################################################################################
 
-rm(list=ls(all=TRUE)) 
+# rm(list=ls(all=TRUE)) 
 
 ##### LOAD PACKAGES, DATA #####
 

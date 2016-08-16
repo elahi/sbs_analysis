@@ -66,7 +66,7 @@ ggDat %>%
   geom_point(alpha = 0.5) + 
   #geom_smooth(method = "lm") + 
   scale_color_manual(values = c("red", "black", "blue")) + 
-  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  ylab(expression(paste("Sea surface temperature (", degree, "C)"))) + 
   xlab("Year") + 
   geom_point(aes(x = year, y = 10.5, shape = genus, color = NULL), data = spYrs, 
              alpha = 0.5, size = 3) + 
@@ -77,7 +77,7 @@ ggDat %>%
               aes(year, tempC), 
               method = "lm")
 
-ggsave("figs/hms_temperature.png", height = 3.5, width = 3.5)
+ggsave("figs/hms_sst.png", height = 3.5, width = 3.5)
 
 
 ##### GET TEMPERATURE BY ERA #####

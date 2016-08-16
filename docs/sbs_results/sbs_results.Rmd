@@ -1,11 +1,10 @@
 ---
-title: 'Testing the generality of the temperature-size rule in space and time: a case
-  study using intertidal snails'
+title: "Decadal-scale changes in body size along a thermal gradient are consistent
+  with the temperature-size rule: a case study using intertidal snails"
 author: "Robin Elahi"
 date: "August 11, 2016"
 output: pdf_document
 ---
-
 
 ```{r setup, include = FALSE, cache = FALSE}
 knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, 
@@ -24,18 +23,13 @@ library(knitr)
 
 ```
 
-
 # Introduction {-}
 
 In this study we used a comparative-historical approach to test the hypothesis that reductions in body size, consistent with climate warming, have occurred over a period of 5–7 decades. Moreover, we examined the consistency of change across a suite of species that span a range of environmental variability. Specifically, we examine changes in the size-frequency distributions of three gastropods inhabiting a gradient of thermal stress in the rocky intertidal between 1947-1963 and 2014-2015.
 
-# Methods {-}
-
-To test the hypothesis that consistent shifts in animal body size occurred over decadal time-scales, we studied three species of intertidal gastropods (*Chlorostoma funebralis*, *Lottia digitalis*, *Littorina keenae*) at Hopkins Marine Station, Pacific Grove, CA, USA. We chose these species because (1) historical size-frequency data were available, (2) they comprise a single phylogenetic and functional group (grazing gastropods), and (3) the benthic intertidal community at Hopkins Marine Station has exhibited a fingerprint of change consistent with climate warming [@Barry1995]. Moreover, these three species span a gradient of thermal stress in the rocky intertidal zone, permitting a preliminary investigation of the hypothesis that environmental variability influences temperature-size shifts [@Gardner2011]. We quantified the thermal variability experienced by each species in the sampling areas using a short-term (8 weeks) deployment of temperature loggers. The historical shifts in body size were interpreted in the context of long-term (50 years) environmental records.
-
 # Predictions {-}
 
-1. Snail size is inversely related to temperature. That is, I expect size declines over time, assuming sea and/or air temperatures have increased during same period [@Barry1995]. Expect opposite pattern if temperatures have decreased, or no pattern if temperatures have not changed. 
+1. Snail size is inversely related to temperature. That is, we expected size declines over time, assuming sea and/or air temperatures have increased during same period [@Barry1995]. We expected the opposite pattern if temperatures have decreased, or no pattern if temperatures have not changed. 
     a. Prediction: snails are smaller now than 50 years ago
     b. Test: Size ~ Era
 
@@ -45,29 +39,39 @@ To test the hypothesis that consistent shifts in animal body size occurred over 
     c. Test 1: Size ~ Era x Species x Tidal height 
     d. Test 2: Temperature ~ Species x Tidal height (tests the assumption that temperature increases with tidal height, and that this response is consistent across species)
 
+# Methods {-}
+
+To test the hypothesis that consistent shifts in animal body size occurred over decadal time-scales, we studied three species of intertidal gastropods (*Chlorostoma funebralis*, *Lottia digitalis*, *Littorina keenae*) at Hopkins Marine Station, Pacific Grove, CA, USA. We chose these species because (1) historical size-frequency data were available, (2) they comprise a single phylogenetic and functional group (grazing gastropods), and (3) the benthic intertidal community at Hopkins Marine Station has exhibited a fingerprint of change consistent with climate warming [@Barry1995]. Moreover, these three species span a gradient of thermal stress in the rocky intertidal zone, permitting a preliminary investigation of the hypothesis that environmental variability influences temperature-size shifts [@Gardner2011]. We quantified the thermal variability experienced by each species in the sampling areas using a short-term (8 weeks) deployment of temperature loggers. The historical shifts in body size were interpreted in the context of long-term (50 years) environmental records.
 
 # Results (outline)
 
-![Figure 1. Size frequency distributions of three intertidal snails. The dashed red line indicates the 5th percentile of size for each species in the past. Only snails larger than this threshold were included for all statistical tests and summary calculations. I did this to ensure a conservative test of declining body size; that is, it is possible that the previous investigators sampled the smallest individuals less carefully than we did.](../../figs/sbs_fig1.png)
+### Decadal-scale changes in snail body size
 
 We used a linear mixed-effects model (nlme package) to test the hypothesis that snail size frequency distributions differed between era (past vs present), and that this variation was mediated by tidal height. We treated sampling areas as random intercepts in the model. 
 
 ```{r aic1, echo = FALSE, eval = TRUE}
-aic1 <- read.csv("output/AIC_eraXspeciesXtidalht.csv") %>% select(-X)
-kable(aic1, caption = "Table 1. Model selection results for linear mixed effects models testing the fixed effects of era, species, and tidal height on snail body size")
+aic1 <- read.csv("output/AIC_eraXspeciesXtidalht.csv") %>% 
+  select(-c(X, AIC, LL)) 
+kable(aic1, caption = "Model selection results for linear mixed effects models testing the fixed effects of era, species, and tidal height on snail body size")
 ```
 
-The model selection results suggest a strong interaction between all three predictors. In general, the peaks of the size frequency distributions have shifted to the left for all three species (Fig. 1), and thus mean snail body size is xx% smaller now than it was xx years ago. However, the 3-way interaction appears to be driven by increases in the maximum size of Littorina keenae. We can inspect this further by plotting the mean snail size as a function of era and tidal height:
+The model selection results suggest a strong interaction between all three predictors. In general, the peaks of the size frequency distributions have shifted to the left for all three species (Fig. 1), and thus mean snail body size is xx% smaller now than it was xx years ago. 
 
-![Figure 2. Snail body size (mean +- CI) as a function of tidal height and species. In general, mean body size has declined. However, Littorina keenae has actually increased in mean body size in the high intertidal. ](../../figs/elahi_size_era_tidal.png)
+![Size frequency distributions of three intertidal snails. The dashed red line indicates the 5th percentile of size for each species in the past. Only snails larger than this threshold were included for all statistical tests and summary calculations. We did this to ensure a conservative test of declining body size; that is, it is possible that the previous investigators sampled the smallest individuals less carefully than we did.](../../figs/sbs_fig1.png)
 
-The temporal increase in size for Littorina keenae was consistent with the prediction that extreme temperatures select for larger snails. Notably, all of the snails at the highest intertidal location were concentrated in a single crevice, suggesting that abiotic conditions (e.g., temperature, wind, dessication risk) were considerably more stressful in this zone (zone D). 
+However, the 3-way interaction appears to be driven by increases in the maximum size of Littorina keenae. We can inspect this further by plotting the mean snail size as a function of era and tidal height:
 
-![Figure 3. Comparison of the sampling areas (A-D) for Littorina keenae, on High Rock, at Cabrillo Point in Pacific Grove, California. In the 1947 photo, the colored lines represent areas that were resampled in 2014 within three of the four original zones sampled by Childs (A-D). In the 2014 photo, the yellow points indicate the locations of temperature loggers. The sampling areas span approximately 6m (2-8m above MLLW) ](../../figs/high_rock_comparison.png)
+![Snail body size (mean +- CI) as a function of tidal height and species. In general, mean body size has declined. However, Littorina keenae has actually increased in mean body size in the high intertidal. ](../../figs/elahi_size_era_tidal.png)
+
+The temporal increase in size for Littorina keenae was consistent with the prediction that extreme warm temperatures select for larger snails. Notably, all of the snails at the highest intertidal location were concentrated in a single crevice, suggesting that abiotic conditions (e.g., temperature, wind, dessication risk) were considerably more stressful in this zone (zone D). 
+
+![Comparison of the sampling areas (A-D) for Littorina keenae, on High Rock, at Cabrillo Point in Pacific Grove, California. In the 1947 photo, the colored lines represent areas that were resampled in 2014 within three of the four original zones sampled by Childs (A-D). In the 2014 photo, the yellow points indicate the locations of temperature loggers. The sampling areas span approximately 6m (2-8m above MLLW) ](../../figs/high_rock_comparison.png)
+
+### Short-term intertidal temperature measurements
 
 To test the assumption that temperature means and variability increased with tidal height, we deployed temperature loggers in locations that spanned the tidal range of each sampling area. For Littorina keenae, we placed a logger each in a crevice and the exposed face for each sampling area (A-D). 
 
-![Figure 4. Habitat temperatures (mean +- CI of daily maximum, median, and minimum) as a function of tidal height and species.](../../figs/elahi_temp_tidal.png)
+![Habitat temperatures (mean +- CI of daily maximum, median, and minimum) as a function of tidal height and species.](../../figs/elahi_temp_tidal.png)
 
 In general, habitat temperature increased with tidal height, except for the two highest zones for Littorina keenae. We hypothesize that these higher zones displayed lower than expected temperatures because:
 
@@ -75,45 +79,36 @@ In general, habitat temperature increased with tidal height, except for the two 
 2. The white projected area, due to bird guano, results in reflection of solar radiation
 3. The high elevation, relative to the surrounding intertidal habitat, facilitates cooling through evaporation due to boundary layer effects
 
-Next, I replotted the mean body sizes of Littorina keenae as a function of habitat temperature. For habitat temperature, I only used the data from loggers deployed on rock faces, except for zone D (the highest zone), for which I used the logger data from the rock crevice. This is because in the lower zones (A-C), snails were collected primarily from the rock face, whereas for the high zone (D), snails were collected exclusively from the single large crevice. I use maximum temperature because this displayed the largest variation across tidal heights (Fig. 4), and arguably, is the most biological relevant metric of temperature for intertidal snails (xxx). 
+In summary, we can reject the hypothesis that body size increase observed in the highest intertidal site was due to exceptionally warm temperatures. We can provide a spatial test of this hypothesis by using the present day dataset, which was sampled with greater spatial resolution (i.e., larger numbers of replicates per sampling area). Each replicate (n = 90) was assigned to the nearest temperature logger (n = 17) with the most similar tidal height. We used another linear mixed effects model to test the effects of mean temperature (daily maximum, daily median, daily minimum) on body size. Sampling units were treated as random intercepts in the model. 
 
-![Figure 5. Body size (mean +- CI) plotted as a function of maximum habitat temperature (mean +- CI of daily maximum) as a function of era and tidal height for all three species](../../figs/elahi_size_temp_tidal.png)
+![Body size (median of each replicate) plotted as a function of habitat temperature (mean +- CI of daily maximum, median, minimum) for all three species. The size of points is proportional to the number of snails in each replicate](../../figs/elahi_pres_medsize_temp.png)
 
-This figure supports the hypothesis that maximum temperature mediated the direction of size change in Littorina keenae. That is, up to a mean maximum temperature of 28C, snails increased in size. Beyond this threshold, snails decreased in size. Across all three species, the reductions in body size tended to be largest in the sampling areas that exhibited the highest maximum habitat temperatures. 
+Snail body size correlated negatively with daily maximum temperature, and thus we can reject the hypothesis that extreme temperatures select for larger snail body size at our study site. Body size did not correlate strongly with daily median temperatures (except for Chlorostoma funebralis), but was correlated positively with daily minimum temperature. Together, these results suggest that body size is maximized at intermediate temperatures, at least for Chlorostoma and Littorina. Indeed, a quadratic regression better fits the relationship between size and median temperature. Therefore, one mechanism for the observed increases in Littorina body size in the higher intertidal zones (but relatively cool temperatures) may be due to beneficial increases in temperature over the past six decades. 
 
-The present day dataset was sampled with greater spatial resolution (i.e., larger numbers of replicates per sampling area), and thus was used to provide a more robust spatial test of the temperature-size rule. Each replicate (n = 90) was assigned to the nearest temperature logger (n = 17) with the most similar tidal height. We used another linear mixed effects model to test the effects of mean temperature (daily maximum, daily median, daily minimum) on body size. Sampling units were treated as random intercepts in the model. 
-
-![Figure 6. Body size (median of each replicate) plotted as a function of habitat temperature (mean +- CI of daily maximum, median, minimum) for all three species. The size of points is proportional to the number of snails in each replicate](../../figs/elahi_pres_medsize_temp.png)
-
-Snail body size correlated negatively with daily maximum temperature, and thus we can reject the hypothesis that extreme temperatures select for larger snail body size at our study site. Body size did not correlate strongly with daily median temperatures (except for Chlorostoma funebralis), but was correlated positively with daily minimum temperature. Together, these results suggest that body size is maximized at intermediate temperatures, at least for Chlorostoma and Littorina. Indeed, a quadratic regression better fits the relationship between size and median temperature. 
-
-![Figure 7. Body size (median of each replicate) plotted as a function of median habitat temperature (mean +- CI) for all three species. The size of points is proportional to the number of snails in each replicate](../../figs/elahi_pres_medsize_quad_temp.png)
-
-Therefore, we suggest that the observed increases in Littorina body size in the higher intertidal zones (but relatively cool temperatures) may be due to beneficial increases in temperature. 
+![Body size (median of each replicate) plotted as a function of median habitat temperature (mean +- CI) for all three species. The size of points is proportional to the number of snails in each replicate](../../figs/elahi_pres_medsize_quad_temp.png)
 
 Our results thus far have demonstrated:
 
 1. Declines in snail body size over five decades
-2. Largest declines were observed in present day areas associated with high maximum temperatures
-3. Present day snail body sizes are correlated negatively with maximum habitat temperatures
+2. Largest declines in size were observed in the lower intertidal zones across all three species
+3. Present day snail body sizes were correlated negatively with maximum habitat temperatures
 
-Together, our results would be consistent with the 'third universal prediction' of body size decline with climate warming IF maximum habitat temperatures have increased during the course of our study. Of course, we do not have long-term temperature records for the sampling areas in the study. Instead, we will examine long-term temperature records of sea surface temperatures collected daily at Hopkins Marine Station, and records of air temperature from an inland weather station. 
+### Long-term temperature trends
+
+Together, our results are consistent with the 'third universal prediction' of body size decline with climate warming if maximum habitat temperatures have increased during the course of our study. Of course, we do not have long-term temperature records for the sampling areas in the study. Instead, we will examine long-term temperature records of sea surface temperatures collected daily at Hopkins Marine Station, and records of air temperature from an inland weather station. 
 
 We tested for temperature trends using regression with correlated errors.  
 
-![Figure 8. Sea surface temperatures at Hopkins Marine Station. Each point represent the monthly mean of each year. Red, black, and blue points represent maximum, median, and minimum values. Gray symbols next to the x-axis represent the years during which snails were sampled](../../figs/hms_temperature.png)
+![Sea surface temperatures at Hopkins Marine Station. Each point represents the monthly mean of each year. Red, black, and blue points represent maximum, median, and minimum values. Gray symbols next to the x-axis represent the years during which snails were sampled](../../figs/hms_sst.png)
 
 
 ```{r gls_temp, echo = FALSE, eval = TRUE}
 gls_temp <- read.csv("output/gls_annual_summary2.csv") %>% select(-X)
 
-kable(gls_temp, caption = "Table 2. Summary of linear regressions testing temperature trends for each species")
+kable(gls_temp, caption = "Summary of linear regressions testing surface seawater temperature trends for each species")
 ```
 
-Only maximum temperature displayed a positive trend over time for each species (P = 0.04 - 0.07). Annual median and minimum temperatures did not change over time. When the estimated rate (degrees per year) was multiplied by the duration of the regression, the change in estimated maximum temperature ranged from 0.54 - 0.65 C. We used this value to calculate the change in median size (mm) per degree C. 
-
-For comparison, we estimated the slope of the relationship between present day size and maximum habitat temperature (Figure 6). 
-
+Only maximum temperature displayed a positive trend over time for each species (P = 0.04 - 0.07). Annual median and minimum temperatures did not change over time. 
 
 ```{r size_change_temporal, echo = FALSE, eval = TRUE}
 size_change <- read.csv("output/size_change_datSubW2.csv") %>% select(-X)
@@ -167,35 +162,53 @@ size_change_comparison$species <- factor(size_change_comparison$species,
 ```{r plot_size_change_comparison}
 theme_set(theme_bw(base_size = 12))
 
-size_change_comparison %>%
-  ggplot(aes(species, mmPerC, color = species, shape = species)) + 
-  geom_point() + 
-  geom_errorbar(aes(ymax = mmPerC + mmPerC_se, 
-                    ymin = mmPerC - mmPerC_se), width = 0.1) + 
-  facet_wrap(~ estimate) + 
-  theme(legend.title = element_blank()) + 
-  ylab(expression(paste("Size change (mm per ", degree, "C)"))) + 
-  xlab("") + 
-  theme(axis.title.x=element_blank(),
-        axis.text.x=element_blank(),
-        axis.ticks.x=element_blank()) + 
-  theme(strip.background = element_blank()) + 
-  theme(legend.position = "top") + 
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray70")
+# size_change_comparison %>%
+#   ggplot(aes(species, mmPerC, color = species, shape = species)) + 
+#   geom_point() + 
+#   geom_errorbar(aes(ymax = mmPerC + mmPerC_se, 
+#                     ymin = mmPerC - mmPerC_se), width = 0.1) + 
+#   facet_wrap(~ estimate) + 
+#   theme(legend.title = element_blank()) + 
+#   ylab(expression(paste("Size change (mm per ", degree, "C)"))) + 
+#   xlab("") + 
+#   theme(axis.title.x=element_blank(),
+#         axis.text.x=element_blank(),
+#         axis.ticks.x=element_blank()) + 
+#   theme(strip.background = element_blank()) + 
+#   theme(legend.position = "top") + 
+#   geom_hline(yintercept = 0, linetype = "dashed", color = "gray70")
+
+# Figure 9. Spatial and temporal estimates of size change per degree C. Spatial estimates were based on mixed effects models for each species (size ~ mean daily maximum temperature). Temporal estimates were estimated as change in median size between eras (for each sampling area), divided by change in temperature estimated from the linear regression between maximum temperatures (Fig. 8). 
+
 ```
 
-Figure 9. Spatial and temporal estimates of size change per degree C. Spatial estimates were based on mixed effects models for each species (size ~ mean daily maximum temperature). Temporal estimates were estimated as change in median size between eras (for each sampling area), divided by change in temperature estimated from the linear regression between maximum temperatures (Fig. 8). 
+To provide an aerial temperature context for these intertidal snails,  we retrieved long-term air temperature records from  [NCDC station # 5795, Monterey](http://169.237.140.1/calludt.cgi/WXDESCRIPTION?MAP=&STN=MONTEREY.C#001). Although these data are several (xx) km inland from the rocky intertidal study sites in Pacific Grove, these are the best available time-series to our knowledge. 
 
-To provide some aerial temperature context for these intertidal snails,  I retrieved long-term air temperature records from  [NCDC station # 5795, Monterey](http://169.237.140.1/calludt.cgi/WXDESCRIPTION?MAP=&STN=MONTEREY.C#001). Although these data are several (xx) km inland from the rocky intertidal study sites in Pacific Grove, these are the best available time-series to my knowledge. 
-
-The data available were daily maximum, minimum, and observed temperature at a given time. I analyzed it similarly to the HMS seawater data. Briefly, I calculated the monthly maximum, median, and minimum values of daily maximum, minimum, and observed values. These monthly values were then averaged, and used in regression analyses (accounting for temporal autocorrelation, as above). 
+The data available were daily maximum, minimum, and observed temperature at a given time. We analyzed it similarly to the HMS seawater data. Briefly, we calculated the monthly median values of daily maximum, minimum, and observed values. These monthly values were then averaged, and used in regression analyses (accounting for temporal autocorrelation, as above). 
 
 ```{r gls_weather, echo = FALSE, eval = TRUE}
-gls_weather <- read.csv("output/weather_annual_summary2.csv") %>% select(-X)
+gls_weather <- read.csv("output/weather_annual_summary2.csv") %>% select(-X) %>% 
+  slice(1:3)
 
-kable(gls_weather, caption = "Table 3. Summary of linear regressions testing air temperature trends in Monterey, California")
+kable(gls_weather, caption = "Summary of linear regressions testing air temperature trends in Monterey, California")
 ```
 
-The only significant temporal trends were for daily maximum temperatures, which actually decreased over time (Figure 10). 
+The only significant temporal trends were for daily maximum temperatures, which actually decreased over time (Figure 8). 
 
-![Figure 10. Maximum air temperatures at the Monterey weather station. Each point represent the mean of monthly temperatures for each year. Red, black, and blue points represent maximum, median, and minimum values estimated for each month (original data were daily estimates). Gray symbols next to the x-axis represent the years during which snails were sampled](../../figs/air_temperature_max.png)
+![Air temperatures at the Monterey weather station. Each point represents the mean of median monthly temperatures for each year. Red, black, and blue points represent  maximum, observed, and minimum temperature measurements (original data were daily estimates). Gray symbols next to the x-axis represent the years during which snails were sampled](../../figs/monterey_air_temperature.png)
+
+### Conclusions
+
+Our results support the 'third universal prediction' that climate warming is associated with body size declines in intertidal snails. Sampling areas lowest in the intertidal were associated with the largest declines in body size, and the sign of body size change reversed for Littorina keenae in the highest intertidal area. 
+
+Our results suggest a temperature-related hypothesis for the variation in body size change along the thermal gradient. Long-term seawater warming (maximum temperatures) but aerial cooling (maximum temperatures) was observed in the region. Therefore, the observed declines in body size in the low intertidal but observed increases in body size in the high intertidal were consistent with the temperature-size rule (i.e., 'hotter is smaller'). 
+
+Of course, we will have to list alternative hypotheses because our results are necessarily observational. 
+
+### Next steps
+
+1. Correlate Hopkins weather station data to the Monterey weather data?
+2. Estimate duration of time that each tidal height is submerged?
+3. Include density of snails as covariate in models?
+
+

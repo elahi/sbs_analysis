@@ -12,6 +12,8 @@
 
 # rm(list=ls(all=TRUE)) 
 
+source("05_summarise_hms_sst.R")
+
 source("R/summarise_weather_data.R")
 
 library(nlme)
@@ -54,7 +56,10 @@ get_gls_results <- function(df, dep_var, ind_var) {
 
 ##### TRENDS IN ANNUAL MEANS OF MONTHLY TEMPERATURES #####
 
-weather_annual_summary <- wAnnualL %>% group_by(climate_var, metric) %>% 
+# Use median values only
+unique(wAnnualL$metric)
+weather_annual_summary <- wAnnualL %>% filter(metric == "median") %>% 
+  group_by(climate_var) %>% 
   do(get_gls_results(df = ., dep_var = "value", ind_var = "year")) %>%
   ungroup()
 weather_annual_summary
@@ -68,40 +73,26 @@ write.csv(weather_annual_summary2, "output/weather_annual_summary2.csv")
 
 ##### PLOT ANNUAL AIR TEMP TIME SERIES #####
 unique(wAnnualL$metric)
+unique(wAnnualL$climate_var)
 
-ggDat <- wAnnualL %>% filter(climate_var == "air_max" & metric != "mean") 
+ggDat <- wAnnualL %>% filter(metric == "median" & climate_var != "precip") 
 
 ggDat %>% 
-  ggplot(aes(year, value, color = metric)) + 
+  ggplot(aes(year, value, color = climate_var)) + 
   geom_point(alpha = 0.5) + 
   scale_color_manual(values = c("red", "black", "blue")) + 
-  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  ylab(expression(paste("Air temperature (", degree, "C)"))) + 
   xlab("Year") + 
-  geom_point(aes(x = year, y = 8, shape = genus, color = NULL), data = spYrs, 
+  geom_point(aes(x = year, y = 5.5, shape = genus, color = NULL), data = spYrs, 
              alpha = 0.5, size = 3) + 
   guides(color = FALSE) + 
   theme(legend.title = element_blank()) + 
   theme(legend.position = "top") + 
-  geom_smooth(method = "lm")
+  geom_smooth(data = subset(ggDat,  climate_var == "air_max"), 
+              aes(year, value), 
+              method = "lm")
 
-ggsave("figs/air_temperature_max.png", height = 3.5, width = 3.5)
-
-ggDat <- wAnnualL %>% filter(climate_var == "air_obs" & metric != "mean") 
-
-ggDat %>% 
-  ggplot(aes(year, value, color = metric)) + 
-  geom_point(alpha = 0.5) + 
-  #geom_smooth(method = "lm") + 
-  scale_color_manual(values = c("red", "black", "blue")) + 
-  ylab(expression(paste("Temperature (", degree, "C)"))) + 
-  xlab("Year") + 
-  geom_point(aes(x = year, y = 8, shape = genus, color = NULL), data = spYrs, 
-             alpha = 0.5, size = 3) + 
-  guides(color = FALSE) + 
-  theme(legend.title = element_blank()) + 
-  theme(legend.position = "top") 
-
-ggsave("figs/air_temperature_obs.png", height = 3.5, width = 3.5)
+ggsave("figs/monterey_air_temperature.png", height = 3.5, width = 3.5)
 
 ##### PLOT ANNUAL PRECIP TIME SERIES #####
 unique(wAnnualL$metric)
