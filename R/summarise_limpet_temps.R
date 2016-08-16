@@ -27,6 +27,12 @@ positionDF <- read_csv("output/positionDF_edit.csv")[-1] %>%
   rename(azimuth = aspect, aspect = slope_normal)
 positionDF
 
+# Load size data
+source("03_identify_size_cutoff.R")
+head(dat4)
+spCodes <- dat4 %>% select(species, sp) %>% distinct()
+levels(spCodes$species)
+
 # Get limpet temperature data
 limpet <- read_csv("../bigFiles/Limpet_temp_estimates.csv")
 glimpse(limpet)
@@ -44,18 +50,75 @@ head(limpetL)
 
 ##### SUMMARISE DAILY #####
 
-lim_dailyL <- limpetL %>% group_by(run_id, dateR, month, year) %>% 
+lim_daily <- limpetL %>% group_by(run_id, dateR, month, year) %>% 
   summarise(maximum = max(tempC), 
             median = median(tempC), 
-            minimum = min(tempC)) %>% 
-  ungroup() %>%
+            minimum = min(tempC), 
+            mean = mean(tempC), 
+            sd = sd(tempC), 
+            cv = sd/mean) %>% 
+  ungroup() 
+
+lim_daily
+
+# write.csv(lim_daily, "output/limpet_daily_temps.csv")
+
+lim_dailyL <- lim_daily %>% select(-c(mean:cv)) %>% 
   gather(., key = "metric", value = "tempC", maximum:minimum)
 
 lim_dailyL
 
-# Get means of daily mean, max and min
-lim_daily_means <- lim_dailyL %>% 
+# Get daily summary stats 
+lim_daily_summary <- lim_dailyL %>% 
   group_by(run_id, metric) %>% 
+  summarise(mean = mean(tempC), 
+            sd = sd(tempC),
+            n = n(), 
+            se = sd/sqrt(n), 
+            CI = qt(0.975, df = n - 1) * se, 
+            max = max(tempC)) %>% 
+  ungroup()
+
+# Join with position data
+lds2 <- inner_join(lim_daily_summary, positionDF, by = "run_id")
+
+##### SUMMARISE MONTHLY #####
+unique(lim_dailyL$metric)
+
+lim_monthly <- lim_dailyL %>% group_by(run_id, metric, month, year) %>% 
+  summarise(monthly_mean = mean(tempC)) %>% 
+  ungroup() %>% 
+  mutate(dateR = as.Date(paste(year, month, "15", sep = "-")))
+
+lim_monthly
+
+##### SUMMARISE ANNUAL #####
+
+lim_annual <- lim_monthly %>% group_by(run_id, metric, year) %>% 
+  summarise(maximum = max(monthly_mean), 
+            median = median(monthly_mean), 
+            minimum = min(monthly_mean)) %>% 
+  ungroup()
+
+la_max <- lim_annual %>% filter(metric == "maximum") %>% 
+  select(run_id, year, maximum) 
+la_med <- lim_annual %>% filter(metric == "median") %>% 
+  select(run_id, year, median) 
+la_min <- lim_annual %>% filter(metric == "minimum") %>% 
+  select(run_id, year, minimum) 
+
+la_summary <- inner_join(la_max, la_med, by = c("run_id", "year")) %>% 
+  inner_join(., la_min, by = c("run_id", "year"))
+la_summL <- gather(la_summary, key = "metric", value = "tempC", maximum:minimum)
+
+la_summL2 <- la_summL %>% 
+  inner_join(., positionDF, by = "run_id") %>% 
+  inner_join(., spCodes, by = "sp")
+
+
+
+annual_summary <- la_summL2 %>% 
+  group_by(position, tidalHT, azimuth, aspect, species, metric) %>% 
   summarise(mean = mean(tempC), 
             sd = sd(tempC),
             n = n(), 
@@ -63,31 +126,7 @@ lim_daily_means <- lim_dailyL %>%
             CI = qt(0.975, df = n - 1) * se) %>% 
   ungroup()
 
-# Join with position data
-lim_daily_means2 <- inner_join(lim_daily_means, positionDF, by = "run_id")
-
-lim_daily_means2 %>% 
-  ggplot(aes(tidalHT, mean, color = metric)) + 
-  geom_point() + 
-  facet_wrap(~ sp) +
-
-
-##### SUMMARISE MONTHLY #####
-
-lim_monthly <- lim_dailyL %>% group_by(run_id, metric, month, year ) %>% 
-  summarise(monthly_mean = mean(tempC)) %>% 
-  ungroup() %>% 
-  mutate(dateR = as.Date(paste(year, month, "15", sep = "-")))
-
-lim_monthly
-
-lim_monthly %>% 
-  ggplot(aes(dateR, monthly_mean, color = metric)) +
-  facet_wrap(~ run_id, ncol = 5) + 
-  geom_point() + geom_smooth(method = "lm")
-
-##### SUMMARISE ANNUAL #####
-
+##
 lim_annual <- lim_dailyL %>% group_by(run_id, metric, year) %>% 
   summarise(annual_mean = mean(tempC)) %>% 
   ungroup()
