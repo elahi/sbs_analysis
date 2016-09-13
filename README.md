@@ -13,29 +13,24 @@ Tegula funebralis - 1962, by Wara
 
 Then we relocated sites and collected size-frequency data in 2014-2015.  
 
-
 ####  Next steps
 
-0. Analyze physical data
-    - sea level
-    - enso (MEI)
-    - pdo
-    - weather (monterey and pg)
-        * air temperature
-        * precipitation
-        * fog (?)
-        
+1. Waiting on Chris Patton - air temperatures
+2. Fix tidal heights for Littorina
+  - Mark's pvc markers at high rock will be between 1.6 and 1.7 above MLLW because they started drifting upwards from the original 1.5m target at that end of his transect
+  - I need a transparent, clean workflow for the decision steps
+  - apply to size data, logger data, and hindcast data
+3. Denote crack vs face for logger temps
+4. Temperature hindcasts - pull hottest month for max, pull coldest month for min
+5. Deal with hindcast facet labels
+6. Compare submersion time across tidal height range for all three species
 
-2. Plot size change/time against habitat thermal variability (predict positive relationship - such that higher thermal variability results in larger body size, especially maximum body size)
+#### Other observational studies to follow up on:
+Frank - Tegula
+Paine - Tegula
+Littorina in san diego
 
-3. Get satellite air temperature time-series for Pacific Grove and other studies
 
-4. Other potential studies to follow up on:
-    - Frank - Tegula
-    - Paine - Tegula
-    - Littorina in san diego
-
-5. Experiment?
 
 
 

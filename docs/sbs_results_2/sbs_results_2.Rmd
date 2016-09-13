@@ -1,0 +1,53 @@
+---
+title: "Decadal-scale changes in body size along a thermal gradient are consistent
+  with the temperature-size rule: a case study using intertidal snails"
+author: "Robin Elahi"
+date: "September 12, 2016"
+output: pdf_document
+---
+
+```{r setup, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, 
+                      fig.path = 'figs/', cache.path = 'cache/graphics-', 
+                      fig.align = 'center', fig.width = 5, fig.height = 5, 
+                      fig.show = 'hold', cache = TRUE, par = TRUE)
+knitr::opts_knit$set(root.dir = "../../")
+```
+
+```{r r_packages}
+# tidyverse
+library(dplyr); library(ggplot2); library(tidyr); library(readr)
+theme_set(theme_bw(base_size = 12))
+
+library(knitr)
+
+```
+
+# Tables {-}
+
+We used a linear mixed-effects model (nlme package) to test the hypothesis that snail size frequency distributions differed between era (past vs present), and that this variation was mediated by tidal height. We treated sampling areas as random intercepts in the model. 
+
+```{r aic1, echo = FALSE, eval = TRUE}
+aic1 <- read.csv("output/AIC_eraXspeciesXtidalht.csv") %>% 
+  select(-c(X, AIC, LL)) 
+kable(aic1, caption = "Model selection results for linear mixed effects models testing the fixed effects of era, species, and tidal height on snail body size")
+```
+
+The model selection results suggest a strong interaction between all three predictors. In general, the peaks of the size frequency distributions have shifted to the left for all three species (Fig. 1), and thus mean snail body size is xx% smaller now than it was xx years ago. 
+
+### Figures {-}
+
+![Size frequency distributions of three intertidal snails. The dashed red line indicates the 5th percentile of size for each species in the past. Only snails larger than this threshold were included for all statistical tests and summary calculations. We did this to ensure a conservative test of declining body size; that is, it is possible that the previous investigators sampled the smallest individuals less carefully than we did.](../../figs/sbs_fig1.png)
+
+![Snail body size (mean +- CI) as a function of tidal height and species. In general, mean body size has declined. However, *L. keenae* has actually increased in mean body size in the high intertidal. ](../../figs/elahi_size_era_tidal.png)
+
+![Historical comparison of three (out of four) sampling areas (B-D) for Littorina keenae, on High Rock, at Cabrillo Point in Pacific Grove, California. In the 2014 photo, the red diamonds and circles indicate the locations of temperature loggers on exposed rock faces and rock crevices, respectively. The lowest and highest loggers were situated at approximately 3.6 and 7.6m above mean lower low water.](../../figs/high_rock_comparison_160912.png)
+
+![Habitat temperatures (mean +- CI of daily maximum, median, and minimum) as a function of tidal height and species.](../../figs/elahi_temp_tidal.png)
+
+![Body size (median of each replicate) plotted as a function of habitat temperature (mean +- CI of daily maximum, median, minimum) for all three species. The size of points is proportional to the number of snails in each replicate](../../figs/elahi_pres_medsize_temp.png)
+
+![Predicted body temperatures (mean +- CI of annual maximum, median, and minimum) for an intertidal limpet as a function of tidal height and species.](../../figs/elahi_predicted_temp_tidal.png)
+
+![Sea surface temperatures at Hopkins Marine Station. Each point represents the monthly mean of each year. Red, black, and blue points represent maximum, median, and minimum values. Gray symbols next to the x-axis represent the years during which snails were sampled](../../figs/hms_sst.png)
+

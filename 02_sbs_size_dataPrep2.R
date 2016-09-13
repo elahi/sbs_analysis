@@ -85,6 +85,16 @@ tidalHTdf <- dat2 %>% filter(!is.na(tideHTm)) %>%
   group_by(sampleArea) %>% 
   summarise(sample_area_tidal_ht = mean(tideHTm))
 
+### Revising values using temp logger measures (ibutton_deployment.csv)
+# get rows that need revising using grep
+high_rows <- grep("High", x = tidalHTdf$sampleArea)
+# save new vector to be revised
+new_tidal_ht <- tidalHTdf$sample_area_tidal_ht
+# replace old values with new ones
+new_tidal_ht[high_rows[1]:high_rows[4]] <- c(2.7, 3.9, 5.9, 6.9)
+# replace in df
+tidalHTdf$sample_area_tidal_ht <- new_tidal_ht
+
 dat2 <- inner_join(dat2, tidalHTdf, by = "sampleArea")
 
 ##### TRANSFORM SIZES TO PERCENTAGE OF MAXIMUM SIZE BY SPECIES #####
