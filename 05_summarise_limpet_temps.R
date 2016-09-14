@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Plot limpet temperatures
+##' @title Summarise limpet temperatures
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com

@@ -30,3 +30,17 @@ tempMeans %>% filter(metric != "daily_cv" & metric != "daily_mean") %>%
   theme(legend.title = element_blank()) 
 
 ggsave("figs/elahi_temp_tidal.png", height = 3.5, width = 7)
+
+
+tempMeans %>% filter(metric != "daily_cv" & metric != "daily_mean") %>% 
+  ggplot(aes(tidalHT, mean, shape = microhabitat, color = metric)) + 
+  geom_point(alpha = 0.6, size = 2) + 
+  geom_errorbar(aes(ymax = mean + CI, 
+                    ymin = mean - CI), width = 0.2, alpha = 0.6) + 
+  labs(x = "Tidal height (m)", y = "Mean temperature (C)") + 
+  theme(strip.background = element_blank()) + 
+  facet_wrap(~ species) + 
+  #guides(shape = FALSE) + 
+  theme(legend.position = "top") + 
+  theme(legend.title = element_blank()) 
+

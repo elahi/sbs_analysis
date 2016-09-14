@@ -9,7 +9,7 @@
 ##' @log 
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
+#rm(list=ls(all=TRUE)) 
 
 ##' To minimize the possibility that we sampled the smallest size classes more efficiently than the historic investigators, I will identify a minimum size cut-off for each of the three species
 
@@ -36,15 +36,6 @@ cutoffDF <- dat2 %>% filter(era == "past") %>%
             size0.25 = quantile(size1mm, 0.25, na.rm = TRUE))
   
 dat3 <- inner_join(dat2, cutoffDF, by = c("species"))
-
-dat3 %>% 
-  ggplot(aes(size)) + 
-  geom_histogram(binwidth = 1, fill = "gray", col = "black") + 
-  facet_wrap(~ era + species, nrow = 2, scales = "free_y") + 
-  geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red") + 
-  labs(x = "Size (mm)", y = "Frequency")
-
-# ggsave("figs/elahi_histo_cutoff.png", height = 5, width = 7)
 
 # Create column to identify whether the size is above the arbitrary cut-off
 dat4 <- dat3 %>%

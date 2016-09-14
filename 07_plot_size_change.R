@@ -16,8 +16,6 @@ source("05_summarise_size_data.R")
 
 glimpse(dm2)
 
-
-
 ##### PLOT MEAN SIZES BY DATA SET #####
 dm2 %>% 
   ggplot(aes(year, size_mean, color = sampleArea)) + 

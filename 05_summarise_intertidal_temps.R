@@ -36,8 +36,30 @@ rawDat <- read.csv("output/temp_raw_iButton.csv") %>%
   select(-X) %>% 
   rename(sp = code)
 names(rawDat)
+head(rawDat); tail(rawDat)
 
-rawDat2 <- inner_join(rawDat, spCodes, by = "sp")
+# Fix tidal heights
+unique(rawDat$position)
+unique(loggerPositions_fixed$position)
+
+rawDat2 <- rawDat %>% rename(tidalHT_old = tidalHT)
+names(rawDat2)
+tail(rawDat2)
+
+rawDat2 <- loggerPositions %>% select(position, tidalHT) %>% 
+  inner_join(rawDat2, ., by = "position")
+names(rawDat2)
+
+rawDat2 <- inner_join(rawDat2, spCodes, by = "sp")
+names(rawDat2)
+
+rawDat2 %>% select(position, tidalHT, tidalHT_old) %>% distinct() %>% 
+  mutate(microhabitat = ifelse(grepl("Crack", position) == TRUE, 
+                               "crevice", "face"))
+
+# Add category for crevice or not
+rawDat2$microhabitat <- ifelse(grepl("Crack", rawDat2$position) == TRUE, 
+                               "crevice", "face")
 
 ##### MAKE DF LINKING POSITIONS TO SAMPLE AREA FOR SIZE CHANGE ANALYSIS #####
 
@@ -67,9 +89,9 @@ sizeLL2 <-  sizeLL %>% #filter(species != "Chlorostoma funebralis") %>%
 
 ##### DAILY SUMMARY PER POSITION #####
 
-position_daily <- rawDat %>%
+position_daily <- rawDat2 %>%
   group_by(position, sp, day, nest1, nest2, tidalHT, 
-           aspect, slope, lon, lat) %>%
+           aspect, slope, lon, lat, microhabitat) %>%
   summarise(daily_mean = mean(tempC), 
             daily_med = median(tempC), 
             daily_max = max(tempC),
@@ -88,13 +110,14 @@ summary(pdL)
 
 # Get means of daily mean, max and min
 tempMeans <- pdL %>% 
-  group_by(species, position, tidalHT, aspect, slope, lon, lat, metric) %>% 
+  group_by(species, position, microhabitat, tidalHT, aspect, slope, lon, lat, metric) %>% 
   summarise(mean = mean(tempC), 
             sd = sd(tempC),
             n = n(), 
             se = sd/sqrt(n), 
             CI = qt(0.975, df = n - 1) * se) %>% 
   ungroup()
+tempMeans
 
 ##### DAILY SUMMARY PER SAMPLE AREA #####
 names(rawDat)

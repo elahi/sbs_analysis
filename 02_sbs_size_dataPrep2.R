@@ -19,15 +19,27 @@ library(tidyr)
 library(readr)
 library(lubridate)
 
+# Get tidal correction
+source("R/buttonPositions.R")
+
 # load modern data
 dat <- read.csv("./output/sbsMaster.csv", na.strings = "NA", 
                 stringsAsFactors = FALSE) %>%
   select(-c(X, row))
+head(dat)
 
 ##### PREPARE DATA #####
 
 # change ft to meters
-dat$tideHTm <- dat$tideHTm/3.28084
+# dat$tideHTm <- dat$tideHTm/3.28084
+# apply tidal correction, using mod1
+
+summary(mod1) # all three species included
+summary(mod3) # excluding littorina
+
+dat <- dat %>% 
+  mutate(tideHTm_orig = tideHTm/3.28084, 
+         tideHTm = tideHTm_orig * coef(mod1)[2] + coef(mod1)[1])
 
 # create numeric lat-long columns
 dat$lat2 <- as.numeric(substr(dat$lat, 1, 8))
@@ -83,19 +95,26 @@ unique(dat2$sampleUnit)
 
 tidalHTdf <- dat2 %>% filter(!is.na(tideHTm)) %>% 
   group_by(sampleArea) %>% 
-  summarise(sample_area_tidal_ht = mean(tideHTm))
+  summarise(sample_area_tidal_ht = mean(tideHTm), 
+            sample_area_tidal_ht_orig = mean(tideHTm_orig))
 
-### Revising values using temp logger measures (ibutton_deployment.csv)
-# get rows that need revising using grep
-high_rows <- grep("High", x = tidalHTdf$sampleArea)
-# save new vector to be revised
-new_tidal_ht <- tidalHTdf$sample_area_tidal_ht
-# replace old values with new ones
-new_tidal_ht[high_rows[1]:high_rows[4]] <- c(2.7, 3.9, 5.9, 6.9)
-# replace in df
-tidalHTdf$sample_area_tidal_ht <- new_tidal_ht
+tidalHTdf %>% 
+  ggplot(aes(sample_area_tidal_ht_orig, sample_area_tidal_ht)) + 
+  geom_point(alpha = 0.5) + 
+  geom_abline(slope = 1, intercept = 0)
 
-dat2 <- inner_join(dat2, tidalHTdf, by = "sampleArea")
+# ### Revising values using temp logger measures (ibutton_deployment.csv)
+# # get rows that need revising using grep
+# high_rows <- grep("High", x = tidalHTdf$sampleArea)
+# # save new vector to be revised
+# new_tidal_ht <- tidalHTdf$sample_area_tidal_ht
+# # replace old values with new ones
+# new_tidal_ht[high_rows[1]:high_rows[4]] <- c(2.7, 3.9, 5.9, 6.9)
+# # replace in df
+# tidalHTdf$sample_area_tidal_ht <- new_tidal_ht
+
+dat2 <- tidalHTdf %>% select(sampleArea, sample_area_tidal_ht) %>% 
+  inner_join(dat2, ., by = "sampleArea")
 
 ##### TRANSFORM SIZES TO PERCENTAGE OF MAXIMUM SIZE BY SPECIES #####
 

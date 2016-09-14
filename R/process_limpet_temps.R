@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Summarise Luke Miller's limpet temperature data
+##' @title Process Luke Miller's limpet temperature data
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
