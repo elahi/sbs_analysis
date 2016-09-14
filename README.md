@@ -17,7 +17,6 @@ Then we relocated sites and collected size-frequency data in 2014-2015.
 
 1. Check with Don - air temperatures
 3. Denote crack vs face for logger temps
-5. Deal with hindcast facet labels
 6. Compare submersion time across tidal height range for all three species
 
 #### Other observational studies to follow up on:
