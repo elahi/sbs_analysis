@@ -11,11 +11,7 @@
 
 # rm(list=ls(all=TRUE)) 
 
-# Load size data
-source("03_identify_size_cutoff.R")
-head(dat4)
-spCodes <- dat4 %>% select(species, sp) %>% distinct()
-levels(spCodes$species)
+source("05_summarise_limpet_temps.R")
 
 ##### LOAD PACKAGES, DATA #####
 
