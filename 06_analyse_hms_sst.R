@@ -68,3 +68,9 @@ gls_annual_summary2 <- gls_annual_summary %>%
   rename(slope = value)
 
 write.csv(gls_annual_summary2, "output/gls_annual_summary2.csv")
+
+
+##### TRENDS IN MONTHLY TIME-SERIES #####
+
+
+

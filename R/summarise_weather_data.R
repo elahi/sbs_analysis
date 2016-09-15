@@ -98,6 +98,7 @@ wMonthly %>%
 # So, start year is 1938
 
 names(wMonthly)
+head(wMonthly)
 
 wAnnual <- wMonthly %>% 
   group_by(climate_var, year) %>% 

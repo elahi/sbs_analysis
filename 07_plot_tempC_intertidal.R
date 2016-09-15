@@ -31,7 +31,7 @@ temp_logger <- tempMeans %>%
          metric, mean, sd, n, se, CI) %>% 
   mutate(month = NA, 
          year = NA,
-         dataset = "Rock")
+         dataset = "Empirical")
 
 # Rename levels of metric
 metric <- temp_logger$metric
@@ -45,48 +45,38 @@ temp_model <- monthly_extremes %>% ungroup() %>%
   select(species, position, tidalHT, month, year, 
          metric, mean, sd, n, se, CI) %>% 
   mutate(microhabitat = NA, 
-         dataset = "Body")
+         dataset = "Model")
 
 tempDF <- rbind(temp_logger, temp_model)
 tempDF
 
 ##### PLOTS ######
 
-tempDF %>% 
-  ggplot(aes(tidalHT, mean, shape = species, color = metric)) + 
-  geom_point(alpha = 0.6, size = 2) + 
-  geom_errorbar(aes(ymax = mean + CI, 
-                    ymin = mean - CI), width = 0.2, alpha = 0.6) + 
-  ylab(expression(paste("Temperature (", degree, "C)"))) + 
-  xlab("Tidal height (m)") +   
-  theme(strip.background = element_blank()) + 
-  guides(color = FALSE) + 
-  #theme(legend.position = "top") + 
-  #theme(legend.title = element_blank()) + 
-  facet_wrap(~ dataset, ncol = 2, scales = "free_y") + 
-  # guides(shape = guide_legend(title = "Habitat", 
-  #                             title.position = "top"))
-  guides(shape = guide_legend(title = "Habitat", 
-                              direction = "horizontal", title.position = "top",
-                              label.position="bottom", label.hjust = 0.5, 
-                              label.vjust = 0.1, label.theme = element_text(angle = 90)))
-  
+dataset_description <- c(
+  Model = "Predicted body temperature", 
+  Empirical = "Empirical rock temperature"
+)
 
 tempDF %>% 
   ggplot(aes(tidalHT, mean, shape = species, color = metric)) + 
   geom_point(alpha = 0.6, size = 2) + 
   geom_errorbar(aes(ymax = mean + CI, 
                     ymin = mean - CI), width = 0.2, alpha = 0.6) + 
+  geom_point(data = subset(tempDF, microhabitat == "crevice" & metric == "maximum"), 
+             aes(tidalHT, mean, shape = species, color = NULL), 
+             alpha = 0.6, size = 2) + 
   ylab(expression(paste("Temperature (", degree, "C)"))) + 
   xlab("Tidal height (m)") +   
   theme(strip.background = element_blank()) + 
   guides(color = FALSE) + 
-  theme(legend.position = "bottom") + 
+  theme(legend.position = "top") + 
   #theme(legend.title = element_blank()) + 
-  facet_wrap(~ dataset, ncol = 2, scales = "free_y") + 
-  guides(shape = guide_legend(title = "Habitat",
+  facet_wrap(~ dataset, ncol = 2, scales = "free_y", 
+             labeller = labeller(dataset = dataset_description)) + 
+  guides(shape = guide_legend(title = "SAMPLING AREA",
                               title.position = "top", 
-                              title.hjust = 0.5))
-
+                              title.hjust = 0.5, 
+                              title.theme = element_text(size = 10, face = "bold", angle = 0))) 
+  
 
 ggsave("figs/elahi_temp_body_rock.png", height = 3.5, width = 7)

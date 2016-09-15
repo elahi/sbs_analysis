@@ -69,7 +69,7 @@ weather_annual_summary2 <- weather_annual_summary %>%
   select(-coef_name, -t_value) %>% 
   rename(slope = value)
 
-write.csv(weather_annual_summary2, "output/weather_annual_summary2.csv")
+#write.csv(weather_annual_summary2, "output/weather_annual_summary2.csv")
 
 ##### PLOT ANNUAL AIR TEMP TIME SERIES #####
 unique(wAnnualL$metric)
@@ -92,7 +92,7 @@ ggDat %>%
               aes(year, value), 
               method = "lm")
 
-ggsave("figs/monterey_air_temperature.png", height = 3.5, width = 3.5)
+#ggsave("figs/monterey_air_temperature.png", height = 3.5, width = 3.5)
 
 ##### PLOT ANNUAL PRECIP TIME SERIES #####
 unique(wAnnualL$metric)
