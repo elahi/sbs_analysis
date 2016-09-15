@@ -10,7 +10,7 @@
 ##' @log Add a log here
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
+#rm(list=ls(all=TRUE)) 
 
 ##### LOAD PACKAGES, DATA #####
 
@@ -35,132 +35,62 @@ source("R/hms_sst_functions.R")
 # Original data were single, daily measurements
 glimpse(sst_hms)
 
-##### GET TIME SERIES BY SPECIES #####
-
-temp_series_dat <- get_hms_sst_series(size_data = dat4)
-
-##### GET MONTHLY MEANS #####
-
-## Entire hms dataset
-sst_monthly <- sst_hms %>% group_by(year, month) %>% 
-  summarise(monthly_mean = mean(tempC),
-            monthly_median = median(tempC), 
-            monthly_max = max(tempC), 
-            monthly_min = min(tempC), 
-            monthly_sd = sd(tempC), 
-            monthly_cv = monthly_sd/monthly_mean * 100) %>%
-  mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
-  ungroup()
-
-## For each species
-sst_monthly_species <- temp_series_dat %>% group_by(species, year, month) %>% 
-  summarise(monthly_mean = mean(tempC),
-            monthly_median = median(tempC), 
-            monthly_max = max(tempC), 
-            monthly_min = min(tempC), 
-            monthly_sd = sd(tempC), 
-            monthly_cv = monthly_sd/monthly_mean * 100) %>%
-  mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
-  ungroup()
-
-# Get in long format
-sst_monthly_species_L <- sst_monthly_species %>% 
-  gather(key = metric, value = tempC, monthly_mean:monthly_cv)
-
-##### GET ANNUAL TIME SERIES #####
+sst_hms %>% 
+  ggplot(aes(as.factor(month), tempC)) + geom_boxplot()
 
 # I want a time-series starting 10 years prior to the first historic sampling year
 # Childs sampled Littorina in 1947
 # So, start year is 1938
 
-elahi_sst_monthly <- sst_monthly %>% filter(year > 1936) %>% 
-  select(-monthly_sd)
+sst <- sst_hms %>% filter(year > 1937 & year < 2016) 
 
-elahi_sst <- elahi_sst_monthly %>% filter(year > 1936) %>% 
-  group_by(year) %>% 
-  summarise(mean_C = mean(monthly_mean), 
-            med_C = mean(monthly_median), 
-            max_C = mean(monthly_max), 
-            min_C = mean(monthly_min), 
-            cv_C = mean(monthly_cv))
+# What are the warmest and coldest months?
+sst %>% group_by(month) %>% 
+  summarise(meanTemp = mean(tempC)) %>% ungroup() %>% 
+  arrange(meanTemp)
 
-# Get in long format
-monthly_sstL <- elahi_sst_monthly %>% 
-  gather(key = metric, value = tempC, monthly_mean:monthly_cv)
+# Coldest == Dec, Jan, Feb
+# Warmest == July, Aug, Sep
 
-sstL <- elahi_sst %>% gather(key = metric, value = tempC, mean_C:cv_C)
 
-### Do the same, but for each species separately
+##### SUMMARISE MONTHLY #####
 
-head(sst_monthly_species)
-
-species_sst_annual <- sst_monthly_species %>% 
-  group_by(species, year) %>% 
-  summarise(mean_C = mean(monthly_mean), 
-            med_C = mean(monthly_median), 
-            max_C = mean(monthly_max), 
-            min_C = mean(monthly_min), 
-            cv_C = mean(monthly_cv)) %>%
-  ungroup()
-
-sp_sst_ann_L <- species_sst_annual %>% 
-  gather(key = metric, value = tempC, med_C:min_C)
-
-sp_sst_ann_L %>% 
-  ggplot(aes(year, tempC, color = metric)) + 
-  geom_point() + 
-  facet_wrap(~ species, nrow = 3)
-
-##### GET YEARS OF SNAIL SAMPLES #####
-head(dat4)
-
-spYrs <- dat4 %>% ungroup() %>% select(species, year) %>% distinct() %>% 
-  arrange(species, year) %>% 
-  group_by(species) %>% 
-  mutate(genus = unlist(strsplit(as.character(species), split = " +"))[1]) %>%
-  ungroup()
-
-spYrs
-
-spYrs$genus <- factor(spYrs$genus, levels = c("Chlorostoma", "Lottia", "Littorina"))
-
-##### GET TEMPERATURE BY ERA #####
-
-temp_period_dat <- get_hms_two_periods(size_data = dat4)
-
-##### SUMMARISE TEMPERATURE BY ERA #####
-
-names(temp_period_dat)
-
-dodge <- position_dodge(width = 0.9)
-
-# Daily temperature comparison
-temp_period_dat %>% 
-  ggplot(aes(species, tempC, fill = era)) +
-  geom_boxplot(position = dodge, notch = TRUE) 
-
-## Get monthly values
-temp_monthly <- temp_period_dat %>% group_by(species, era, year, month) %>% 
-  summarise(monthly_mean = mean(tempC), 
-            monthly_med = median(tempC), 
-            monthly_max = max(tempC), 
-            monthly_min = min(tempC), 
-            monthly_sd = sd(tempC), 
-            monthly_cv = monthly_sd/monthly_mean * 100) %>%
+sst_monthly <- sst %>% group_by(year, month) %>% 
+  summarise(median = median(tempC), 
+            maximum = max(tempC), 
+            minimum = min(tempC)) %>% 
   mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
   ungroup()
 
-temp_monthlyL <- temp_monthly %>% gather(key = metric, value = tempC, 
-                                         monthly_mean:monthly_min)
+##### GET ANNUAL TIME SERIES #####
 
-## Get annual values
-temp_annual <- temp_monthly %>% 
-  group_by(species, era, year) %>% 
-  summarise(mean_C = mean(monthly_mean),
-            med_C = mean(monthly_med), 
-            max_C = mean(monthly_max), 
-            min_C = mean(monthly_min), 
-            cv_C = mean(monthly_cv))
+# Calculate mean of hottest months for maximum per year
+sst_monthly_max <- sst_monthly %>% 
+  filter(month == 7 | month == 8 | month == 9) %>% 
+  group_by(year) %>% 
+  summarise(maximum = mean(maximum)) %>% ungroup()
+
+# Calculate mean of coldest months for minimum per year
+sst_monthly_min <- sst_monthly %>% 
+  filter(month == 12 | month == 1 | month == 2) %>% 
+  group_by(year) %>% 
+  summarise(minimum = mean(minimum)) %>% ungroup()
+
+# Calculate mean of median temperatures for median per year
+sst_monthly_med <- sst_monthly %>% 
+  group_by(year) %>% 
+  summarise(median = mean(median)) %>% ungroup()
+
+sst_annual <- inner_join(sst_monthly_max, sst_monthly_min, 
+                         by = "year") %>% 
+  inner_join(., sst_monthly_med, by = "year")
+
+sst_annual
 
 # Get in long format
-temp_annualL <- temp_annual %>% gather(key = metric, value = tempC, mean_C:cv_C)
+sst_annual_long <- sst_annual %>% 
+  gather(key = metric, value = tempC, maximum:median)
+
+
+
+

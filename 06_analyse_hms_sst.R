@@ -10,7 +10,7 @@
 ##' @log Add a log here
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
+#rm(list=ls(all=TRUE)) 
 
 source("05_summarise_hms_sst.R")
 
@@ -18,19 +18,12 @@ library(nlme)
 library(broom)
 # library(AICcmodavg)
 
-# wide format
-species_sst_annual
 # long format
-sp_sst_ann_L
+sst_annual_long
 
-##' I want to test whether max, median, or min temperatures have changed during the relevant time period for each species
-##' 
+##' I want to test whether max, median, or min temperatures have changed during the relevant time period
 
 ##### FUNCTION TO RETURN GLS SUMMARY #####
-
-df = species_sst_annual %>% filter(species == "Littorina keenae")
-dep_var = "max_C"
-ind_var = "year"
 
 get_gls_results <- function(df, dep_var, ind_var) {
 
@@ -55,9 +48,9 @@ get_gls_results <- function(df, dep_var, ind_var) {
   return(gls_results.i)
 }
 
-##### TRENDS IN ANNUAL MEANS OF MONTHLY TEMPERATURES #####
+##### TRENDS IN SST ANNUAL MEANS #####
 
-gls_annual_summary <- sp_sst_ann_L %>% group_by(species, metric) %>% 
+gls_annual_summary <- sst_annual_long %>% group_by(metric) %>% 
   do(get_gls_results(df = ., dep_var = "tempC", ind_var = "year")) %>%
   ungroup()
 gls_annual_summary
@@ -69,8 +62,6 @@ gls_annual_summary2 <- gls_annual_summary %>%
 
 write.csv(gls_annual_summary2, "output/gls_annual_summary2.csv")
 
-
-##### TRENDS IN MONTHLY TIME-SERIES #####
 
 
 

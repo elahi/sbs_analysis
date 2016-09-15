@@ -24,16 +24,20 @@ Summarising steps:
 ## Sea surface temperatures - Hopkins Marine Station
 
 Measurements: mercury thermometer
-Duration: January 1 1919 - July 31 2016
+Duration: January 1 1937 - Dec 31 2015
 Frequency: daily (usually in the morning)
 
 Summarising steps
   1. Get maximum, median, minimum temperature for each month
+  2. Calculate annual means:
+    * maximum = mean of the maximum for three hottest months (july, august, september)
+    * minimum = mean of the minimum for three coldest months (dec, jan, feb)
+    * median = mean of the median for all 12 months
 
 ## Air temperatures - Monterey NCDC
 
 Measurements: mercury thermometer (?)
-Duration: January 1 1951 - August 7 2016
+Duration: January 1 1951 - Dec 31 2015
 Frequency: daily maximum, daily minimum, and daily observed (only through 2010)
 
 Summarising steps

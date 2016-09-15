@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Plot intertidal temperatures
+##' @title Plot seawater and air temperature time-series together
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -11,50 +11,60 @@
 
 #rm(list=ls(all=TRUE)) 
 
-### Load limpet hindcasts (15 yrs of modeled body temperatures)
-source("05_summarise_limpet_temps.R")
-monthly_extremes
-la_summL2
+### Load HMS seawater temperature data
+source("05_summarise_hms_sst.R")
+sst_annual
+sst_annual_long
 
-### Load Monterey weather data and HMS sst data
+### Load Monterey weather data
+
+
 source("06_analyse_weather_data.R")
 head(wL); tail(wL)
 summary(weather3) # air_obs is the measurement of interest
 wAnnualL
 
-### HMS
-summary(sst_hms)
-# wide format
-species_sst_annual
-# long format
-sp_sst_ann_L
-# entire time series
-sstL
+### Load limpet hindcasts (15 yrs of modeled body temperatures)
+source("05_summarise_limpet_temps.R")
+monthly_extremes
+la_summL2
+
+
+
+
 
 theme_set(theme_bw(base_size = 12) + 
             theme(panel.grid = element_blank()))
 
 ##### PLOT SEAWATER TIME SERIES #####
 
-sst_monthly
+sst_monthly <- sst_hms %>% group_by(year, month) %>% 
+  summarise(median = median(tempC), 
+            maximum = max(tempC), 
+            minimum = min(tempC)) %>% 
+  mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
+  ungroup()
 
-ggDat <- sstL %>% filter(metric != "cv_C" & metric != "mean_C")
+# I want a time-series starting 10 years prior to the first historic sampling year
+# Childs sampled Littorina in 1947
+# So, start year is 1938
 
-ggDat %>%
+elahi_sst_monthly <- sst_monthly %>% filter(year > 1936 & year < 2016)
+
+# Get in long format
+monthly_sstL <- elahi_sst_monthly %>% 
+  gather(key = metric, value = tempC, median:minimum)
+
+sst_annual_long %>% #filter(metric == "maximum") %>% 
   ggplot(aes(year, tempC, color = metric)) + 
-  geom_point(alpha = 0.5) + 
-  #geom_smooth(method = "lm") + 
-  scale_color_manual(values = c("red", "black", "blue")) + 
+  geom_line(alpha = 0.25) +
+  geom_point(alpha = 0.25, size = 1) + 
   ylab(expression(paste("Sea surface temperature (", degree, "C)"))) + 
   xlab("Year") + 
-  geom_point(aes(x = year, y = 10.5, shape = genus, color = NULL), data = spYrs, 
-             alpha = 0.5, size = 3) + 
-  guides(color = FALSE) + 
   theme(legend.title = element_blank()) + 
   theme(legend.position = "top") + 
-  geom_smooth(data = subset(ggDat,  metric == "max_C"), 
-              aes(year, tempC), 
-              method = "lm")
+  geom_smooth(method = "lm")
+
 
   
 ##### LIMPET HINDCASTS #####
