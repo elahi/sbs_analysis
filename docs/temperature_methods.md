@@ -22,9 +22,9 @@ Summarising steps:
   2. Calculate mean daily max, median, minimum for each month for each position
 
 This summary was then used to:
-  1. Extract the single hottest, median, and coldest month for each run across the 15 year period. 
-  2. Calculate the mean annual max, median, min for each year
-  3. Calculate summer max, winter min, and median:
+  1. Extract the single hottest, median, and coldest month for each run across the 15 year period (used for rock and body temperature figure)
+  2. Calculate the mean annual max, median, min for each year (not used)
+  3. Calculate summer max, winter min, and median (used for temperature time series figure):
     * summer max = mean of the monthly maximum for July, Aug, Sept
     * winter min = mean of the monthly minimum for Dec - Feb
     * annual median = mean of the monthly median for the whole year

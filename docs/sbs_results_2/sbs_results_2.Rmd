@@ -23,27 +23,16 @@ library(knitr)
 
 ```
 
-# Tables {-}
-
-We used a linear mixed-effects model (nlme package) to test the hypothesis that snail size frequency distributions differed between era (past vs present), and that this variation was mediated by tidal height. We treated sampling areas as random intercepts in the model. 
-
-```{r aic1, echo = FALSE, eval = TRUE}
-aic1 <- read.csv("output/AIC_eraXspeciesXtidalht.csv") %>% 
-  select(-c(X, AIC, LL)) 
-kable(aic1, caption = "Model selection results for linear mixed effects models testing the fixed effects of era, species, and tidal height on snail body size")
-```
-
-The model selection results suggest a strong interaction between all three predictors. In general, the peaks of the size frequency distributions have shifted to the left for all three species (Fig. 1), and thus mean snail body size is xx% smaller now than it was xx years ago. 
-
-### Figures {-}
+# Figures {-}
 
 ![Size frequency distributions of three intertidal snails. The dashed red line indicates the 5th percentile of size for each species in the past. Only snails larger than this threshold were included for all statistical tests and summary calculations. We did this to ensure a conservative test of declining body size; that is, it is possible that the previous investigators sampled the smallest individuals less carefully than we did.](../../figs/sbs_fig1.png)
 
-![Snail body size (mean +- CI) as a function of tidal height and species. In general, mean body size has declined. However, *L. keenae* has actually increased in mean body size in the high intertidal. ](../../figs/elahi_size_era_tidal_3panel.png)
+![Snail body size (mean +- CI) as a function of era, tidal height and species. In general, mean body size has declined. However, *L. keenae* has increased in mean body size in the high intertidal. ](../../figs/elahi_size_era_tidal_3panel.png)
 
 ![Historical comparison of three (out of four) sampling areas (B-D) for *Littorina keenae* on High Rock at Cabrillo Point in Pacific Grove, California. In the 2014 photo, the red diamonds and circles indicate the locations of temperature loggers on exposed rock faces and rock crevices, respectively. The lowest and highest loggers were situated at approximately 3.6 and 7.6m above mean lower low water.](../../figs/high_rock_comparison_160912.png)
 
 ![Empirical rock and predicted body temperatures (mean +- CI of daily maximum, median, and minimum) quantified from 6-week deployments of temperature loggers in the gastropod sampling areas and predicted from heat budget models, respectively. Predictions are for a 30mm limpet (*Lottia gigantea*) from the same areas sampled for the three gastropods (*C. funebralis*, *L. digitalis*, *L. keenae*). The four black squares represent measurements from loggers placed in crevices where we sampled *L. keenae* (but not indicated for median and minimum temperatures for clarity). Note the different y-axes between panels. See Methods for details of measurements. ](../../figs/elahi_temp_body_rock.png)
 
-![Sea surface temperatures at Hopkins Marine Station. Each point represents the monthly mean of each year. Red, black, and blue points represent maximum, median, and minimum values. Gray symbols next to the x-axis represent the years during which snails were sampled](../../figs/hms_sst.png)
+![Air temperatures from a weather station in Monterey (36.6, -121.9; 2.44km south of the sampling sites; 117m above sea level), and seawater temperatures from Hopkins Marine Station, Pacific Grove. Black dashed lines are plotted for time-series if the trend was significant (P < 0.05). The thicker, shorter time-series represent predicted body temperature for a sampling location low (1.1m above mllw) and high (7.6m above mllw), plotted with air and seawater time-series, respectively. Gray symbols next to the x-axis represent the years during which snails were sampled.](../../figs/temp_timeseries.png)
 
+![Body size (median of each replicate) plotted as a function of median habitat temperature (mean +- CI) for all three species. The size of points is proportional to the number of snails in each replicate](../../figs/elahi_pres_medsize_quad_temp.png)
