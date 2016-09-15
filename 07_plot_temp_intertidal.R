@@ -51,11 +51,19 @@ tempDF <- rbind(temp_logger, temp_model)
 tempDF
 
 ##### PLOTS ######
+theme_set(theme_bw(base_size = 12) + 
+            theme(panel.grid = element_blank()))
 
 dataset_description <- c(
   Model = "Predicted body temperature", 
   Empirical = "Empirical rock temperature"
 )
+
+intertidal_text_df <- data.frame(x = c(rep(3.5, 3)), 
+                      y = c(9.25, 14, 19), 
+                      text1 = c("Min", "Median", "Max"), 
+                      dataset = rep("Model", 3), 
+                      metric = c("minimum", "median", "maximum"))
 
 tempDF %>% 
   ggplot(aes(tidalHT, mean, shape = species, color = metric)) + 
@@ -73,10 +81,16 @@ tempDF %>%
   #theme(legend.title = element_blank()) + 
   facet_wrap(~ dataset, ncol = 2, scales = "free_y", 
              labeller = labeller(dataset = dataset_description)) + 
-  guides(shape = guide_legend(title = "SAMPLING AREA",
-                              title.position = "top", 
-                              title.hjust = 0.5, 
-                              title.theme = element_text(size = 10, face = "bold", angle = 0))) 
+  guides(shape = 
+           guide_legend(title = "SAMPLING AREA", title.position = "top", 
+                        title.hjust = 0.5, 
+                        title.theme = 
+                          element_text(size = 10, face = "bold", angle = 0), 
+                        label.theme = 
+                          element_text(angle = 0, size = 8, face =  "italic"))) + 
+  geom_text(aes(x, y, label = text1, shape = NULL), 
+            data = intertidal_text_df, size = 3, 
+            hjust = 0, fontface = "bold")
   
 
-ggsave("figs/elahi_temp_body_rock.png", height = 3.5, width = 7)
+ggsave("figs/elahi_temp_body_rock.png", height = 4.5, width = 7)

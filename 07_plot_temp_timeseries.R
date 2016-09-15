@@ -1,0 +1,103 @@
+################################################################################
+##' @title Plot seawater and air temperature time-series together
+##'
+##' @author Robin Elahi
+##' @contact elahi.robin@gmail.com
+##' 
+##' @date 2016-09-13
+##' 
+##' @log 
+################################################################################
+
+#rm(list=ls(all=TRUE)) 
+
+# Get monterey air summary
+source("05_summarise_monterey_weather.R")
+air_annual_long <- air_annual_long %>% 
+  mutate(dataset = "Air")
+
+# Get SST summary
+source("05_summarise_hms_sst.R")
+sst_annual_long
+sst_annual_long <- sst_annual_long %>% 
+  mutate(dataset = "Seawater")
+
+### Load limpet hindcasts (15 yrs of modeled body temperatures)
+source("05_summarise_limpet_temps.R")
+lim_annual_seasons_long2
+
+theme_set(theme_bw(base_size = 12) + 
+            theme(panel.grid = element_blank()))
+
+### Combine data
+temp_records <- rbind(sst_annual_long, air_annual_long)
+
+##### GET YEARS OF SNAIL SAMPLES #####
+head(dat4)
+
+spYrs <- dat4 %>% ungroup() %>% select(species, year) %>% distinct() %>% 
+  arrange(species, year) %>% 
+  group_by(species) %>% 
+  mutate(genus = unlist(strsplit(as.character(species), split = " +"))[1]) %>%
+  ungroup()
+
+spYrs
+
+spYrs$genus <- factor(spYrs$genus, levels = c("Chlorostoma", "Lottia", "Littorina"))
+
+##### TWO-PANEL PLOT #####
+
+sort(unique(lim_annual_seasons_long2$tidalHT))
+
+lim_for_sst <- lim_annual_seasons_long2 %>% 
+  filter(tidalHT == 1.1) %>% 
+  mutate(dataset = "Seawater")
+
+lim_for_air <- lim_annual_seasons_long2 %>% 
+  filter(tidalHT == 7.55) %>% 
+  mutate(dataset = "Air")
+
+text_df <- data.frame(x = c(rep(1940, 3)), 
+                      y = c(6.5, 13, 21), 
+                      text1 = c("Min", "Median", "Max"), 
+                      dataset = rep("Air", 3), 
+                      metric = c("minimum", "median", "maximum"))
+
+temp_records %>% 
+  ggplot(aes(year, tempC, color = metric)) + 
+  geom_line(alpha = 1) +
+  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  xlab("Year") + 
+  theme(legend.title = element_blank()) + 
+  theme(legend.position = "top") + 
+  guides(color = FALSE) + 
+  guides(shape = 
+           guide_legend(title = "SAMPLING EVENT", title.position = "top", 
+                        title.hjust = 0.5, 
+                        title.theme = 
+                                element_text(size = 10, face = "bold", angle = 0), 
+                        direction = "horizontal", 
+                        label.theme = element_text(angle = 0, size = 8, 
+                                                   face =  "italic"))) + 
+  facet_wrap(~ dataset) + 
+  theme(strip.background = element_blank()) + 
+  geom_line(data = lim_for_sst, 
+             aes(year, tempC), alpha = 0.5, size = 1.5) + 
+  geom_line(data = lim_for_air, 
+            aes(year, tempC), alpha = 0.5, size = 1.5) + 
+  geom_smooth(data = subset(temp_records, dataset == "Seawater" & 
+                              metric == "maximum"), method = "lm", 
+              color = "black", linetype = "dashed") + 
+  geom_smooth(data = subset(temp_records, dataset == "Air" & 
+                              metric == "maximum"), method = "lm", 
+              color = "black", linetype = "dashed") + 
+  geom_smooth(data = subset(temp_records, dataset == "Air" & 
+                              metric == "minimum"), method = "lm", 
+              color = "black", linetype = "dashed") + 
+  geom_text(aes(x, y, label = text1), data = text_df, size = 3, 
+            hjust = 0, fontface = "bold") + 
+  geom_point(aes(x = year, y = 5, shape = species, color = NULL), data = spYrs, 
+             alpha = 0.6, size = 2)
+
+ggsave("figs/temp_timeseries.png", height = 4.5, width = 7)
+  
