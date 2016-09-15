@@ -30,9 +30,9 @@ Frequency: daily (usually in the morning)
 Summarising steps
   1. Get maximum, median, minimum temperature for each month
   2. Calculate annual means:
-    * maximum = mean of the maximum for three hottest months (july, august, september)
-    * minimum = mean of the minimum for three coldest months (dec, jan, feb)
-    * median = mean of the median for all 12 months
+    * maximum = mean of the monthly maximum for three hottest months (july, aug, sept)
+    * minimum = mean of the monthly minimum for three coldest months (dec, jan, feb)
+    * median = mean of the monthly median for all 12 months
 
 ## Air temperatures - Monterey NCDC
 
@@ -41,6 +41,7 @@ Duration: January 1 1951 - Dec 31 2015
 Frequency: daily maximum, daily minimum, and daily observed (only through 2010)
 
 Summarising steps
-  1. Get maximum of daily maximum for each month
-  2. Get median of daily observed temperature for each month
-  3. Get minimum of daily minimum for each month
+  1. Calculate annual means:
+    * maximum = mean of the daily maximum for three hottest months (aug, sept, oct)
+    * minimum = mean of the daily minimum for three coldest months (dec, jan, feb)
+    * 'median' = mean of the daily observed temperature for all 12 months

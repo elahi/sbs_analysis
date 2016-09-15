@@ -36,16 +36,13 @@ glimpse(weather)
 
 unique(weather$Wx)
 
-weather2 <- weather %>% select(dateR, month, year, precip, air_max:air_obs)
+weather2 <- weather %>% select(dateR, month, year, air_max:air_obs) %>% 
+  filter(year < 2016)
+
 head(weather2)
 
-weather3 <- weather2 %>% filter(!is.na(air_obs))
-tail(weather3)
-tail(weather2)
-
-wL <- weather2 %>% select(-precip) %>% 
-  gather(., key = climate_var, value = value, air_max:air_obs) %>% 
-  filter(year < 2016)
+wL <- weather2 %>%
+  gather(., key = climate_var, value = value, air_max:air_obs)
 
 tail(wL)
 glimpse(wL)
@@ -66,38 +63,61 @@ wL %>% filter(!is.na(value)) %>%
   group_by(month, year, climate_var) %>% tally() %>% 
   filter(n < 28)
 
+##### SUMMARISE MONTHLY #####
+head(weather2)
+tail(weather2)
+
+# Use air_obs only
+wM <- weather2 %>% filter(!is.na(air_obs)) %>% 
+  group_by(year, month) %>% 
+  summarise(median = median(air_obs, na.rm = TRUE), 
+            maximum = max(air_obs, na.rm = TRUE), 
+            minimum = min(air_obs, na.rm = TRUE)) %>% 
+  mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
+  ungroup()
+
+# Use air_obs, air_max, air_min
+wM <- weather2 %>% group_by(year, month) %>% 
+  summarise(median = median(air_obs, na.rm = TRUE), 
+            maximum = median(air_max, na.rm = TRUE), 
+            minimum = median(air_min, na.rm = TRUE)) %>% 
+  mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
+  ungroup()
+
+wM
+tail(wM)
+summary(wM)
+
 ##### GET ANNUAL TIME SERIES #####
-head(wL)
-unique(wL$climate_var)
 
 # Calculate mean of hottest months for maximum per year
-wL_monthly_max <- wL %>% filter(!is.na(value)) %>% 
-  filter(climate_var == "air_max") %>% 
+monthly_max <- wM %>% filter(!is.na(maximum)) %>% 
   filter(month == 10 | month == 8 | month == 9) %>% 
   group_by(year) %>% 
-  summarise(maximum = mean(value)) %>% ungroup()
+  summarise(maximum = mean(maximum)) %>% ungroup()
 
 # Calculate mean of coldest months for minimum per year
-wL_monthly_min <- wL %>% filter(!is.na(value)) %>% 
-  filter(climate_var == "air_min") %>% 
-  #filter(month == 12 | month == 1 | month == 2) %>% 
+monthly_min <- wM %>% filter(!is.na(minimum)) %>% 
+  filter(month == 12 | month == 1 | month == 2) %>% 
   group_by(year) %>% 
-  summarise(minimum = mean(value)) %>% ungroup()
+  summarise(minimum = mean(minimum)) %>% ungroup()
 
 # Calculate mean of observed temperatures for median per year
-wL_monthly_med <- wL %>% filter(!is.na(value)) %>% 
-  filter(climate_var == "air_obs") %>% 
+monthly_med <- wM %>% filter(!is.na(median)) %>% 
   group_by(year) %>% 
-  summarise(median = mean(value)) %>% ungroup()
+  summarise(median = mean(median)) %>% ungroup()
 
-air_annual <- inner_join(wL_monthly_max, wL_monthly_min, 
+air_annual <- inner_join(monthly_max, monthly_min, 
                          by = "year") %>% 
-  inner_join(., wL_monthly_med, by = "year")
+  inner_join(., monthly_med, by = "year")
 
 air_annual
+tail(air_annual)
 
 # Get in long format
 air_annual_long <- air_annual %>% 
-  gather(key = metric, value = tempC, maximum:median)
+  gather(key = metric, value = tempC, maximum:median) %>%
+  filter(!is.na(tempC))
 
+tail(air_annual_long)
 
