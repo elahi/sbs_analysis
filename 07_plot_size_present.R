@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Summarising snail size frequency data - present data only 
+##' @title Plot snail size data vs temperature - present data only 
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -11,85 +11,95 @@
 
 # rm(list=ls(all=TRUE)) 
 
-# Load data
+### Load Elahi size present day data
 source("05_summarise_size_data.R")
+# summarized by position 
+posMeans
 
-##### PLOT INDIVIDUAL SIZE V TEMPERATURE #####
-pres3 %>% 
-  ggplot(aes(mean, size1mm, color = species, 
-             shape = species)) +
-  geom_point(alpha = 0.25) + 
-  geom_smooth(method = "lm") + 
-  xlab(expression(paste("Temperature (", degree, "C)"))) + 
-  ylab("Size (mm)") + 
-  theme(legend.position = "top") + 
-  theme(legend.title = element_blank()) + 
-  facet_wrap(~ metric, scales = "free") + 
-  theme(legend.title = element_blank()) 
+### Load latitudinal size gradients
+source("R/process_lat_gradient_size.R")
+lat_grad_df
 
-pres3 %>% filter(metric == "daily_med") %>% 
-  ggplot(aes(mean, size1mm, color = species, 
-             shape = species)) +
-  geom_point(alpha = 0.25) + 
-  geom_smooth(method = "lm") + 
-  labs(x = "Temperature (C)", y = "Size (mm)") + 
-  theme(legend.position = "top") + 
-  theme(legend.title = element_blank()) + 
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2), linetype = "dashed")
+###
+source("R/multiplotF.R")
+library(grid)
+theme_set(theme_bw(base_size = 12))
 
-##### PLOT SAMPLE UNIT SIZE BY TEMPERATURE #####
-head(suMeans3)
-unique(suMeans3$metric)
+##### PLOT POSITION SIZE MEANS VS MAX TEMPERATURE #####
 
-ggDat <- suMeans3 %>% filter(metric != "daily_mean" & metric != "daily_cv")
-
-### MEDIAN SIZE
-ggDat %>% 
-  ggplot(aes(mean, size_median, color = species, 
-             shape = species, size = size_n)) +
-  geom_point(alpha = 0.6) + 
-  geom_smooth(method = "lm") + 
-  xlab(expression(paste("Temperature (", degree, "C)"))) + 
-  ylab("Median size (mm)") + 
-  theme(legend.position = "top") + 
-  theme(legend.title = element_blank()) + 
-  facet_wrap(~ metric, scales = "free") + 
-  guides(size = FALSE) + 
-  theme(strip.background = element_blank())
-
-ggsave("figs/elahi_pres_medsize_temp.png", height = 3.5, width = 7)
-
-### MAXIMUM SIZE
-unique(ggDat$position)
-unique(ggDat$sampleUnit)
-unique(ggDat$sampleArea)
+ggDat <- posMeans %>% filter(metric == "daily_max")
 
 ggDat %>% 
-  ggplot(aes(mean, size_max, color = species, 
-             shape = species, size = size_n)) +
-  geom_point(alpha = 0.6) + 
-  geom_smooth(method = "lm") + 
+  ggplot(aes(mean, size_mean, color = species, 
+             shape = species, size = NULL)) +
+  geom_point(alpha = 0.75, size = 2) + 
+  geom_errorbar(aes(ymax = size_mean + size_CI, 
+                    ymin = size_mean - size_CI, 
+                    size = NULL), width = 0.5, alpha = 0.75) + 
+  geom_errorbarh(aes(xmax = mean + CI, 
+                     xmin = mean - CI, 
+                     size = NULL), height = 0.5, alpha = 0.75) + 
+  # geom_smooth(method = "lm", se = TRUE,  aes(color = NULL, shape = NULL), 
+  #             color = "black") + 
+  # geom_smooth(method = "lm", se = FALSE) + 
   xlab(expression(paste("Temperature (", degree, "C)"))) + 
-  ylab("Maximum size (mm)") + 
-  theme(legend.position = "top") + 
-  theme(legend.title = element_blank()) + 
-  facet_wrap(~ metric, scales = "free") + 
-  guides(size = FALSE)
+  ylab("Size (mm)") +   
+  # theme(legend.position = "top") + 
+  theme(legend.position = c(1,1), legend.justification = c(1,1)) + 
+  theme(legend.title = element_blank(), 
+        legend.text = element_text(face = "italic", size = 8)) + 
+  scale_colour_grey()
 
-ggsave("figs/elahi_pres_maxsize_temp.png", height = 3.5, width = 7)
+ggsave("figs/elahi_pres_meansize_maxtemp.png", height = 3.5, width = 3.5)
 
+##### Two panel plot #####
 
-### MEDIAN SIZE WITH QUADRATIC
-ggDat %>% filter(metric == "daily_med") %>% 
-  ggplot(aes(mean, size_median, color = species, 
-             shape = species, size = size_n)) +
-  geom_point(alpha = 0.6) + 
-  geom_smooth(method = "lm", formula = y ~ x + I(x^2)) + 
+range(ggDat$size_mean)
+range(ggDat$mean)
+
+facet_A <- grobTree(textGrob("A", x = 0.1, y = 0.95, hjust = 0.5))
+
+p1 <- ggDat %>% 
+  ggplot(aes(mean, size_mean, color = species, 
+             shape = species, size = NULL)) +
+  geom_point(alpha = 0.75, size = 2) + 
+  geom_errorbar(aes(ymax = size_mean + size_CI, 
+                    ymin = size_mean - size_CI, 
+                    size = NULL), width = 0.5, alpha = 0.75) + 
+  geom_errorbarh(aes(xmax = mean + CI, 
+                     xmin = mean - CI, 
+                     size = NULL), height = 0.5, alpha = 0.75) + 
   xlab(expression(paste("Temperature (", degree, "C)"))) + 
-  ylab("Median size (mm)") + 
-  theme(legend.position = "top") + 
-  theme(legend.title = element_blank()) + 
-  guides(size = FALSE) 
-ggsave("figs/elahi_pres_medsize_quad_temp.png", height = 3.5, width = 3.5)
+  ylab("Size (mm)") +   
+  theme(legend.position = c(1,1), legend.justification = c(1,1)) + 
+  theme(legend.title = element_blank(), 
+        legend.text = element_text(face = "italic", size = 8)) + 
+  scale_colour_grey() +
+  annotation_custom(facet_A)
 
+p1
 
+facet_B <- grobTree(textGrob("B", x = 0.05, y = 0.95, hjust = 0.5))
+
+p2 <- lat_grad_df %>% 
+  ggplot(aes(Latitude, size_mm, shape = species, color = species)) + 
+  geom_point(alpha = 0.75, size = 2) + 
+  # geom_smooth(method = "lm") + 
+  scale_x_reverse() + 
+  theme(legend.position = "none") + 
+  #theme(legend.position = c(1,1), legend.justification = c(1,1)) + 
+  theme(legend.title = element_blank(), 
+        legend.text = element_text(face = "italic", size = 8)) + 
+  scale_colour_grey() + 
+  xlab("Latitude") + 
+  ylab("Size (mm)") +     
+  scale_shape_manual(values = c("Chlorostoma funebralis" = 16,
+                                "Littorina keenae" = 15)) +
+  annotation_custom(facet_B) + 
+  geom_vline(xintercept = 36.64, alpha = 0.05, size = 6)
+
+p2
+
+png("./figs/spatial_temp_size.png", width = 7, height = 3.5, units = "in", res = 300)
+multiplot(p1, p2, cols = 2)
+dev.off()	

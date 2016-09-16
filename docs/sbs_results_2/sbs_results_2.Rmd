@@ -1,6 +1,6 @@
 ---
-title: "Decadal-scale changes in body size along a thermal gradient are consistent
-  with the temperature-size rule: a case study using intertidal snails"
+title: "Decadal-scale changes in gastropod body size along a thermal gradient support
+  the temperature-size rule"
 author: "Robin Elahi"
 date: "September 12, 2016"
 output: pdf_document
@@ -35,4 +35,4 @@ library(knitr)
 
 ![Air temperatures (A) from a weather station in Monterey (36.6, -121.9; 2.44km south of the sampling sites; 117m above sea level), and seawater temperatures (B) from Hopkins Marine Station, Pacific Grove. Gray dashed lines and confidence intervals are plotted for time-series if the trend was significant (P < 0.05). In (A), the black lines represent time-series of predicted body temperatures for a sampling location low (1.1m above mean lower low water (mllw)) in the intertidal. In (B), the black lines represent time-series of predicted body temperatures for a sampling location high (7.6m above mllw) in the intertidal. Note that maximum air temperature coincides with predictions of body temperature high in the intertidal, but maximum seawater temperature coincides with predictions low in the intertidal. Gray symbols next to the x-axis represent the years during which snails were sampled.](../../figs/temp_timeseries.png)
 
-![Body size (median of each replicate) plotted as a function of median habitat temperature (mean +- CI) for all three species. The size of points is proportional to the number of snails in each replicate](../../figs/elahi_pres_medsize_temp.png)
+![Microhabitat (A) and macroecological (B) spatial evidence for the temperature-size rule in intertidal gastropods. In (A), body size (mean + CI) is plotted against daily maximum rock temperature (mean +- CI) for all three species. In (B), body size of two gastropods sampled along the west coast of North America is plotted against latitude. For *C. funebralis*, points represent mean body size from Frank (1975). For *L. keenae*, points represent maximum, minimum, and estimated size for each latitude from Lee and Boulding (2010). Size was estimated using a quadratic regression in Lee and Boulding (2010). The gray vertical bar in (B) represents the latitudinal range relevant to the present study.](../../figs/spatial_temp_size.png)

@@ -16,7 +16,6 @@ source("05_summarise_size_data.R")
 
 library(nlme)
 library(AICcmodavg)
-
 # library(lme4)
 
 ##' For present day snails only:
@@ -46,8 +45,6 @@ unique(pres3$metric)
 unique(pres3$sampleUnit)
 unique(pres3$sampleArea)
 names(pres3)
-
-posMeans
 
 ##### DAILY MEAN TEMPERATURE #####
 dat_mean <- pres3 %>% filter(metric == "daily_mean")
@@ -179,23 +176,3 @@ fullMod <- update(Cand.mod[[1]], method = "REML")
 summary(fullMod)
 plot(fullMod)
 anova(fullMod)
-
-
-##### ANALYSIS BY POSITION #####
-
-pos_max <- posMeans %>% filter(metric == "daily_max")
-pos_max_mod <- lm(size_mean ~ mean + species, data = pos_max)
-pos_max_mod
-anova(pos_max_mod)
-summary(pos_max_mod)
-plot(pos_max_mod)
-
-pos_med <- posMeans %>% filter(metric == "daily_med")
-pos_med_mod <- lm(size_mean ~ mean + species, data = pos_med)
-anova(pos_med_mod)
-summary(pos_med_mod)
-
-pos_min <- posMeans %>% filter(metric == "daily_min")
-pos_min_mod <- lm(size_mean ~ mean + species, data = pos_min)
-anova(pos_min_mod)
-summary(pos_min_mod)

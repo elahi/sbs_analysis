@@ -131,7 +131,9 @@ pres2 <- sizeLL %>% select(sampleUnit, position) %>%
 pres3 <- tempMeans %>% select(position, aspect, slope, metric:CI) %>% 
   inner_join(pres2, ., by = "position")
 
-head(pres3)
+# Therea are 22 positions with distinct temperature estimates
+tempMeans %>% filter(metric == "daily_max") %>% 
+  select(position, mean) %>% View()
 
 pres3 %>% filter(metric == "daily_max") %>% 
   ggplot(aes(mean, size1mm, color = species, 
@@ -165,10 +167,15 @@ suMeans2 <- sizeLL %>% select(sampleUnit, position) %>%
 suMeans3 <- tempMeans %>% select(position, aspect, slope, metric:CI) %>% 
   inner_join(suMeans2, ., by = "position")
 
-##### SUMMARISE DATA BY NEST1 #####
+##### SUMMARISE DATA BY POSITION #####
+unique(pres3$sampleArea)
 
-nest1Means <- pres %>% filter(!is.na(size1mm)) %>% 
-  group_by(species, sp, site, nest1, year, lat, long, tideHTm) %>% 
+# There are 17 positions with distinct temperature data
+pres3 %>% filter(metric == "daily_max") %>% select(position, mean) %>% distinct()
+
+posMeans <- pres3 %>% filter(!is.na(size1mm)) %>% 
+  group_by(species, sp, position, year, 
+           metric, mean, CI) %>% 
   summarise(size_mean = mean(size1mm), 
             size_sd = sd(size1mm),
             size_n = n(), 
@@ -177,3 +184,29 @@ nest1Means <- pres %>% filter(!is.na(size1mm)) %>%
             tidalHT_mean = mean(tideHTm, na.rm = TRUE), 
             size_max = quantile(size1mm, 0.95)) %>% 
   ungroup()
+
+posMeans$metric
+
+posMeans %>% filter(metric != "daily_mean" & metric != "daily_cv") %>% 
+  ggplot(aes(mean, size_mean, color = species, 
+             shape = species, size = size_n)) +
+  geom_point(alpha = 0.5) + 
+  geom_errorbar(aes(ymax = size_mean + size_CI, 
+                    ymin = size_mean - size_CI, 
+                    size = NULL), width = 0, alpha = 1) + 
+  geom_smooth(method = "lm", se = TRUE,  aes(color = NULL, shape = NULL)) + 
+  labs(x = "Temperature (C)", y = "Size (mm)") + 
+  theme(legend.position = "top") + 
+  theme(legend.title = element_blank()) + 
+  facet_wrap(~ metric, scales = "free_x")
+
+posMeans %>% filter(metric != "daily_mean" & metric != "daily_cv") %>% 
+  ggplot(aes(mean, size_max, color = species, 
+             shape = species, size = size_n)) +
+  geom_point(alpha = 0.5) + 
+  geom_smooth(method = "lm", se = TRUE) + 
+  labs(x = "Temperature (C)", y = "Size (mm)") + 
+  theme(legend.position = "top") + 
+  theme(legend.title = element_blank()) + 
+  facet_wrap(~ metric, scales = "free_x")
+
