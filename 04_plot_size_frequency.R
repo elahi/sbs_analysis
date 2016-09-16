@@ -77,7 +77,8 @@ plot_histo_panel <- function(df, bin_width = 1) {
     geom_histogram(aes(y = ..count../sum(..count..)), binwidth = bin_width, 
                    color = "black", fill = "gray") +
     xlab("Size (mm)") + ylab("Proportion") +
-    geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red") 
+    geom_vline(aes(xintercept = size0.05), 
+               linetype = "dashed", color = "black", alpha = 0.65) 
   
   return(p)
   
@@ -85,8 +86,10 @@ plot_histo_panel <- function(df, bin_width = 1) {
   
 # Need to customize for each panel:
 
-theme_set(theme_bw(base_size = 10) + 
-            theme(panel.grid = element_blank()))
+theme_set(theme_bw(base_size = 10))
+
+# theme_set(theme_bw(base_size = 10) + 
+#             theme(panel.grid = element_blank()))
 
 fig1a <- plot_histo_panel(waraPast, bin_width = 2) + 
   scale_x_continuous(limits = c(2, 32)) + 

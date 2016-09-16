@@ -11,6 +11,8 @@
 
 #rm(list=ls(all=TRUE)) 
 
+library(grid)
+
 # Load temperature logger data (6 weeks of empirical data)
 source("05_summarise_intertidal_temps.R")
 tempMeans
@@ -51,8 +53,10 @@ tempDF <- rbind(temp_logger, temp_model)
 tempDF
 
 ##### PLOTS ######
-theme_set(theme_bw(base_size = 12) + 
-            theme(panel.grid = element_blank()))
+theme_set(theme_bw(base_size = 12))
+
+# theme_set(theme_bw(base_size = 12) + 
+#             theme(panel.grid = element_blank()))
 
 dataset_description <- c(
   Model = "Predicted body temperature", 
@@ -65,9 +69,20 @@ intertidal_text_df <- data.frame(x = c(rep(3.5, 3)),
                       dataset = rep("Model", 3), 
                       metric = c("minimum", "median", "maximum"))
 
+facet_label_text <- tempDF %>% group_by(dataset) %>% 
+  summarise(minValue = min(mean), 
+            maxValue = max(mean)) %>%  
+  mutate(x = 0, 
+         text1 = c("A", "B"), 
+         dataset = c("Empirical", "Model"), 
+         y = c(38.5, 20.5))
+
+
 tempDF %>% 
   ggplot(aes(tidalHT, mean, shape = species, color = metric)) + 
   geom_point(alpha = 0.6, size = 2) + 
+  geom_line(aes(group = interaction(species, metric), color = NULL), 
+            alpha = 1, size = 0.3) + 
   geom_errorbar(aes(ymax = mean + CI, 
                     ymin = mean - CI), width = 0.2, alpha = 0.6) + 
   geom_point(data = subset(tempDF, microhabitat == "crevice" & metric == "maximum"), 
@@ -90,7 +105,10 @@ tempDF %>%
                           element_text(angle = 0, size = 8, face =  "italic"))) + 
   geom_text(aes(x, y, label = text1, shape = NULL), 
             data = intertidal_text_df, size = 3, 
-            hjust = 0, fontface = "bold")
+            hjust = 0, fontface = "bold") + 
+  geom_text(aes(x, y, label = text1, color = NULL, shape = NULL), 
+            data = facet_label_text, size = 5, hjust = 0.25, vjust = 0.75, 
+            show.legend = FALSE) 
   
 
 ggsave("figs/elahi_temp_body_rock.png", height = 4.5, width = 7)
