@@ -30,14 +30,13 @@ dat <- read.csv("./data/buttonDeployment.csv", na.strings = c("", "NA"))
 
 # get one observation for each position (there are two, meant for each of the loggers
 # in each zspar blob)
+dat <- dat %>% distinct(position, .keep_all = TRUE)
 head(dat)
-dat <- dat %>% distinct(position)
-dat
 
 # load gps coordinates for each logger position from etrex gpx file
 gps <- read.csv("./data/ibuttons_gps_150801.csv", na.strings = c("", "NA"))
 gps <- gps %>% select(lon, lat, ele, time, name) %>% rename(gps = name)
-gps
+head(gps)
 
 # now join files
 dat2 <- inner_join(dat, gps, by = "gps")

@@ -52,13 +52,13 @@ dat$LL <- with(dat, paste(lat2, long2, sep = ","))
 ### that were sampled in historic and modern studies
 
 # Littorina keenae = nest1 (zoneA, zoneB, zoneC, zoneD)
-dat %>% filter(sp == "LIKE") %>% distinct(nest1)
+dat %>% filter(sp == "LIKE") %>% distinct(nest1, .keep_all = TRUE)
 
 # Lottia digitalis = site (areaA, areaB, areaC) and nest1 (zone1, zone2, zone3)
-dat %>% filter(sp == "LODI") %>% distinct(site, nest1)
+dat %>% filter(sp == "LODI") %>% distinct(site, nest1,.keep_all = TRUE)
 
 # Chlorostoma funebralis = site (Wara.B, Wara.D)
-dat %>% filter(sp == "CHFU") %>% distinct(site)
+dat %>% filter(sp == "CHFU") %>% distinct(site, .keep_all = TRUE)
 
 # Create new column called 'sampleArea' based on 
 # the areas that were resampled in modern surveys
@@ -77,7 +77,8 @@ dat %>% filter(sp == "LIKE") %>% group_by(sampleUnit) %>% tally()
 
 # Chlorostoma funebralis = nest1 + nest2 = sampleUnit
 dat %>% filter(sp == "CHFU") %>% group_by(sampleUnit) %>% tally() 
-dat %>% filter(sp == "CHFU") %>% distinct(site, nest1, nest2) %>% select(nest1:long) %>% 
+dat %>% filter(sp == "CHFU") %>% distinct(site, nest1, nest2, .keep_all = TRUE) %>% 
+  select(nest1:long) %>% 
   head()
 
 # Lottia digitalis = site + nest1 + nest2 (quadrats within tidal heights)
