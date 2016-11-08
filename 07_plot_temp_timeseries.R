@@ -116,3 +116,59 @@ temp_records %>%
 
 ggsave("figs/temp_timeseries.png", height = 4.5, width = 7)
   
+##### TWO-PANEL PLOT - FOR PPT #####
+
+sort(unique(lim_annual_seasons_long2$tidalHT))
+
+lim_for_sst <- lim_annual_seasons_long2 %>% 
+  filter(tidalHT == 1.1) %>% 
+  mutate(dataset = "Seawater")
+
+lim_for_air <- lim_annual_seasons_long2 %>% 
+  filter(tidalHT == 7.55) %>% 
+  mutate(dataset = "Air")
+
+text_df <- data.frame(x = c(rep(1940, 3)), 
+                      y = c(6.5, 13, 21), 
+                      text1 = c("Min", "Median", "Max"), 
+                      dataset = rep("Air", 3), 
+                      metric = c("minimum", "median", "maximum"))
+
+facet_label_text <- data.frame(x = rep(1938, 2), 
+                               y = rep(23.3, 2), 
+                               text1 = c("A", "B"), 
+                               dataset = c("Air", "Seawater"))
+
+temp_records %>% 
+  ggplot(aes(year, tempC, color = metric)) + 
+  geom_smooth(data = subset(temp_records, dataset == "Seawater" & 
+                              metric == "maximum"), method = "lm", 
+              color = "darkgray", linetype = "dashed") + 
+  geom_smooth(data = subset(temp_records, dataset == "Air" & 
+                              metric == "maximum"), method = "lm", 
+              color = "darkgray", linetype = "dashed") + 
+  geom_smooth(data = subset(temp_records, dataset == "Air" & 
+                              metric == "minimum"), method = "lm", 
+              color = "darkgray", linetype = "dashed") + 
+  geom_line(alpha = 1) +
+  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  xlab("Year") + 
+  theme(legend.title = element_blank()) + 
+  theme(legend.position = "top") + 
+  guides(color = FALSE) + 
+  guides(shape = 
+           guide_legend(title = "SAMPLING EVENT", title.position = "top", 
+                        title.hjust = 0.5, 
+                        title.theme = 
+                          element_text(size = 10, face = "bold", angle = 0), 
+                        direction = "horizontal", 
+                        label.theme = element_text(angle = 0, size = 8, 
+                                                   face =  "italic"))) + 
+  facet_wrap(~ dataset) + 
+  theme(strip.background = element_blank()) + 
+  geom_text(aes(x, y, label = text1), data = text_df, size = 3, 
+            hjust = 0, fontface = "bold") 
+
+
+ggsave("figs/temp_timeseries_ppt.png", height = 3.5, width = 7)
+
