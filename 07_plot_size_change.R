@@ -79,3 +79,23 @@ ggDat %>%
 
 
 ggsave("figs/elahi_size_era_tidal.png", height = 3.5, width = 5)
+
+##### PLOT MEAN SIZES TIDAL HEIGHT - THREE PANELS - PPT #####
+
+theme_set(theme_gray(base_size = 12))
+
+ggDat %>% 
+  ggplot(aes(tidalHeight, size_mean, color = era, shape = species)) + 
+  geom_point(alpha = 1, size = 2) + 
+  geom_errorbar(aes(ymax = size_mean + size_CI, 
+                    ymin = size_mean - size_CI), width = 0.1, alpha = 0.6) + 
+  labs(x = "Tidal height (m)", y = "Size (mm)") + 
+  theme(strip.background = element_blank(), 
+        strip.text = element_text(face = "italic")) + 
+  facet_wrap(~ species) + 
+  guides(shape = FALSE) + 
+  theme(legend.position = c(0, 0.0), legend.justification = c(0, 0)) + 
+  theme(legend.title = element_blank()) + 
+  scale_color_manual(values = c("darkgray", "black"))
+
+ggsave("figs/elahi_size_era_tidal_3panel_ppt.png", height = 3.5, width = 7)

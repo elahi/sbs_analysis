@@ -131,12 +131,12 @@ cbPalette <- c("#999999", "#E69F00", "#56B4E9")
 tempDF %>% filter(metric == "maximum") %>% 
   filter(species == "Chlorostoma funebralis") %>% 
   ggplot(aes(tidalHT, mean, shape = species, color = species)) + 
-  geom_point(alpha = 0.6, size = 2) + 
+  geom_point(alpha = 1, size = 2) + 
   geom_line(aes(group = interaction(species, metric), color = species), 
-            alpha = 1, size = 0.15) + 
+            alpha = 1, size = 0.5) + 
   scale_colour_manual(values=cbPalette) + 
   geom_errorbar(aes(ymax = mean + CI, 
-                    ymin = mean - CI), width = 0.2, alpha = 0.6) + 
+                    ymin = mean - CI), width = 0.3, alpha = 1) + 
   ylab(expression(paste("Maximum temperature (", degree, "C)"))) + 
   xlab("Tidal height (m)") +   
   theme(strip.background = element_blank()) + 
@@ -153,12 +153,12 @@ ggsave("figs/elahi_temp_body_rock_ppt1.png", height = 3.5, width = 7)
 tempDF %>% filter(metric == "maximum") %>% 
   filter(species != "Littorina keenae") %>% 
   ggplot(aes(tidalHT, mean, shape = species, color = species)) + 
-  geom_point(alpha = 0.6, size = 2) + 
+  geom_point(alpha = 1, size = 2) + 
   geom_line(aes(group = interaction(species, metric), color = species), 
-            alpha = 1, size = 0.15) + 
+            alpha = 1, size = 0.5) + 
   scale_colour_manual(values=cbPalette) + 
   geom_errorbar(aes(ymax = mean + CI, 
-                    ymin = mean - CI), width = 0.2, alpha = 0.6) + 
+                    ymin = mean - CI), width = 0.3, alpha = 1) + 
   ylab(expression(paste("Maximum temperature (", degree, "C)"))) + 
   xlab("Tidal height (m)") +   
   theme(strip.background = element_blank()) + 
@@ -174,12 +174,12 @@ ggsave("figs/elahi_temp_body_rock_ppt2.png", height = 3.5, width = 7)
 tempDF %>% filter(metric == "maximum") %>% 
   #filter(species != "Littorina keenae") %>% 
   ggplot(aes(tidalHT, mean, shape = species, color = species)) + 
-  geom_point(alpha = 0.6, size = 2) + 
+  geom_point(alpha = 1, size = 2) + 
   geom_line(aes(group = interaction(species, metric), color = species), 
-            alpha = 1, size = 0.15) + 
+            alpha = 1, size = 0.5) + 
   scale_colour_manual(values=cbPalette) + 
   geom_errorbar(aes(ymax = mean + CI, 
-                    ymin = mean - CI), width = 0.2, alpha = 0.6) + 
+                    ymin = mean - CI), width = 0.3, alpha = 1) + 
   ylab(expression(paste("Maximum temperature (", degree, "C)"))) + 
   xlab("Tidal height (m)") +   
   theme(strip.background = element_blank()) + 
