@@ -75,9 +75,9 @@ temp_records %>%
   geom_smooth(data = subset(temp_records, dataset == "Seawater" & 
                               metric == "maximum"), method = "lm", 
               color = "darkgray", linetype = "dashed") + 
-  geom_smooth(data = subset(temp_records, dataset == "Air" & 
-                              metric == "maximum"), method = "lm", 
-              color = "darkgray", linetype = "dashed") + 
+  # geom_smooth(data = subset(temp_records, dataset == "Air" & 
+  #                             metric == "maximum"), method = "lm", 
+  #             color = "darkgray", linetype = "dashed") + 
   geom_smooth(data = subset(temp_records, dataset == "Air" & 
                               metric == "minimum"), method = "lm", 
               color = "darkgray", linetype = "dashed") + 
@@ -144,9 +144,9 @@ temp_records %>%
   geom_smooth(data = subset(temp_records, dataset == "Seawater" & 
                               metric == "maximum"), method = "lm", 
               color = "darkgray", linetype = "dashed") + 
-  geom_smooth(data = subset(temp_records, dataset == "Air" & 
-                              metric == "maximum"), method = "lm", 
-              color = "darkgray", linetype = "dashed") + 
+  # geom_smooth(data = subset(temp_records, dataset == "Air" & 
+  #                             metric == "maximum"), method = "lm", 
+  #             color = "darkgray", linetype = "dashed") + 
   geom_smooth(data = subset(temp_records, dataset == "Air" & 
                               metric == "minimum"), method = "lm", 
               color = "darkgray", linetype = "dashed") + 

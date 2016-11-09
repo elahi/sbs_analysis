@@ -7,7 +7,7 @@
 ##' 
 ##' @date 2016-08-12
 ##' 
-##' @log Add a log here
+##' @log 
 ################################################################################
 
 # rm(list=ls(all=TRUE)) 
@@ -28,6 +28,8 @@ weather <- read.csv(file = "data/climate_monterey/monterey_weather.txt",
 head(weather)
 tail(weather)
 summary(weather)
+unique(weather$Station)
+weather %>% group_by(Wx) %>% tally()
 
 weather <- weather %>% select(Station:Wx) %>%
   mutate(dateR = ymd(Date), 

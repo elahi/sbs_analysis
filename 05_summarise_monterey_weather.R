@@ -7,7 +7,8 @@
 ##' 
 ##' @date 2016-09-13
 ##' 
-##' @log Add a log here
+##' @log 
+##' 2016-11-08 Checking other weather stations against Monterey
 ################################################################################
 
 # rm(list=ls(all=TRUE)) 
@@ -17,67 +18,85 @@
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(readr)
 theme_set(theme_bw(base_size = 12))
 library(lubridate)
 
-weather <- read.csv(file = "data/climate_monterey/monterey_weather.txt", 
-                    skip = 53, header = TRUE, stringsAsFactors = FALSE)
+path_to_weather_data <- "data/climate_monterey/"
+weather_file <- "monterey_weather_backup.txt"
+
+### FUNCTION TO LOAD AND CLEAN RAW WEATHER DATA
+
+format_weather_data <- function(path, weather_file, back_up = TRUE){
+  
+  weather <- read.csv(file = paste(path_to_weather_data, weather_file, sep = ""), 
+           skip = 55, header = TRUE, stringsAsFactors = FALSE)
+  
+  weather <- weather %>% select(Station:Wx) %>%
+    mutate(dateR = ymd(Date), 
+           month = month(dateR), 
+           year = year(dateR)) %>%
+    rename(precip = Precip, air_max = Air.max, air_min = min, air_obs = obs)
+  
+  weather2 <- weather %>% select(Station, dateR, month, year, air_max:air_obs) %>% 
+    filter(year < 2016) 
+  
+  weather2$backup_status <- ifelse(back_up == TRUE, "backup", "backup_no")
+  
+  return(weather2)
+  
+}
+
+# Get cleaned weather data
+mry_backup <- format_weather_data(path_to_weather_data, "monterey_weather_backup.txt", back_up = TRUE)
+head(mry_backup)
+
+mry_backup_no <- format_weather_data(path_to_weather_data, "monterey_weather_backup_no.txt", back_up = FALSE)
+head(mry_backup_no)
+
+summary(mry_backup_no)
+
+# Are some months poorly sampled?
+# Remove months that have fewer than 15 samples
+mry_backup_no %>% filter(!is.na(air_max)) %>% 
+  group_by(year, month) %>% tally() %>% ungroup() %>% 
+  filter(n < 15)
+
+mry_backup_no2 <- mry_backup_no %>% filter(!is.na(air_max)) %>% 
+  group_by(year, month) %>% 
+  mutate(n = n()) %>% ungroup()
+
+mry_backup_no3 <- mry_backup_no2 %>% filter(n > 15)
+
+weather <- mry_backup_no3
 
 head(weather)
 tail(weather)
 summary(weather)
-
-weather <- weather %>% select(Station:Wx) %>%
-  mutate(dateR = ymd(Date), 
-         month = month(dateR), 
-         year = year(dateR)) %>%
-  rename(precip = Precip, air_max = Air.max, air_min = min, air_obs = obs)
 glimpse(weather)
 
-unique(weather$Wx)
-
-weather2 <- weather %>% select(dateR, month, year, air_max:air_obs) %>% 
-  filter(year < 2016)
-
-head(weather2)
-
-wL <- weather2 %>%
+#### GET WARMEST AND COLDEST MONTHS #####
+wL <- weather %>%
   gather(., key = climate_var, value = value, air_max:air_obs)
 
 tail(wL)
 glimpse(wL)
 
-wL %>% 
-  ggplot(aes(climate_var, value)) + 
-  geom_boxplot() 
-
 # What are the warmest and coldest months?
 wL %>% group_by(month, climate_var) %>% 
   summarise(meanTemp = mean(value, na.rm = TRUE)) %>% ungroup() %>% 
-  arrange(climate_var, meanTemp) # %>% View()
+  arrange(climate_var, meanTemp) %>% View()
 
 # Coldest == Dec, Jan, Feb
 # Warmest == Aug, Sep, Oct
 
 wL %>% filter(!is.na(value)) %>% 
-  group_by(month, year, climate_var) %>% tally() %>% 
+  group_by(Station, month, year, climate_var) %>% tally() %>% 
   filter(n < 28)
 
 ##### SUMMARISE MONTHLY #####
-head(weather2)
-tail(weather2)
-
-# Use air_obs only
-wM <- weather2 %>% filter(!is.na(air_obs)) %>% 
-  group_by(year, month) %>% 
-  summarise(median = median(air_obs, na.rm = TRUE), 
-            maximum = max(air_obs, na.rm = TRUE), 
-            minimum = min(air_obs, na.rm = TRUE)) %>% 
-  mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
-  ungroup()
-
 # Use air_obs, air_max, air_min
-wM <- weather2 %>% group_by(year, month) %>% 
+wM <- weather %>% group_by(Station, backup_status, year, month) %>% 
   summarise(median = median(air_obs, na.rm = TRUE), 
             maximum = median(air_max, na.rm = TRUE), 
             minimum = median(air_min, na.rm = TRUE)) %>% 
