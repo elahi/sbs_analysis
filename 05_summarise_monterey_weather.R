@@ -22,8 +22,13 @@ library(readr)
 theme_set(theme_bw(base_size = 12))
 library(lubridate)
 
-path_to_weather_data <- "data/climate_monterey/"
-weather_file <- "monterey_weather_backup.txt"
+source("R/process_weather_data.R")
+
+path_to_weather_data <- "data/uc_ipm/"
+
+# Need a list of file names
+fileNames <- dir(path = path_to_weather_data, recursive = TRUE, 
+                 pattern = ".txt") 
 
 ### FUNCTION TO LOAD AND CLEAN RAW WEATHER DATA
 
@@ -47,28 +52,23 @@ format_weather_data <- function(path, weather_file, back_up = TRUE){
   
 }
 
-# Get cleaned weather data
-mry_backup <- format_weather_data(path_to_weather_data, "monterey_weather_backup.txt", back_up = TRUE)
-head(mry_backup)
-
-mry_backup_no <- format_weather_data(path_to_weather_data, "monterey_weather_backup_no.txt", back_up = FALSE)
-head(mry_backup_no)
-
-summary(mry_backup_no)
+monterey <- format_weather_data(path = path_to_weather_data, 
+                                weather_file = fileNames[3], 
+                                lines_to_skip = 55)
 
 # Are some months poorly sampled?
 # Remove months that have fewer than 15 samples
-mry_backup_no %>% filter(!is.na(air_max)) %>% 
+monterey %>% filter(!is.na(air_max)) %>% 
   group_by(year, month) %>% tally() %>% ungroup() %>% 
   filter(n < 15)
 
-mry_backup_no2 <- mry_backup_no %>% filter(!is.na(air_max)) %>% 
+monterey2 <- monterey %>% filter(!is.na(air_max)) %>% 
   group_by(year, month) %>% 
   mutate(n = n()) %>% ungroup()
 
-mry_backup_no3 <- mry_backup_no2 %>% filter(n > 15)
+monterey3 <- monterey2 %>% filter(n > 15)
 
-weather <- mry_backup_no3
+weather <- monterey3
 
 head(weather)
 tail(weather)
@@ -90,13 +90,9 @@ wL %>% group_by(month, climate_var) %>%
 # Coldest == Dec, Jan, Feb
 # Warmest == Aug, Sep, Oct
 
-wL %>% filter(!is.na(value)) %>% 
-  group_by(Station, month, year, climate_var) %>% tally() %>% 
-  filter(n < 28)
-
 ##### SUMMARISE MONTHLY #####
 # Use air_obs, air_max, air_min
-wM <- weather %>% group_by(Station, backup_status, year, month) %>% 
+wM <- weather %>% group_by(Station, year, month) %>% 
   summarise(median = median(air_obs, na.rm = TRUE), 
             maximum = median(air_max, na.rm = TRUE), 
             minimum = median(air_min, na.rm = TRUE)) %>% 
@@ -139,4 +135,82 @@ air_annual_long <- air_annual %>%
   filter(!is.na(tempC))
 
 tail(air_annual_long)
+
+##### GET DECADAL MEANS #####
+
+weather2 <- weather %>% 
+  mutate(era = ifelse(year < 1961, "past", 
+                      ifelse(year > 2000, "present", "between"))) %>% 
+  filter(era != "between")
+
+decade_max <- weather2 %>% group_by(era, month) %>% 
+  summarise(mean = mean(air_max, na.rm = TRUE), 
+            sd = sd(air_max, na.rm = TRUE),
+            n = n(), 
+            se = sd/sqrt(n), 
+            CI = qt(0.975, df = n - 1) * se,
+            upper = mean + CI, 
+            lower = mean - CI)
+
+decade_max_long <- decade_max %>% 
+  select(era, month, mean, upper, lower) %>% 
+  gather(key = summary_stat, value = tempC, mean:lower) %>% 
+  mutate(line_type = ifelse(summary_stat == "mean", "average", "ci"), 
+         metric = "maximum")
+
+decade_min <- weather2 %>% group_by(era, month) %>% 
+  summarise(mean = mean(air_min, na.rm = TRUE), 
+            sd = sd(air_min, na.rm = TRUE),
+            n = n(), 
+            se = sd/sqrt(n), 
+            CI = qt(0.975, df = n - 1) * se,
+            upper = mean + CI, 
+            lower = mean - CI)
+
+decade_min_long <- decade_min %>% 
+  select(era, month, mean, upper, lower) %>% 
+  gather(key = summary_stat, value = tempC, mean:lower) %>% 
+  mutate(line_type = ifelse(summary_stat == "mean", "average", "ci"), 
+         metric = "minimum")
+
+decade_obs <- weather2 %>% group_by(era, month) %>% 
+  summarise(mean = mean(air_obs, na.rm = TRUE), 
+            sd = sd(air_obs, na.rm = TRUE),
+            n = n(), 
+            se = sd/sqrt(n), 
+            CI = qt(0.975, df = n - 1) * se,
+            upper = mean + CI, 
+            lower = mean - CI)
+
+decade_obs_long <- decade_obs %>% 
+  select(era, month, mean, upper, lower) %>% 
+  gather(key = summary_stat, value = tempC, mean:lower) %>% 
+  mutate(line_type = ifelse(summary_stat == "mean", "average", "ci"), 
+         metric = "median")
+
+decade_dat <- rbind(decade_max_long, decade_min_long, decade_obs_long)
+decade_dat
+
+
+
+##### SEASONAL PLOTS #####
+  
+decade_dat %>% 
+  ggplot(aes(month, tempC, group = interaction(era, summary_stat, metric))) + 
+  geom_line(aes(linetype = line_type, color = era, size = line_type)) + 
+  #facet_wrap(~ metric, ncol = 3) + 
+  scale_color_manual(values = c("darkgray", "black")) + 
+  scale_size_manual(values = c(0.75, 0.25)) + 
+  theme(strip.background = element_blank()) + 
+  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  xlab("Month") +
+  ggtitle("Air") + 
+  scale_x_continuous(breaks = seq(1, 12, 1)) + 
+  guides(linetype = FALSE, size = FALSE) + 
+  theme(legend.position = c(0, 1), legend.justification = c(0, 1)) + 
+  theme(legend.title = element_blank()) 
+
+ggsave("figs/seasonal_era_temp_air.png", height = 3.5, width = 3.5)
+
+
 

@@ -7,12 +7,12 @@
 ##' 
 ##' @date 2016-08-12
 ##' 
-##' @log 
+##' 2016-11-08 Checking other weather stations against Monterey
 ################################################################################
 
 # rm(list=ls(all=TRUE)) 
 
-##### LOAD PACKAGES, DATA #####
+##### LOAD PACKAGES #####
 
 library(dplyr)
 library(tidyr)
@@ -20,28 +20,173 @@ library(ggplot2)
 theme_set(theme_bw(base_size = 12))
 library(lubridate)
 
-#head(sst_hms)
+source("R/process_weather_data.R")
 
-weather <- read.csv(file = "data/climate_monterey/monterey_weather.txt", 
-                    skip = 53, header = TRUE, stringsAsFactors = FALSE)
+path_to_weather_data <- "data/uc_ipm/"
 
-head(weather)
-tail(weather)
-summary(weather)
-unique(weather$Station)
-weather %>% group_by(Wx) %>% tally()
+# Need a list of file names
+fileNames <- dir(path = path_to_weather_data, recursive = TRUE, 
+                 pattern = ".txt") 
 
-weather <- weather %>% select(Station:Wx) %>%
-  mutate(dateR = ymd(Date), 
-         month = month(dateR), 
-         year = year(dateR)) %>%
-  rename(precip = Precip, air_max = Air.max, air_min = min, air_obs = obs)
-glimpse(weather)
+fileNames
 
-unique(weather$Wx)
+#### LOAD DATA #####
 
-weather2 <- weather %>% select(dateR, month, year, precip, air_max:air_obs)
-head(weather2)
+carmel <- format_weather_data(path = path_to_weather_data, 
+                               weather_file = fileNames[1], 
+                               lines_to_skip = 61)
+
+kingcity <- format_weather_data(path = path_to_weather_data, 
+                              weather_file = fileNames[2], 
+                              lines_to_skip = 55)
+
+monterey <- format_weather_data(path = path_to_weather_data, 
+                                weather_file = fileNames[3], 
+                                lines_to_skip = 55)
+
+salinas <- format_weather_data(path = path_to_weather_data, 
+                                weather_file = fileNames[4], 
+                                lines_to_skip = 53)
+
+santacruz <- format_weather_data(path = path_to_weather_data, 
+                               weather_file = fileNames[5], 
+                               lines_to_skip = 61)
+
+watsonville <- format_weather_data(path = path_to_weather_data, 
+                                 weather_file = fileNames[6], 
+                                 lines_to_skip = 55)
+
+head(watsonville)
+
+weather <- rbind(carmel, kingcity, monterey, salinas, santacruz, watsonville)
+
+##### PRELIM CHECKS #####
+# Are some months poorly sampled?
+# Remove months that have fewer than 15 samples
+weather %>% filter(!is.na(air_max)) %>% 
+  group_by(Station, year, month) %>% tally() %>% ungroup() %>% 
+  filter(n < 10) %>% View()
+
+weather2 <- weather %>% filter(!is.na(air_max)) %>% 
+  group_by(Station, year, month) %>% 
+  mutate(n = n()) %>% ungroup()
+
+weather3 <- weather2 %>% filter(n > 10)
+unique(weather3$Station)
+
+weather3 %>% group_by(Station) %>% 
+  summarise(mean = mean(air_min, na.rm = TRUE))
+
+#### GET WARMEST AND COLDEST MONTHS #####
+wL <- weather %>%
+  gather(., key = climate_var, value = value, air_max:air_obs)
+
+tail(wL)
+glimpse(wL)
+
+# What are the warmest and coldest months?
+wL %>% group_by(month, climate_var) %>% 
+  summarise(meanTemp = mean(value, na.rm = TRUE)) %>% ungroup() %>% 
+  arrange(climate_var, meanTemp) %>% View()
+
+# Coldest == Dec, Jan, Feb
+# Warmest == Aug, Sep, Oct
+
+wL %>% filter(!is.na(value)) %>% 
+  group_by(Station, month, year, climate_var) %>% tally() %>% 
+  filter(n < 28)
+
+##### SUMMARISE MONTHLY #####
+# Use air_obs, air_max, air_min
+wM <- weather3 %>% group_by(Station, year, month) %>% 
+  summarise(median = median(air_obs, na.rm = TRUE), 
+            maximum = median(air_max, na.rm = TRUE), 
+            minimum = median(air_min, na.rm = TRUE)) %>% 
+  mutate(dateR = ymd(paste(year, month, 15, sep = "-"))) %>% 
+  ungroup()
+
+wM
+unique(wM$Station)
+tail(wM)
+summary(wM)
+
+##### GET ANNUAL TIME SERIES #####
+
+# Calculate mean of hottest months for maximum per year
+monthly_max <- wM %>% filter(!is.na(maximum)) %>% 
+  filter(month == 10 | month == 8 | month == 9) %>% 
+  group_by(Station, year) %>% 
+  summarise(maximum = mean(maximum), 
+            n = n()) %>% ungroup()
+
+monthly_max %>% filter(n < 3)
+unique(monthly_max$Station)
+
+monthly_max %>% 
+  ggplot(aes(year, maximum, color = as.factor(n))) + 
+  geom_point() + 
+  facet_wrap(~ Station)
+
+# Calculate mean of coldest months for minimum per year
+monthly_min <- wM %>% filter(!is.na(minimum)) %>% 
+  filter(month == 12 | month == 1 | month == 2) %>% 
+  group_by(Station, year) %>% 
+  summarise(minimum = mean(minimum), 
+            n = n()) %>% ungroup()
+monthly_min %>% filter(n < 3)
+
+
+# Calculate mean of observed temperatures for median per year
+monthly_med <- wM %>% filter(!is.na(median)) %>% 
+  group_by(Station, year) %>% 
+  summarise(median = mean(median), 
+            n = n()) %>% ungroup()
+
+monthly_med %>% filter(n < 3)
+
+monthly_med %>% 
+  ggplot(aes(Station, median)) + 
+  geom_boxplot()
+
+air_annual <- full_join(monthly_max, monthly_min, 
+                         by = c("Station", "year")) %>% 
+  full_join(., monthly_med, c("Station", "year"))
+
+monthly_med %>% group_by(Station) %>% 
+  summarise(minYr = min(year), 
+            maxYr = max(year))
+
+tail(air_annual)
+
+# Get in long format
+air_annual_long <- air_annual %>% 
+  gather(key = metric, value = tempC, maximum:median) %>%
+  filter(!is.na(tempC))
+
+unique(air_annual_long$Station)
+
+tail(air_annual_long)
+
+air_annual_long %>% 
+  ggplot(aes(year, tempC, color = metric)) + 
+  geom_line(alpha = 1) +
+  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  xlab("Year") + 
+  theme(legend.title = element_blank()) + 
+  theme(legend.position = "top") + 
+  facet_wrap(~ Station) + 
+  theme(strip.background = element_blank()) 
+
+
+
+####################
+####################
+####################
+####################
+####################
+
+####################
+#### LOAD DATA #####
 
 weather3 <- weather2 %>% filter(!is.na(air_obs))
 tail(weather3)
