@@ -112,7 +112,7 @@ tempDF %>%
   
 ggsave("figs/elahi_temp_body_rock.png", height = 4.5, width = 7)
 
-##### FRIENDLY PLOT FOR POWERPOINT #####
+##### FRIENDLY PLOT FOR POWERPOINT - 2 PANEL#####
 
 head(tempDF)
 range(tempDF$mean)
@@ -190,3 +190,76 @@ tempDF %>% filter(metric == "maximum") %>%
   scale_x_continuous(limits = c(-0.1, 8))
 
 ggsave("figs/elahi_temp_body_rock_ppt3.png", height = 3.5, width = 7)
+
+
+##### FRIENDLY PLOT FOR POWERPOINT - HINDCASTS ONLY #####
+head(tempDF)
+theme_set(theme_bw(base_size = 8) + theme(panel.grid.minor=element_blank(),
+                                          panel.grid.major=element_blank()))
+
+  
+
+# plot1
+tempDF %>% filter(metric == "maximum") %>% filter(dataset == "Model") %>% 
+  filter(species == "Chlorostoma funebralis") %>% 
+  ggplot(aes(tidalHT, mean, shape = species, color = species)) + 
+  geom_point(alpha = 1, size = 1.5) + 
+  geom_line(aes(group = interaction(species, metric), color = species), 
+            alpha = 1, size = 0.5) + 
+  scale_colour_manual(values=cbPalette) + 
+  geom_errorbar(aes(ymax = mean + CI, 
+                    ymin = mean - CI), width = 0.1, alpha = 1) + 
+  ylab(expression(paste("Max temperature (", degree, "C)"))) + 
+  xlab("Tidal height (m)") +   
+  theme(strip.background = element_blank()) + 
+  theme(legend.position = "none") + 
+  facet_wrap(~ dataset, ncol = 2, #scales = "free_y", 
+             labeller = labeller(dataset = dataset_description)) + 
+  scale_y_continuous(limits = c(16, 21)) + 
+  scale_x_continuous(limits = c(-0.1, 8))
+
+ggsave("figs/elahi_temp_body_rock_ppt1_hindcast.png", height = 1.75, width = 3.5)
+
+
+# plot2
+tempDF %>% filter(metric == "maximum") %>% filter(dataset == "Model") %>% 
+  filter(species != "Littorina keenae") %>% 
+  ggplot(aes(tidalHT, mean, shape = species, color = species)) + 
+  geom_point(alpha = 1, size = 1.5) + 
+  geom_line(aes(group = interaction(species, metric), color = species), 
+            alpha = 1, size = 0.5) + 
+  scale_colour_manual(values=cbPalette) + 
+  geom_errorbar(aes(ymax = mean + CI, 
+                    ymin = mean - CI), width = 0.1, alpha = 1) + 
+  ylab(expression(paste("Max temperature (", degree, "C)"))) + 
+  xlab("Tidal height (m)") +   
+  theme(strip.background = element_blank()) + 
+  theme(legend.position = "none") + 
+  facet_wrap(~ dataset, ncol = 2, #scales = "free_y", 
+             labeller = labeller(dataset = dataset_description)) + 
+  scale_y_continuous(limits = c(16, 21)) + 
+  scale_x_continuous(limits = c(-0.1, 8))
+
+ggsave("figs/elahi_temp_body_rock_ppt2_hindcast.png", height = 1.75, width = 3.5)
+
+# plot3
+tempDF %>% filter(metric == "maximum") %>% filter(dataset == "Model") %>% 
+  #filter(species != "Littorina keenae") %>% 
+  ggplot(aes(tidalHT, mean, shape = species, color = species)) + 
+  geom_point(alpha = 1, size = 1.5) + 
+  geom_line(aes(group = interaction(species, metric), color = species), 
+            alpha = 1, size = 0.5) + 
+  scale_colour_manual(values=cbPalette) + 
+  geom_errorbar(aes(ymax = mean + CI, 
+                    ymin = mean - CI), width = 0.1, alpha = 1) + 
+  ylab(expression(paste("Max temperature (", degree, "C)"))) + 
+  xlab("Tidal height (m)") +   
+  theme(strip.background = element_blank()) + 
+  theme(legend.position = "none") + 
+  facet_wrap(~ dataset, ncol = 2, #scales = "free_y", 
+             labeller = labeller(dataset = dataset_description)) + 
+  scale_y_continuous(limits = c(16, 21)) + 
+  scale_x_continuous(limits = c(-0.1, 8))
+
+ggsave("figs/elahi_temp_body_rock_ppt3_hindcast.png", height = 1.75, width = 3.5)
+

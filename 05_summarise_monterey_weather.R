@@ -32,26 +32,6 @@ fileNames <- dir(path = path_to_weather_data, recursive = TRUE,
 
 ### FUNCTION TO LOAD AND CLEAN RAW WEATHER DATA
 
-format_weather_data <- function(path, weather_file, back_up = TRUE){
-  
-  weather <- read.csv(file = paste(path_to_weather_data, weather_file, sep = ""), 
-           skip = 55, header = TRUE, stringsAsFactors = FALSE)
-  
-  weather <- weather %>% select(Station:Wx) %>%
-    mutate(dateR = ymd(Date), 
-           month = month(dateR), 
-           year = year(dateR)) %>%
-    rename(precip = Precip, air_max = Air.max, air_min = min, air_obs = obs)
-  
-  weather2 <- weather %>% select(Station, dateR, month, year, air_max:air_obs) %>% 
-    filter(year < 2016) 
-  
-  weather2$backup_status <- ifelse(back_up == TRUE, "backup", "backup_no")
-  
-  return(weather2)
-  
-}
-
 monterey <- format_weather_data(path = path_to_weather_data, 
                                 weather_file = fileNames[3], 
                                 lines_to_skip = 55)
@@ -210,7 +190,7 @@ decade_dat %>%
   theme(legend.position = c(0, 1), legend.justification = c(0, 1)) + 
   theme(legend.title = element_blank()) 
 
-ggsave("figs/seasonal_era_temp_air.png", height = 3.5, width = 3.5)
+#ggsave("figs/seasonal_era_temp_air.png", height = 3.5, width = 3.5)
 
 
 
