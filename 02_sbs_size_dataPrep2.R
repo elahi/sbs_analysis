@@ -131,3 +131,9 @@ dat2 <- dat2 %>%
   mutate(year = lubridate::year(dmy(date)))
 head(dat2)
 unique(dat2$year)
+
+##### GET SAMPLE DATES #####
+
+dat2 %>% group_by(species, era) %>% 
+  summarise(minDate = min(date), 
+            maxDate = max(date))
