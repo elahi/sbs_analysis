@@ -52,3 +52,9 @@ tail(dat_fine)
 
 save(dat_fine, file = "output/monterey_tides_fine_scale.RData")
 
+dat0 <- tide_height('Monterey Harbor',from = as.Date('2014-01-01'), 
+                    to = as.Date('2014-12-31'), minutes = 10, tz ='PST8PDT')
+save(dat0, file = "output/monterey_tides_2014.RData")
+
+
+

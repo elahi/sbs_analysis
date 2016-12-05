@@ -17,15 +17,25 @@ library(lubridate)
 #library(rtide)
 #library(scales) # for the date_format function
 
+theme_set(theme_bw(base_size = 12))
+
 source("R/air_exposure_functions.R")
 
+# 91 years of data, hourly intervals
 load("output/monterey_tides_1930_2020.RData")
 head(dat)
+
+# Load data
+source("05_summarise_size_data.R")
 
 ##### FINE SCALE DATA #####
 
 ##' Load fine scale data for 4 sampling years
 load("output/monterey_tides_fine_scale.RData")
+##' Load the missing set
+load("output/monterey_tides_2014.RData")
+
+dat_fine <- rbind(dat_fine, dat0)
 
 dat <- dat_fine %>% 
   mutate(year = year(DateTime), 
@@ -119,148 +129,84 @@ year_min_df %>% filter(tidal_height > 1.5) %>%
                     ymin = mean - CI), width = 0.01, alpha = 0.6) +
   facet_wrap(~ season)
 
+##### MAKE LRR PLOT #####
 
-##### DENNY FUNCTION FOR DATAFRAME #####
+##' Select appropriate data
+##' LIKE: 1938-1947; 2014
+##' LODI: 1941-1950; 2015
+##' CHFU: 1954-1963; 2014
+##' 
 
-new_df <- data.frame(tidal_height = seq(0, 2, by = 0.1), Station = "Monterey")
-head(new_df)
-str(new_df)
+names(year_min_df)
 
-new_df <- new_df[10, ]
-new_df
-str(new_df)
-rtide_df = dat %>% filter(year == 1930)
+## Lottia
+dat_long <- year_min_df %>% filter(year == "1950" | year == "2015") %>% 
+  select(tidal_height:mean) %>% 
+  spread(key = year, value = mean) 
+names(dat_long)[3:4] <- c("past", "present")  
+dat_long <- dat_long %>% 
+  mutate(lrr = log10(present/past))
 
-classify_air_water <- function(rtide_df, new_df){
-  
-  tidal_height = new_df$tidal_height
-  
-  replacement_interval = 1 # this number should be the interval
-  
-  df <- rtide_df %>% 
-    mutate(air_water = ifelse(TideHeight > tidal_height, "water", "air"), 
-           intv = as.numeric(DateTime - lag(DateTime)), 
-           intv = ifelse(is.na(intv), 
-                         replacement_interval, intv)) 
-  return(df)
-}
+dat_lodi <- dat_long %>% 
+  mutate(species = "Lottia digitalis")
 
-test <- classify_air_water(rtide_df, new_df)
-test
+## Littorina
+dat_long <- year_min_df %>% filter(year == "1947" | year == "2014") %>% 
+  select(tidal_height:mean) %>% 
+  spread(key = year, value = mean) 
+names(dat_long)[3:4] <- c("past", "present")  
+dat_long <- dat_long %>% 
+  mutate(lrr = log10(present/past))
 
-new_df <- data.frame(tidal_height = seq(0, 2.2, by = 0.1))
-str(new_df)
+dat_like <- dat_long %>% 
+  mutate(species = "Littorina keenae")
 
-#get_air_water_time(dat, new_df)
+## Chlorostoma
+dat_long <- year_min_df %>% filter(year == "1963" | year == "2014") %>% 
+  select(tidal_height:mean) %>% 
+  spread(key = year, value = mean) 
+names(dat_long)[3:4] <- c("past", "present")  
+dat_long <- dat_long %>% 
+  mutate(lrr = log10(present/past))
 
-test <- new_df %>% group_by(tidal_height) %>% 
-  do(classify_air_water(dat, .)) %>% ungroup()
-head(test)
-tail(test)
+dat_chfu <- dat_long %>% 
+  mutate(species = "Chlorostoma funebralis")
 
-test %>% filter(air_water == "air") %>% 
-  group_by(tidal_height, year, day) %>% 
-  summarise(sum_hours = sum(intv))
+dat_long <- rbind(dat_chfu, dat_lodi, dat_like)
 
+# Reorder levels
+dat_long$species <- factor(dat_long$species, levels = rev(c("Littorina keenae",
+                                               "Lottia digitalis", 
+                                               "Chlorostoma funebralis")))
+# Get tidal range by species
+tidal_range <- dm2 %>% group_by(species) %>%
+  summarise(min_height = min(tidalHeight), 
+            max_height = max(tidalHeight)) %>%
+  filter(species != "Littorina keenae")
 
-##### FUNCTION FOR DATAFRAME #####
+my_text <- data.frame(x = rep(2.5, 3), 
+                               y = rep(0.03, 3), 
+                               text1 = c("A", "B", "C"), 
+                               species = c("Chlorostoma funebralis", 
+                                           "Lottia digitalis", 
+                                           "Littorina keenae")) %>%
+  filter(species != "Littorina keenae")
 
-new_df <- data.frame(tidal_height = seq(0, 2, by = 0.1), Station = "Monterey")
-head(new_df)
-str(new_df)
+dat_long %>% filter(species != "Littorina keenae") %>% 
+  ggplot(aes(tidal_height, lrr, color = season, shape = species)) + 
+  geom_vline(aes(xintercept = min_height), data = tidal_range, col = "black") + 
+  geom_vline(aes(xintercept = max_height), data = tidal_range, col = "black") +  
+  geom_point() + geom_line() + 
+  geom_hline(yintercept = 0, color = "gray", linetype = "dashed") + 
+  facet_wrap(~ species) + 
+  theme(strip.background = element_blank(), 
+        strip.text = element_text(face = "italic")) + 
+  labs(x = "Tidal height (m)", y = "Log change in daily emersion\nlog(present/past)") + 
+  theme(legend.position = c(1, 0.0), legend.justification = c(1, 0)) + 
+  theme(legend.title = element_blank())  + 
+  guides(shape = FALSE) + 
+  geom_text(aes(x, y, label = text1, color = NULL, shape = NULL), 
+            data = my_text, size = 5, hjust = 1, show.legend = FALSE) 
 
-new_df <- new_df[10, ]
-new_df
-str(new_df)
-rtide_df = dat %>% filter(year == 1930)
-
-get_air_water_time <- function(rtide_df, new_df){
-  
-  tidal_height = new_df$tidal_height
-  
-  df <- rtide_df %>% 
-    mutate(air_water = ifelse(TideHeight > tidal_height, "water", "air"), 
-           intv = as.numeric(DateTime - lag(DateTime)))
-  
-  total_hrs <- df %>% 
-    summarise(sum_duration = (sum(intv, na.rm = TRUE))/60) %>%
-    unlist(use.names = FALSE)
-  
-  df2 <- df %>% group_by(air_water) %>%
-    summarise(duration_hrs = (sum(intv, na.rm = TRUE))/60, 
-              duration_prop = duration_hrs/total_hrs)
-  
-  return(df2)
-}
-
-dat <-  dat %>% mutate(x = replace(x, x<0, NA))
-df <- df %>%
-  mutate(colname = ifelse(is.na(colname),0,colname))
-
-
-get_air_water_time <- function(rtide_df, new_df){
-  
-  tidal_height = new_df$tidal_height
-  
-  replacement_interval = 1 # this number should be the interval
-  
-  df <- rtide_df %>% 
-    mutate(air_water = ifelse(TideHeight > tidal_height, "water", "air"), 
-           intv = as.numeric(DateTime - lag(DateTime)), 
-           intv = ifelse(is.na(intv), 
-                         replacement_interval, intv)) %>% # this line replaces 1st NA 
-    group_by(year) %>% 
-    mutate(total_hrs = sum(intv, na.rm = TRUE)) %>% 
-    ungroup() 
-  
-  df2 <- df %>% group_by(year, air_water) %>%
-    summarise(duration_hrs = (sum(intv, na.rm = TRUE)),
-              total_hrs = mean(total_hrs), 
-              duration_prop = duration_hrs/total_hrs) %>% 
-    ungroup()
-  
-  return(df2)
-}
-
-
-new_df <- data.frame(tidal_height = seq(0, 2.2, by = 0.1))
-str(new_df)
-
-#get_air_water_time(dat, new_df)
-
-test <- new_df %>% group_by(tidal_height) %>% 
-  do(get_air_water_time(dat, .)) %>% ungroup()
-
-head(test)
-tail(test)
-
-test %>% filter(air_water == "air") %>% 
-  filter(tidal_height == 0 | tidal_height == 0.5 |
-           tidal_height == 1 | tidal_height == 1.5) %>% 
-  ggplot(aes(year, duration_prop)) +
-  geom_line() + facet_wrap(~tidal_height, scales = "free_y")
-
-test %>% filter(air_water == "air") %>% 
-  filter(year == 1950 | year == 2015) %>% 
-  ggplot(aes(tidal_height, duration_prop, color = as.factor(year))) +
-  geom_line() + 
-  facet_wrap(~ year, scales = "free_y")
-
-
-
-
-test2 <- test %>% filter(air_water == "air") %>% 
-  dplyr::select(tidal_height, duration_prop) %>% 
-  rename(air_exposure_proportion = duration_prop)
-
-## Everything > 2m will have air exposure = 100%
-dummy_df <- data.frame(tidal_height = seq(2.01, 8, by = 0.01), 
-                       air_exposure_proportion = rep(1))
-
-## Combine
-
-test3 <- rbind(test2, dummy_df)
-
-write.csv(test3, "output/monterey_air_exposure.csv")
-
+ggsave("figs/elahi_lrr_emersion_tidal_2panel.png", height = 3.5, width = 7)
 
