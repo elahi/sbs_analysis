@@ -32,11 +32,13 @@ sizeLL %>% select(sampleArea, position) %>% distinct()
 
 ##### RAW IBUTTON DATA #####
 # Load raw ibutton data
-rawDat <- read.csv("output/temp_raw_iButton.csv") %>%
-  select(-X) %>% 
-  rename(sp = code)
-names(rawDat)
-head(rawDat); tail(rawDat)
+# (on gitignore list, I will save this as .RData file)
+# rawDat <- read.csv("output/temp_raw_iButton.csv") %>%
+#   select(-X) %>% 
+#   rename(sp = code) %>% tbl_df
+# save(rawDat, file = "output/temp_raw_iButton.RData")
+load("output/temp_raw_iButton.RData")
+rawDat
 
 # Fix tidal heights
 unique(rawDat$position)
