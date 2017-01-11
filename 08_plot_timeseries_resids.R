@@ -14,6 +14,12 @@
 # Get temperature regression results
 source("06_analyse_temp_time_series.R")
 
+air_annual_long <- air_annual_long %>% 
+  mutate(dataset = "Air")
+
+sst_annual_long <- sst_annual_long %>% 
+  mutate(dataset = "Seawater")
+
 ### Combine data
 temp_records <- rbind(sst_annual_long, air_annual_long)
 unique(temp_records$dataset)
@@ -118,7 +124,7 @@ plot_resids <- temp_records3 %>%
   guides(shape = FALSE) + 
   geom_line(aes(year, temp_ma, color = metric), size = 1) + 
   theme(strip.background = element_blank()) 
-
+plot_resids
 ggsave("figs/temp_timeseries_resids.png", height = 5, width = 7)
 
 ##### SPECTRAL ANALYSIS #####
@@ -140,7 +146,9 @@ get_spectrum <- function(df){
 
 spectra_df <- temp_records3 %>% 
   group_by(dataset, metric) %>% 
-  do(get_spectrum(df = .)) %>% ungroup()
+  do(get_spectrum(df = .)) %>% ungroup() %>%
+  mutate(period = 1/spec)
+spectra_df
 
 plot_spectra <- spectra_df %>% 
   ggplot(aes(freq, spec, color = metric))  + 
@@ -152,7 +160,8 @@ plot_spectra <- spectra_df %>%
   theme(strip.background = element_blank()) + 
   theme(legend.title = element_blank()) + 
   theme(legend.position = "none")
-  
+plot_spectra  
+
 ggsave("figs/temp_timeseries_spectra.png", height = 5, width = 7)
 
 plot_resids_spectra <- plot_grid(plot_resids, plot_spectra, labels = c("A", "B"), nrow = 2, align = "v")
@@ -166,7 +175,6 @@ save_plot("figs/plot_resids_spectra.png", plot_resids_spectra,
 )
 
 ##### SEAWATER MINIMUM ONLY #####
-
 
 plot_resids_min <- temp_records3 %>% 
   filter(dataset == "Seawater" & metric == "minimum") %>% 
@@ -209,6 +217,22 @@ save_plot("figs/plot_resids_spectra_min.png", plot_resids_spectra_min,
           ncol = 2, nrow = 1,
           base_aspect_ratio = 1.2, base_height = 3.5
 )
+
+
+##### TO DO: ADD SECOND X-AXIS TO SHOW PERIOD ON SPECTRAL PLOTS #####
+
+plot_spectra_period <- spectra_df %>% 
+  ggplot(aes(period, spec, color = metric))  + 
+  geom_vline(aes(xintercept = 18.6), linetype = "solid", color = "gray", alpha = 0.5, 
+             size = 2) + 
+  geom_line() + geom_point() + 
+  xlab("Frequency (1/yr)") + ylab("Spectrum") + 
+  facet_grid(dataset ~ metric, switch = "y") + 
+  theme(strip.background = element_blank()) + 
+  theme(legend.title = element_blank()) + 
+  theme(legend.position = "none")
+
+plot_spectra_period 
 
 
 
