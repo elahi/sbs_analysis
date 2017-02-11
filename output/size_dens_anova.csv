@@ -1,0 +1,9 @@
+"","numDF","denDF","F.value","p.value"
+"(Intercept)",1,128,6702.016,0
+"era",1,128,82.935,0
+"species",2,3,84.558,0.002
+"log10(density_m2)",1,128,24.512,0
+"era:species",2,128,0.051,0.95
+"era:log10(density_m2)",1,128,13.547,0
+"species:log10(density_m2)",2,128,0.913,0.404
+"era:species:log10(density_m2)",2,128,1.028,0.361

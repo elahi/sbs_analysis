@@ -52,8 +52,10 @@ waraPast
 
 dat4 %>% group_by(sp, site, era, year, nest1, nest2) %>% tally() %>% ungroup() %>% View()
 
+unique(dat4$sampleArea)
+
 datMeans <- dat4 %>% filter(!is.na(size1mm)) %>% 
-  group_by(species, sp, site, era, year, nest1, nest2) %>% 
+  group_by(species, sp, site, era, year, nest1, nest2, sampleArea) %>% 
   summarise(size_mean = mean(size1mm), 
             size_med = median(size1mm), 
             size_sd = sd(size1mm),
@@ -104,11 +106,17 @@ datMeans2
 
 names(datMeans2)
 datMeans3 <- datMeans2 %>% 
-  select(species, sp, site, era, tide_mean, size_mean, density_m2) %>% 
+  select(species, sp, site, era, tide_mean, size_mean, density_m2, 
+         sampleArea, nest1, nest2) %>% 
   rename(tideHTm = tide_mean, 
          size_mm = size_mean)
 datMeans3
+unique(datMeans3$sampleArea)
 
+waraPast <- waraPast %>%
+  mutate(sampleArea = site, 
+         nest1 = NA, 
+         nest2 = NA)
 datMeans4 <- datMeans3 %>% rbind(., waraPast)
 
 # Reorder levels
@@ -116,5 +124,31 @@ species <- factor(datMeans4$species, levels = rev(c("Littorina keenae",
                                                "Lottia digitalis", 
                                                "Chlorostoma funebralis")))
 datMeans4$species <- species
+
+##### GET LOG CHANGE IN DENSITY #####
+
+datAreaMeans <- datMeans4 %>% 
+  group_by(species, site, sampleArea, era) %>%
+  summarise(tideHTm = mean(tideHTm), 
+            size_mm = mean(size_mm), 
+            density_m2 = mean(density_m2)) %>% 
+  mutate(size_lrr = log10(size_mm/lag(size_mm)), 
+         dens_rr = log10(density_m2/lag(density_m2))) %>%
+           ungroup()
+
+datAreaMeans %>% 
+  ggplot(aes(dens_rr, size_lrr, color = species, shape = species)) + 
+  geom_smooth(method = "lm") + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") + 
+  scale_x_continuous(limits = c(-1.1, 1.1)) + 
+  scale_y_continuous(limits = c(-1.1, 1.1)) + 
+  geom_point(alpha = 0.75, size = 2) + 
+  theme(legend.position = "top")
+
+ggsave("figs/size_dens_log_change.png", height = 3.5, width = 3.5)
+
+
+
 
 

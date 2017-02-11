@@ -97,7 +97,10 @@ datMeans4 %>%
   ylab("Size (mm)") + 
   guides(shape = FALSE) + 
   geom_text(aes(x, y, label = text1, color = NULL, shape = NULL), 
-            data = size_dens_text, size = 5, hjust = 1, show.legend = FALSE) 
+            data = size_dens_text, size = 5, hjust = 1, show.legend = FALSE) #+
+  # geom_boxplot(aes(5500, size_mm, color = era),
+  #              width = 0.5, inherit.aes = FALSE) + 
+  # geom_vline(xintercept = 2200, color = "darkgray", size = 0.25)
 
 
 ggsave("figs/elahi_size_era_density_3panel.png", height = 3.5, width = 7)
