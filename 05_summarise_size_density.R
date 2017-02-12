@@ -107,7 +107,7 @@ datMeans2
 names(datMeans2)
 datMeans3 <- datMeans2 %>% 
   select(species, sp, site, era, tide_mean, size_mean, density_m2, 
-         sampleArea, nest1, nest2) %>% 
+         sampleArea, nest1, nest2, size_n) %>% 
   rename(tideHTm = tide_mean, 
          size_mm = size_mean)
 datMeans3
@@ -116,7 +116,8 @@ unique(datMeans3$sampleArea)
 waraPast <- waraPast %>%
   mutate(sampleArea = site, 
          nest1 = NA, 
-         nest2 = NA)
+         nest2 = NA, 
+         size_n = NA)
 datMeans4 <- datMeans3 %>% rbind(., waraPast)
 
 # Reorder levels
