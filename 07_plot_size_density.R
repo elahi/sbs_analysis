@@ -89,19 +89,25 @@ datMeans4 %>%
   theme(legend.title = element_blank()) +
   theme(legend.key = element_rect(fill = "white")) + 
   xlab(expression(paste("Density (no. ", m^-2, ")"))) + 
-  ylab("Size (mm)") + 
+  ylab("Mean size (mm)") + 
   guides(shape = FALSE) + 
   geom_text(aes(x, y, label = text1, color = NULL, shape = NULL), 
-            data = size_dens_text, size = 5, hjust = 1, show.legend = FALSE) + 
-  geom_smooth(data = subset(datMeans4, sp == "CHFU" & era == "present"), 
-              method = "lm", linetype = "solid", fill = NA) + 
-  geom_smooth(data = subset(datMeans4, sp == "CHFU" & era == "present"), 
-              method = "lm", linetype = "solid", show.legend = FALSE)
+            data = size_dens_text, size = 5, hjust = 1, show.legend = FALSE)  + 
+  scale_color_manual(values = c("darkgray", "black"))
+  
+  # geom_smooth(data = subset(datMeans4, sp == "CHFU" & era == "present" &
+  #                             site == "Wara.B"), 
+  #             method = "lm", linetype = "solid", fill = NA) + 
+  # geom_smooth(data = subset(datMeans4, sp == "CHFU" & era == "present" &
+  #                             site == "Wara.B"), 
+  #             method = "lm", linetype = "solid", show.legend = FALSE) + 
+  # geom_smooth(data = subset(datMeans4, sp == "CHFU" & era == "present" &
+  #                             site == "Wara.D"), 
+  #             method = "lm", linetype = "solid", fill = NA) + 
+  # geom_smooth(data = subset(datMeans4, sp == "CHFU" & era == "present" &
+  #                             site == "Wara.D"), 
+  #             method = "lm", linetype = "solid", show.legend = FALSE)
 
-ggplot(aes(dens_log, pred)) + 
-  #geom_point(size = 0.1) + 
-  facet_wrap(~ species) + 
-  geom_smooth(method = "lm")
 
 #scale_color_manual(values = c("darkgray", "black")) + 
 #scale_color_brewer(type = 'qual') + 
@@ -125,7 +131,7 @@ datMeans4 %>%
   ggplot(aes(era, density_m2, color = era)) + 
   geom_boxplot(notch = FALSE) + 
   facet_wrap(~ species, scales = "free_y") + 
-  stat_summary(fun.data = give.n, geom = "text", show.legend = FALSE) + 
+  #stat_summary(fun.data = give.n, geom = "text", show.legend = FALSE) + 
   ylab(expression(paste("Density (no. ", m^-2, ")"))) + 
   xlab("") + 
   theme(legend.position = "none")
