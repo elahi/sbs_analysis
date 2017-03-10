@@ -122,6 +122,14 @@ write.csv(datSubW2, "output/size_change_datSubW2.csv")
 ##### ##### ##### ##### ##### ##### 
 
 pres <- dat4 %>% filter(era == "present")
+head(pres)
+names(pres)
+
+# Need to get density per sampleUnit (1/4 m2 quadrats for all samples)
+unique(pres$sampleUnit)
+pres <- pres %>% group_by(sampleUnit) %>% 
+  mutate(snail_dens = n() * 4) %>% ungroup()
+pres
 
 ##### JOIN TEMPERATURE DATA TO RAW SIZE DATA BY POSITION #####
 pres2 <- sizeLL %>% select(sampleUnit, position) %>% 
@@ -135,6 +143,8 @@ pres3 <- tempMeans %>% select(position, aspect, slope, metric:CI) %>%
 tempMeans %>% filter(metric == "daily_max") %>% 
   select(position, mean) %>% View()
 
+names(pres3)
+
 pres3 %>% filter(metric == "daily_max") %>% 
   ggplot(aes(mean, size1mm, color = species, 
              shape = species)) +
@@ -146,6 +156,7 @@ pres3 %>% filter(metric == "daily_max") %>%
 
 ##### SUMMARISE BY SAMPLE UNIT #####
 
+# Calculate size means and densities
 suMeans <- pres %>% filter(!is.na(size1mm)) %>% 
   group_by(species, sp, site, nest1, nest2, sampleUnit, 
            sampleArea, year, lat, long, tideHTm) %>% 
@@ -155,8 +166,16 @@ suMeans <- pres %>% filter(!is.na(size1mm)) %>%
             size_se = size_sd/sqrt(size_n), 
             size_CI = qt(0.975, df = size_n - 1) * size_se, 
             size_max = quantile(size1mm, 0.95), 
-            size_median = median(size1mm)) %>% 
+            size_median = median(size1mm), 
+            snail_dens = mean(snail_dens)) %>% 
   ungroup()
+
+suMeans
+
+suMeans %>% 
+  ggplot(aes(snail_dens, size_mean, color = species)) + geom_point() + 
+  scale_x_log10() + 
+  geom_smooth(method = "lm")
 
 ##### JOIN TEMPERATURE DATA TO SUMMARISED SIZE DATA BY POSITION #####
 
@@ -167,7 +186,7 @@ suMeans2 <- sizeLL %>% select(sampleUnit, position) %>%
 suMeans3 <- tempMeans %>% select(position, aspect, slope, metric:CI) %>% 
   inner_join(suMeans2, ., by = "position")
 
-##### SUMMARISE DATA BY POSITION #####
+##### SUMMARISE SIZE DATA BY POSITION #####
 unique(pres3$sampleArea)
 
 # There are 17 positions with distinct temperature data
@@ -182,7 +201,9 @@ posMeans <- pres3 %>% filter(!is.na(size1mm)) %>%
             size_se = size_sd/sqrt(size_n), 
             size_CI = qt(0.975, df = size_n - 1) * size_se, 
             tidalHT_mean = mean(tideHTm, na.rm = TRUE), 
-            size_max = quantile(size1mm, 0.95)) %>% 
+            size_max = quantile(size1mm, 0.95), 
+            dens_mean = mean(snail_dens), 
+            dens_sd = sd(snail_dens)) %>% 
   ungroup()
 
 posMeans$metric
@@ -209,4 +230,62 @@ posMeans %>% filter(metric != "daily_mean" & metric != "daily_cv") %>%
   theme(legend.position = "top") + 
   theme(legend.title = element_blank()) + 
   facet_wrap(~ metric, scales = "free_x")
+
+##### SUMMARISE DENSITY DATA BY POSITION #####
+unique(suMeans3$sampleArea)
+unique(suMeans3$sampleUnit) # 90 quadrats
+unique(suMeans3$metric)
+
+suMeans3 %>% select(-n) %>%
+  filter(metric == "daily_max") %>% 
+  group_by(species) %>% tally()
+  
+# There are 17 positions with distinct temperature data
+suMeans3 %>% filter(metric == "daily_max") %>% select(position, mean) %>% distinct()
+
+# How many sample units per position?
+suMeans3 %>% filter(metric == "daily_max") %>% 
+  group_by(position) %>% 
+  summarise(sampleUnit_n = n())
+
+names(suMeans3)
+
+# Calculate size and density means for each position
+posMeans2 <- suMeans3 %>% 
+  group_by(species, sp, position, year, 
+           metric, mean, CI) %>% 
+  summarise(size_mean2 = mean(size_mean), 
+            size_sd2 = sd(size_mean),
+            sample_n = n(), 
+            size_se = size_sd2/sqrt(sample_n), 
+            size_CI = qt(0.975, df = sample_n - 1) * size_se, 
+            tidalHT_mean = mean(tideHTm, na.rm = TRUE), 
+            dens_mean = mean(snail_dens), 
+            dens_sd = sd(snail_dens), 
+            dens_se = dens_sd/sqrt(sample_n), 
+            dens_CI = qt(0.975, df = sample_n - 1) * dens_se) %>% 
+  ungroup() 
+
+posMeans2
+
+# Density v temp
+posMeans2 %>% filter(metric != "daily_mean" & metric != "daily_cv") %>% 
+  ggplot(aes(mean, dens_mean, color = species, 
+             shape = species)) +
+  geom_point(alpha = 0.5) + 
+  labs(x = "Temperature (C)", y = "Density (m-2)") + 
+  theme(legend.position = "top") + 
+  theme(legend.title = element_blank()) + 
+  facet_wrap(~ metric) + 
+  geom_smooth(method = "lm")
+
+# Size v temp
+posMeans2 %>% filter(metric != "daily_mean" & metric != "daily_cv") %>% 
+  ggplot(aes(mean, size_mean, color = species, 
+             shape = species)) +
+  geom_point(alpha = 0.5) + 
+  labs(x = "Temperature (C)", y = "Density (m-2)") + 
+  theme(legend.position = "top") + 
+  theme(legend.title = element_blank()) + 
+  facet_wrap(~ metric)
 
