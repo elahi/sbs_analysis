@@ -12,6 +12,11 @@
 #rm(list=ls(all=TRUE)) 
 
 library(grid)
+library(cowplot)
+
+source("R/multiplotF.R")
+library(grid)
+theme_set(theme_bw(base_size = 12))
 
 # Load temperature logger data (6 weeks of empirical data)
 source("05_summarise_intertidal_temps.R")
@@ -262,4 +267,125 @@ tempDF %>% filter(metric == "maximum") %>% filter(dataset == "Model") %>%
   scale_x_continuous(limits = c(-0.1, 8))
 
 ggsave("figs/elahi_temp_body_rock_ppt3_hindcast.png", height = 1.75, width = 3.5)
+
+##### 3 PANEL PLOT WITH AIR EXPOSURE ######
+theme_set(theme_bw(base_size = 12))
+
+tempDF$dataset
+
+facet_label_text <- tempDF %>% group_by(dataset) %>% 
+  summarise(minValue = min(mean), 
+            maxValue = max(mean)) %>%  
+  mutate(x = 0, 
+         text1 = c("A", "B"), 
+         dataset = c("Empirical", "Model"), 
+         y = c(38.5, 20.5))
+
+facet_label_text
+
+panelAB <- tempDF %>% 
+  ggplot(aes(tidalHT, mean, shape = species, color = metric)) + 
+  geom_point(alpha = 0.6, size = 2) + 
+  geom_line(aes(group = interaction(species, metric), color = NULL), 
+            alpha = 1, size = 0.3) + 
+  geom_errorbar(aes(ymax = mean + CI, 
+                    ymin = mean - CI), width = 0.2, alpha = 0.6) + 
+  geom_point(data = subset(tempDF, microhabitat == "crevice" & metric == "maximum"), 
+             aes(tidalHT, mean, shape = species, color = NULL), 
+             alpha = 0.6, size = 2) + 
+  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  xlab("Tidal height (m)") +   
+  theme(strip.background = element_blank()) + 
+  guides(color = FALSE) + 
+  theme(legend.position = "none") + 
+  #theme(legend.title = element_blank()) + 
+  facet_wrap(~ dataset, ncol = 1, scales = "free_y", 
+             labeller = labeller(dataset = dataset_description)) + 
+  guides(shape = 
+           guide_legend(title = "SAMPLING AREA", title.position = "top", 
+                        title.hjust = 0.5, 
+                        title.theme = 
+                          element_text(size = 10, face = "bold", angle = 0), 
+                        label.theme = 
+                          element_text(angle = 0, size = 8, face =  "italic"))) + 
+  geom_text(aes(x, y, label = text1, shape = NULL), 
+            data = intertidal_text_df, size = 3, 
+            hjust = 0, fontface = "bold") + 
+  geom_text(aes(x, y, label = text1, color = NULL, shape = NULL), 
+            data = facet_label_text, size = 5, hjust = 0.25, vjust = 0.75, 
+            show.legend = FALSE) 
+
+
+
+## Panel A - Empirical rock temps
+panelA <- tempDF %>% 
+  filter(dataset == "Empirical") %>% 
+  ggplot(aes(tidalHT, mean, shape = species, color = metric)) + 
+  guides(shape = 
+           guide_legend(title = "SAMPLING AREA", title.position = "top", 
+                        title.hjust = 0.5, 
+                        title.theme = 
+                          element_text(size = 8, face = "bold", angle = 0), 
+                        keywidth = 0.1,
+                        keyheight = 0.1,
+                        default.unit="inch", 
+                        label.theme = 
+                          element_text(angle = 0, size = 8, face =  "italic"))) + 
+  geom_point(alpha = 0.8, size = 2) + 
+  geom_line(aes(group = interaction(species, metric), color = NULL), 
+            alpha = 1, size = 0.3) + 
+  geom_errorbar(aes(ymax = mean + CI, 
+                    ymin = mean - CI), width = 0.2, alpha = 0.8) + 
+  geom_point(data = subset(tempDF, microhabitat == "crevice" & metric == "maximum"), 
+             aes(tidalHT, mean, shape = species, color = NULL), 
+             alpha = 0.6, size = 2) + 
+  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  xlab("Tidal height (m)") +   
+  theme(strip.background = element_blank()) + 
+  guides(color = FALSE) + 
+  facet_wrap(~ dataset, ncol = 1, scales = "free_y", 
+             labeller = labeller(dataset = dataset_description)) + 
+  annotate(geom = "text", x = 8, y = 38.5, label = "A") + 
+  theme(legend.position = c(0.05, 0.95), legend.justification = c(0.05, 0.95)) + 
+  theme(legend.title = element_blank()) + 
+  theme(legend.background = element_blank())
+  
+panelA
+
+panelB <- tempDF %>% 
+  filter(dataset == "Model") %>% 
+  ggplot(aes(tidalHT, mean, shape = species, color = metric)) + 
+  geom_point(alpha = 0.8, size = 2) + 
+  geom_line(aes(group = interaction(species, metric), color = NULL), 
+            alpha = 1, size = 0.3) + 
+  geom_errorbar(aes(ymax = mean + CI, 
+                    ymin = mean - CI), width = 0.2, alpha = 0.8) + 
+  ylab(expression(paste("Temperature (", degree, "C)"))) + 
+  xlab("Tidal height (m)") +   
+  theme(strip.background = element_blank()) + 
+  guides(color = FALSE) + 
+  theme(legend.position = "none") +
+  facet_wrap(~ dataset, ncol = 1, scales = "free_y", 
+             labeller = labeller(dataset = dataset_description)) + 
+  geom_text(aes(x, y, label = text1, shape = NULL), 
+            data = intertidal_text_df, size = 3, 
+            hjust = 0, fontface = "bold") + 
+  annotate(geom = "text", x = 0, y = 20.5, label = "B")
+
+panelB
+
+
+panelC <- df %>%
+  ggplot(aes(tidal_height, air_exposure_proportion * 100, color)) +
+  geom_line() + 
+  labs(x = "Tidal height (m)", y = "Air exposure (%)") + 
+  # scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100), 
+  #                    labels = c("0", "20", "40", "60", "80", "")) + 
+  annotate(geom = "text", x = 0, y = 90, label = "C")
+
+layout1 <- matrix(c(1, 1, 2, 2, 3), nrow = 5, byrow = TRUE)
+png("figs/elahi_temp_body_rock_3panel.png", width = 3.5, height = 7, units = "in", res = 300)
+multiplot(panelA, panelB, panelC, layout = layout1)
+dev.off()	
+
 

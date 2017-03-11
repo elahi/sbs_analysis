@@ -11,13 +11,14 @@
 
 
 library(ggplot2)
+library(dplyr)
 theme_set(theme_bw(base_size = 12))
 library(readr)
 
 # Load file created from "R/estimate_air_exposure"
 df <- read_csv("output/monterey_air_exposure.csv")[-1]
 
-df %>%
+plot_air_exposure <- df %>%
   ggplot(aes(tidal_height, air_exposure_proportion, color)) +
   geom_line() + 
   labs(x = "Tidal height (m)", y = "Air exposure\n(proportion)")
