@@ -69,7 +69,15 @@ wara_area2 <- wara_area2 %>%
   mutate(snail_number = area_m2 * dens_mean)
 
 wara_area2
-wara %>% group_by(area) %>% summarise(total_snails = sum(snail_count))
+
+total_snails_transect <- wara %>% group_by(area) %>% summarise(total_snails = sum(snail_count))
+total_snails
+total_snails_transect
+
+total_snails$transect_estimate <- total_snails_transect$total_snails
+
+total_snails <- total_snails %>% 
+  mutate(per_diff = 100 *(transect_estimate - transect_snail_count_total)/transect_snail_count_total)
 
 waraPast <- wara %>% 
   mutate(sp = "CHFU", 
@@ -79,6 +87,19 @@ waraPast <- wara %>%
          era = "past") %>% 
   select(density_m2, size_mm, species, sp, tideHTm, site, era)
 waraPast
+
+##### FIGURE 8 ######
+
+##' eyeballed estimates of transect length from figure 2 at each tidal height
+##' eyeballed density estimates per tidal height from figure 8
+##' 
+
+transect_length_vector <- c(1, 3, 2, 3, 5)
+density_vector <- c(160, 180, 450, 390, 290)
+
+total_snails_vector <- transect_length_vector * 2 * density_vector
+sum(total_snails_vector)
+
 
 ##### SUMMARISE SIZE-DENSITY DATA FOR ALL THREE SPECIES #####
 
