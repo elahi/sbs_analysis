@@ -16,7 +16,7 @@ source("03_identify_size_cutoff.R")
 
 dat4
 
-##### TRY FACETTING #####
+##### GET FACETS #####
 
 facet_panels <- dat4 %>% select(species, era) %>% distinct() %>%
   arrange(species, era)
@@ -49,13 +49,28 @@ hexPres <- hexDF %>% filter(era == "present")
 
 ##### Chlorostoma #####
 
+##' 200 samples
+set.seed(82)
 wara_sample <- data.frame(size1mm = sample(waraPast$size1mm, size = 200))
-
 wara_sample %>% 
   ggplot(aes(size1mm)) +
   geom_dotplot(binwidth = 2, method = "histodot", dotsize = 0.18, stackratio = 1.1, 
                fill = "red") + 
-  ylim(0, 32)
+  ylim(0, 32)  
+
+##' 300 samples
+set.seed(12)
+theme_set(theme_bw(base_size = 20))
+wara_sample <- data.frame(size1mm = sample(waraPast$size1mm, size = 300))
+
+wara_sample %>% 
+  ggplot(aes(size1mm)) +
+  geom_dotplot(binwidth = 2, method = "histodot", dotsize = 0.16, stackratio = 1, 
+               fill = "red", alpha = 0.8) + 
+  ylim(0, 50) + 
+  xlab("Size (mm)") + 
+  ylab("Number of snails") + 
+  scale_x_continuous(breaks = seq(0, 30, by = 2))
 
 ggsave("hms_open_house/chlorostoma_dotplot.png")
 
