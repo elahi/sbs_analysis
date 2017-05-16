@@ -68,8 +68,6 @@ datMeans4 %>% filter(sp == "CHFU") %>%
   geom_point(alpha = 0.75, size = 2) + 
   facet_wrap(~ site, scales = "free") + 
   geom_line()
-geom_smooth(fill = NA) + 
-  geom_smooth(show.legend = FALSE) 
 
 ##### PLOT MEAN SIZES TIDAL HEIGHT - THREE PANELS #####
 
@@ -85,7 +83,7 @@ datMeans4 %>%
   geom_point(alpha = 0.75, size = 2) + 
   facet_wrap(~ species) + 
   scale_x_log10() + 
-  theme(legend.position = c(0, 0.0), legend.justification = c(0, 0)) + 
+  theme(legend.position = c(0.01, 0.01), legend.justification = c(0.01, 0.01)) + 
   theme(legend.title = element_blank()) +
   theme(legend.key = element_rect(fill = "white")) + 
   xlab(expression(paste("Density (no. ", m^-2, ")"))) + 
@@ -119,7 +117,8 @@ datMeans4 %>%
   # geom_vline(xintercept = 2200, color = "darkgray", size = 0.25)
 
 
-ggsave("figs/elahi_size_era_density_3panel.png", height = 3.5, width = 7)
+ggsave("figs/elahi_size_era_density_3panel.pdf", height = 3.5, width = 7)
+#ggsave("figs/elahi_size_era_density_3panel.png", height = 3.5, width = 7)
 
 size_dens_box_text <- data.frame(x = rep(1500, 3), 
                              y = rep(3, 3), 
@@ -135,5 +134,5 @@ datMeans4 %>%
   ylab(expression(paste("Density (no. ", m^-2, ")"))) + 
   xlab("") + 
   theme(legend.position = "none")
-ggsave("figs/elahi_size_era_density_box_3panel.png", height = 3.5, width = 7)
+#ggsave("figs/elahi_size_era_density_box_3panel.png", height = 3.5, width = 7)
 

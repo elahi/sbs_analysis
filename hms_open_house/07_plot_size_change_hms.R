@@ -74,3 +74,4 @@ wara_sample %>%
 
 ggsave("hms_open_house/chlorostoma_dotplot.png")
 
+save.image(file = "hms_open_house/hms_open_house_script.RData")
