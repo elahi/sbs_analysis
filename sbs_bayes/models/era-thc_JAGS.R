@@ -2,11 +2,11 @@
     model{
     # priors
     alpha1 ~ dnorm(15, 30)
-    alpha2 ~ dnorm(-2, 2) 
+    alpha2 ~ dnorm(0, 30) 
     sigma ~ dunif(0, 50)
     tau <- 1/sigma^2
-    beta1 ~ dnorm(0, 10)
-    beta2 ~ dnorm(0, 5)
+    beta1 ~ dnorm(0, 20)
+    beta2 ~ dnorm(0, 20)
 
     # likelihood
     for(i in 1:length(y)){

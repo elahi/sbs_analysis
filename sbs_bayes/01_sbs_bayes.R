@@ -67,7 +67,7 @@ cat("
     model{
     # priors
     alpha1 ~ dnorm(15, 30)
-    alpha2 ~ dnorm(-2, 2) 
+    alpha2 ~ dnorm(0, 5) 
     sigma ~ dunif(0, 50)
     tau <- 1/sigma^2
     
@@ -182,9 +182,9 @@ inits = list(
   )
 )
 
-n.adapt = 2000
-n.update = 2000
-n.iter = 2000
+n.adapt = 1000
+n.update = 1000
+n.iter = 1000
 
 ## JAGS model
 sink("sbs_bayes/models/era-thc_JAGS.R")
@@ -192,11 +192,11 @@ cat("
     model{
     # priors
     alpha1 ~ dnorm(15, 30)
-    alpha2 ~ dnorm(-2, 2) 
+    alpha2 ~ dnorm(0, 30) 
     sigma ~ dunif(0, 50)
     tau <- 1/sigma^2
-    beta1 ~ dnorm(0, 10)
-    beta2 ~ dnorm(0, 5)
+    beta1 ~ dnorm(0, 20)
+    beta2 ~ dnorm(0, 20)
 
     # likelihood
     for(i in 1:length(y)){
@@ -236,13 +236,14 @@ jm = jags.model("sbs_bayes/models/era-thc_JAGS.R", data = data, inits = inits,
 
 update(jm, n.iter = n.update)
 
-zm = coda.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", "p.sd", 
+zm = coda.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", 
+                                         "beta1", "beta2","p.sd", 
                                          "p.mean", "p.discrep", "p.max"), 
                   n.iter = n.iter, n.thin = 1)
 
 head(zm[[1]])
 
-zj = jags.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", 
+zj = jags.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", "beta1", "beta2", 
                                          "y.sim", "p.sd", "p.mean", "p.discrep", "p.max"), 
                   n.iter = n.iter, n.thin = 1)
 

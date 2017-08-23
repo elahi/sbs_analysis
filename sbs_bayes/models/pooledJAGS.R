@@ -2,7 +2,7 @@
     model{
     # priors
     alpha1 ~ dnorm(15, 30)
-    alpha2 ~ dnorm(-2, 2) 
+    alpha2 ~ dnorm(0, 5) 
     sigma ~ dunif(0, 50)
     tau <- 1/sigma^2
     
