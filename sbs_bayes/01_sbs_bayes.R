@@ -24,6 +24,13 @@ datJ <- dat4 %>%
   mutate(eraJ = ifelse(era == "past", 0, 1), 
          thc = as.numeric(scale(sample_area_tidal_ht, scale = F)))
 
+###
+datJ %>% count(sp, sampleArea, era)  %>% View()
+
+## Analyze species separately
+## Use group level effects for Littorina and Lottia
+## For Chlorostoma, analyze sites separately
+
 ## Make separate dataframes
 childsDF <- droplevels(filter(datJ, sp == "LIKE"))
 waraDF <- droplevels(filter(datJ, sp == "CHFU"))
@@ -36,8 +43,6 @@ library(rjags)
 
 # Choose data - Littorina
 dat <- childsDF
-#dat <- waraDF
-#dat <- hexDF
 
 data = list(
   y = dat$size1mm,
@@ -74,9 +79,9 @@ cat("
     # likelihood
     for(i in 1:length(y)){
     y_mu[i] <- exp(alpha1 + alpha2 * era[i])
-    y[i] ~ dnorm(y_mu[i], tau)
+    y[i] ~ dlnorm(log(y_mu[i]), tau)
     # Simulated data for posterior predictive checks
-    y.sim[i] ~ dnorm(y_mu[i], tau)
+    y.sim[i] ~ dlnorm(log(y_mu[i]), tau)
     sq.error.data[i] <- (y[i] - y_mu[i])^2
     sq.error.sim[i] <- (y.sim[i] - y_mu[i])^2
     }
@@ -93,15 +98,10 @@ cat("
     discrep.data <- sum(sq.error.data)
     discrep.sim <- sum(sq.error.sim)
     p.discrep <- step(discrep.sim - discrep.data)
-    
-    max.data <- max(y)
-    max.sim <- max(y.sim)
-    p.max <-step(max.sim - max.data)
 
     }
     ", fill = TRUE)
 sink()
-
 
 jm = jags.model("sbs_bayes/models/pooledJAGS.R", data = data, inits = inits, 
                 n.chains = length(inits), n.adapt = n.adapt)
@@ -109,13 +109,13 @@ jm = jags.model("sbs_bayes/models/pooledJAGS.R", data = data, inits = inits,
 update(jm, n.iter = n.update)
 
 zm = coda.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", "p.sd", 
-                                         "p.mean", "p.discrep", "p.max"), 
+                                         "p.mean", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 
 head(zm[[1]])
 
 zj = jags.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", 
-                                         "y.sim", "p.sd", "p.mean", "p.discrep", "p.max"), 
+                                         "y.sim", "p.sd", "p.mean", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 
 #Produce trace plots of the chains for model parameters. 
@@ -149,36 +149,30 @@ exp(2.45)
 8.5/11.1
 11.1 * -0.3
 
-##### POOLED MODEL FOR EACH SPECIES & TIDAL HEIGHT,IGNORING SPATIAL STRUCTURE #####
+##### POOLED MODEL FOR EACH SPECIES, IGNORING SPATIAL STRUCTURE & TIDAL HEIGHT #####
+## LOGNORMAL
 
 # load jags
 library(rjags)
 
 # Choose data - Littorina
 dat <- childsDF
-#dat <- waraDF
-#dat <- hexDF
 
 data = list(
   y = dat$size1mm,
-  era = dat$eraJ, 
-  thc = dat$thc
+  era = dat$eraJ
 )
 
 inits = list(
   list(
     alpha1 = 15,
     alpha2 = 0,
-    sigma = 40, 
-    beta1 = -0.9, 
-    beta2 = -0.2
+    sigma = 5
   ),
   list(
     alpha1 = 5,
     alpha2 = 0.7,
-    sigma = 20, 
-    beta1 = 9, 
-    beta2 = 0.5
+    sigma = 1
   )
 )
 
@@ -187,28 +181,25 @@ n.update = 1000
 n.iter = 1000
 
 ## JAGS model
-sink("sbs_bayes/models/era-thc_JAGS.R")
+sink("sbs_bayes/models/pooledJAGS.R")
 cat(" 
     model{
     # priors
     alpha1 ~ dnorm(15, 30)
-    alpha2 ~ dnorm(0, 30) 
-    sigma ~ dunif(0, 50)
+    alpha2 ~ dnorm(0, 2) 
+    sigma ~ dunif(0, 5)
     tau <- 1/sigma^2
-    beta1 ~ dnorm(0, 20)
-    beta2 ~ dnorm(0, 20)
-
+    
     # likelihood
     for(i in 1:length(y)){
-    y_mu[i] <- exp(alpha1 + alpha2*era[i] + beta1*thc[i] + beta2*thc[i]*era[i])
-    y[i] ~ dnorm(y_mu[i], tau)
-
+    y_mu[i] <- exp(alpha1 + alpha2 * era[i])
+    y[i] ~ dlnorm(log(y_mu[i] - 0.67*tau), tau)
     # Simulated data for posterior predictive checks
-    y.sim[i] ~ dnorm(y_mu[i], tau)
+    y.sim[i] ~ dlnorm(log(y_mu[i] - 0.67*tau), tau)
     sq.error.data[i] <- (y[i] - y_mu[i])^2
     sq.error.sim[i] <- (y.sim[i] - y_mu[i])^2
     }
-
+    
     #Bayesian P values
     sd.data <- sd(y)
     sd.sim <- sd(y.sim)
@@ -222,38 +213,33 @@ cat("
     discrep.sim <- sum(sq.error.sim)
     p.discrep <- step(discrep.sim - discrep.data)
     
-    max.data <- max(y)
-    max.sim <- max(y.sim)
-    p.max <-step(max.sim - max.data)
-
     }
     ", fill = TRUE)
 sink()
 
-
-jm = jags.model("sbs_bayes/models/era-thc_JAGS.R", data = data, inits = inits, 
+jm = jags.model("sbs_bayes/models/pooledJAGS.R", data = data, inits = inits, 
                 n.chains = length(inits), n.adapt = n.adapt)
 
 update(jm, n.iter = n.update)
 
-zm = coda.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", 
-                                         "beta1", "beta2","p.sd", 
-                                         "p.mean", "p.discrep", "p.max"), 
+zm = coda.samples(jm, variable.names = c("alpha1", "alpha2", "sigma"), 
                   n.iter = n.iter, n.thin = 1)
 
 head(zm[[1]])
 
-zj = jags.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", "beta1", "beta2", 
-                                         "y.sim", "p.sd", "p.mean", "p.discrep", "p.max"), 
+zj = jags.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", 
+                                         "y.sim", "p.sd", "p.mean", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 
 #Produce trace plots of the chains for model parameters. 
+plot(zm)
 traceplot(zm)
 densplot(zm)
+
 #Produce a summary table for the parameters. 
 summary(zm)
 
-#Test for convergence using the Gelman diagnostic.
+# Test for convergence using the Gelman diagnostic.
 gelman.diag(zm, multivariate = F)
 
 # Check Bayesian pvals
@@ -266,9 +252,8 @@ zj$p.discrep
 hist(data$y, breaks = 30, freq=FALSE) #note that this is the log transformed data
 lines(density(zj$y.sim), col="red")
 
-lm2 <- lm(size1mm ~ era * thc, data = dat)
-summary(lm2)
-lm2
+lm1 <- lm(size1mm ~ era, data = dat)
+summary(lm1)
 
 waraDF %>% group_by(era) %>% 
   summarise(mean = mean(size1mm, na.rm = TRUE),
@@ -278,6 +263,8 @@ exp(2.45)
 8.5/11.1
 11.1 * -0.3
 
+##' 2.24, -0.8 for alpha1 and alpha2
+
 ##### POOLED MODEL FOR EACH SPECIES & TIDAL HEIGHT, WITH SITE GROUPS #####
 
 # load jags
@@ -285,8 +272,6 @@ library(rjags)
 
 # Choose data - Littorina
 dat <- childsDF
-#dat <- waraDF
-#dat <- hexDF
 
 # Create site groups
 dat <- dat %>% group_by(sampleArea) %>% 
@@ -369,10 +354,6 @@ cat("
     discrep.sim <- sum(sq.error.sim)
     p.discrep <- step(discrep.sim - discrep.data)
     
-    max.data <- max(y)
-    max.sim <- max(y.sim)
-    p.max <-step(max.sim - max.data)
-    
     }
     ", fill = TRUE)
 sink()
@@ -384,12 +365,141 @@ jm = jags.model("sbs_bayes/models/hier1_JAGS.R", data = data, inits = inits,
 update(jm, n.iter = n.update)
 
 zm = coda.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", "p.sd", 
-                                         "p.mean", "p.discrep", "p.max"), 
+                                         "p.mean", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 
 head(zm[[1]])
 
 zj = jags.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", 
+                                         "y.sim", "p.sd", "p.mean", "p.discrep"), 
+                  n.iter = n.iter, n.thin = 1)
+
+#Produce trace plots of the chains for model parameters. 
+traceplot(zm)
+densplot(zm)
+
+#Produce a summary table for the parameters. 
+summary(zm)
+
+#Test for convergence using the Gelman diagnostic.
+gelman.diag(zm, multivariate = F)
+
+# Check Bayesian pvals
+zj$p.sd
+zj$p.mean
+zj$p.discrep
+
+# Compared observed vs simulated
+hist(data$y, breaks = 30, freq=FALSE)
+lines(density(zj$y.sim), col="red")
+
+lm2 <- lm(size1mm ~ era * thc, data = dat)
+summary(lm2)
+lm2
+
+waraDF %>% group_by(era) %>% 
+  summarise(mean = mean(size1mm, na.rm = TRUE),
+            sd = sd(size1mm, na.rm = TRUE))
+exp(2.45)
+11/8.5
+8.5/11.1
+11.1 * -0.3
+
+##### POOLED MODEL FOR EACH SPECIES & TIDAL HEIGHT, IGNORING SPATIAL STRUCTURE #####
+
+# load jags
+library(rjags)
+
+# Choose data - Littorina
+dat <- childsDF
+#dat <- waraDF
+#dat <- hexDF
+
+data = list(
+  y = dat$size1mm,
+  era = dat$eraJ, 
+  thc = dat$thc
+)
+
+inits = list(
+  list(
+    alpha1 = 15,
+    alpha2 = 0,
+    sigma = 40, 
+    beta1 = -0.9, 
+    beta2 = -0.2
+  ),
+  list(
+    alpha1 = 5,
+    alpha2 = 0.7,
+    sigma = 20, 
+    beta1 = 9, 
+    beta2 = 0.5
+  )
+)
+
+n.adapt = 1000
+n.update = 1000
+n.iter = 1000
+
+## JAGS model
+sink("sbs_bayes/models/era-thc_JAGS.R")
+cat(" 
+    model{
+    # priors
+    alpha1 ~ dnorm(15, 30)
+    alpha2 ~ dnorm(0, 30) 
+    sigma ~ dunif(0, 50)
+    tau <- 1/sigma^2
+    beta1 ~ dnorm(0, 20)
+    beta2 ~ dnorm(0, 20)
+    
+    # likelihood
+    for(i in 1:length(y)){
+    y_mu[i] <- exp(alpha1 + alpha2*era[i] + beta1*thc[i] + beta2*thc[i]*era[i])
+    y[i] ~ dnorm(y_mu[i], tau)
+    
+    # Simulated data for posterior predictive checks
+    y.sim[i] ~ dnorm(y_mu[i], tau)
+    sq.error.data[i] <- (y[i] - y_mu[i])^2
+    sq.error.sim[i] <- (y.sim[i] - y_mu[i])^2
+    }
+    
+    #Bayesian P values
+    sd.data <- sd(y)
+    sd.sim <- sd(y.sim)
+    p.sd <- step(sd.sim - sd.data)
+    
+    mean.data <- mean(y)
+    mean.sim  <- mean(y.sim)
+    p.mean <- step(mean.sim - mean.data)
+    
+    discrep.data <- sum(sq.error.data)
+    discrep.sim <- sum(sq.error.sim)
+    p.discrep <- step(discrep.sim - discrep.data)
+    
+    max.data <- max(y)
+    max.sim <- max(y.sim)
+    p.max <-step(max.sim - max.data)
+    
+    }
+    ", fill = TRUE)
+sink()
+
+
+jm = jags.model("sbs_bayes/models/era-thc_JAGS.R", data = data, inits = inits, 
+                n.chains = length(inits), n.adapt = n.adapt)
+
+update(jm, n.iter = n.update)
+
+zm = coda.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", 
+                                         "beta1", "beta2","p.sd", 
+                                         "p.mean", "p.discrep", "p.max"), 
+                  n.iter = n.iter, n.thin = 1)
+
+head(zm[[1]])
+
+zj = jags.samples(jm, variable.names = c("alpha1", "alpha2", "sigma", "beta1", "beta2", 
                                          "y.sim", "p.sd", "p.mean", "p.discrep", "p.max"), 
                   n.iter = n.iter, n.thin = 1)
 
@@ -423,4 +533,3 @@ exp(2.45)
 11/8.5
 8.5/11.1
 11.1 * -0.3
-

@@ -40,9 +40,5 @@
     discrep.sim <- sum(sq.error.sim)
     p.discrep <- step(discrep.sim - discrep.data)
     
-    max.data <- max(y)
-    max.sim <- max(y.sim)
-    p.max <-step(max.sim - max.data)
-    
     }
     
