@@ -84,7 +84,7 @@ dat4 %>%
 
 
 ##### SIZE - lme #####
-lmeMod1 <- lme(fixed = size1mm ~ era * species * sample_area_tidal_ht,
+lmeMod1 <- lme(fixed = size1mm ~ era * species * scale(sample_area_tidal_ht),
                random = list(~ 1 | sampleArea), 
                na.action = na.omit, method = "REML", 
                data = statDat)
@@ -93,7 +93,8 @@ summary(lmeMod1)
 round(summary(lmeMod1)$tTable, 3)
 anova(lmeMod1)
 plot(lmeMod1)
-
+coef(lmeMod1)
+fixed.effects(lmeMod1)
 ##### SIZE - lme - MODEL SELECTION #####
 
 # Set up candidate model list

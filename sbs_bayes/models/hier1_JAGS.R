@@ -19,10 +19,10 @@
     # likelihood
     for(i in 1:length(y)){
     y_mu[i] <- exp(alpha1[y.group[i]] + alpha2*era[i])
-    y[i] ~ dnorm(y_mu[i], tau)
+    y[i] ~ dlnorm(log(y_mu[i]), tau)
     
     # Simulated data for posterior predictive checks
-    y.sim[i] ~ dnorm(y_mu[i], tau)
+    y.sim[i] ~ dlnorm(log(y_mu[i]), tau)
     sq.error.data[i] <- (y[i] - y_mu[i])^2
     sq.error.sim[i] <- (y.sim[i] - y_mu[i])^2
     }
