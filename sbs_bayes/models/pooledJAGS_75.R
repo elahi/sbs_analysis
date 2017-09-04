@@ -11,8 +11,8 @@
     mu_mat <- X %*% beta # can't exponentiate a vector
     for (i in 1:k){
     mu[i] <- exp(mu_mat[i])
-    y[i] ~ dlnorm(log(mu[i]), tau)
-    y.new[i] ~ dlnorm(log(mu[i]), tau)
+    y[i] ~ dlnorm(log(mu[i]) - 0.67*sigma, tau)
+    y.new[i] ~ dlnorm(log(mu[i]) - 0.67*sigma, tau)
     sq.error.data[i] <- (y[i] - mu[i])^2
     sq.error.sim[i] <- (y.new[i] - mu[i])^2
     }
@@ -29,6 +29,6 @@
     discrep.data <- sum(sq.error.data)
     discrep.sim <- sum(sq.error.sim)
     p.discrep <- step(discrep.sim - discrep.data)
-    
+
     }
     

@@ -30,6 +30,18 @@ summary(datJ)
 ## For Chlorostoma, analyze sites separately
 
 ## Make separate dataframes
+
+# Littorina keenae 
 childsDF <- droplevels(filter(datJ, sp == "LIKE"))
+childsPast <- childsDF %>% filter(era == "past")
+childsPres <- childsDF %>% filter(era == "present")
+
+# Chlorostoma funebralis
 waraDF <- droplevels(filter(datJ, sp == "CHFU"))
+waraPast <- waraDF %>% filter(era == "past")
+waraPres <- waraDF %>% filter(era == "present")
+
+# Lottia digitalis
 hexDF <- droplevels(filter(datJ, sp == "LODI"))
+hexPast <- hexDF %>% filter(era == "past")
+hexPres <- hexDF %>% filter(era == "present")
