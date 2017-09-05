@@ -22,15 +22,18 @@ median_change <- function(dat){
 }
 
 # Number of iterations
+n.adapt <- 1000
+n.update <- 1000
 n.iter <- 1000
+
+# Number of chains
+n_chains <- 2
 
 ##### LOTTIA #####
 dat <- hexDF 
-dat <- childsDF
-dat <- waraDF
 
 start_time <- proc.time()
-jm = pooled_model(dat = dat, iter_adapt = 1000, iter_update = 1000, n_chains = 2)
+jm = pooled_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
 zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
                   n.iter = n.iter, n.thin = 1)
 zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
@@ -62,13 +65,47 @@ mean(zj$p.discrep)
 hist(dat$size1mm, breaks = 20, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
-##### SAVE CODA SUMMARIES #####
-
 ### Save coda summary - Lottia
 hex_coda_summary <- summary(zm)
 hex_coda_quantile <- data.frame(hex_coda_summary$quantile) %>% 
   mutate(sp = "LODI", 
          param = c("alpha", "beta", "sigma"))
+
+##### LITTORINA #####
+dat <- childsDF
+
+start_time <- proc.time()
+jm = pooled_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
+                  n.iter = n.iter, n.thin = 1)
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
+                  n.iter = n.iter, n.thin = 1)
+end_time <- proc.time()
+end_time - start_time 
+
+#Produce a summary table for the parameters. 
+summary(zm)
+exp(summary(zm)$stat[1]) # size intercept (past)
+summary(zm)$stat[2] 
+
+# Compare with median values
+dat %>% group_by(era) %>% summarise(median(size1mm))
+median_change(dat)
+
+#Produce trace plots of the chains for model parameters. 
+plot(zm)
+
+# Test for convergence using the Gelman diagnostic.
+gelman.diag(zm, multivariate = F)
+
+# Check Bayesian pvals
+mean(zj$p.mean)
+mean(zj$p.sd)
+mean(zj$p.discrep)
+
+# Compared observed vs simulated
+hist(dat$size1mm, breaks = 20, freq=FALSE) 
+lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Littorina
 childs_coda_summary <- summary(zm)
@@ -76,11 +113,49 @@ childs_coda_quantile <- data.frame(childs_coda_summary$quantile) %>%
   mutate(sp = "LIKE", 
          param = c("alpha", "beta", "sigma"))
 
+##### CHLOROSTOMA #####
+dat <- waraDF
+
+start_time <- proc.time()
+jm = pooled_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
+                  n.iter = n.iter, n.thin = 1)
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
+                  n.iter = n.iter, n.thin = 1)
+end_time <- proc.time()
+end_time - start_time 
+
+#Produce a summary table for the parameters. 
+summary(zm)
+exp(summary(zm)$stat[1]) # size intercept (past)
+summary(zm)$stat[2] 
+
+# Compare with median values
+dat %>% group_by(era) %>% summarise(median(size1mm))
+median_change(dat)
+
+#Produce trace plots of the chains for model parameters. 
+plot(zm)
+
+# Test for convergence using the Gelman diagnostic.
+gelman.diag(zm, multivariate = F)
+
+# Check Bayesian pvals
+mean(zj$p.mean)
+mean(zj$p.sd)
+mean(zj$p.discrep)
+
+# Compared observed vs simulated
+hist(dat$size1mm, breaks = 20, freq=FALSE) 
+lines(density(zj$y.new), col="red")
+
 ### Save coda summary - Chlorostoma
 wara_coda_summary <- summary(zm)
 wara_coda_quantile <- data.frame(wara_coda_summary$quantile) %>% 
   mutate(sp = "CHFU", 
          param = c("alpha", "beta", "sigma"))
+
+##### SAVE CODA SUMMARIES #####
 
 ### Compile and save
 coda_quantile <- rbind(hex_coda_quantile, childs_coda_quantile, wara_coda_quantile)

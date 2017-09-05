@@ -12,7 +12,7 @@
 # rm(list=ls(all=TRUE)) 
 
 
-pooled_model <- function(dat, iter_adapt = 1000, iter_update = 1000, n_chains = 1){
+pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
   
   # load jags
   library(rjags)
