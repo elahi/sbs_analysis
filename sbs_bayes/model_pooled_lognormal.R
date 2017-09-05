@@ -11,7 +11,6 @@
 
 # rm(list=ls(all=TRUE)) 
 
-
 pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
   
   # load jags
@@ -55,8 +54,8 @@ pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
   cat(" 
       model{
       # priors
-      alpha ~ dnorm(0, 100) 
-      beta ~ dnorm(0, 10)
+      alpha ~ dnorm(0, 1/100^2) 
+      beta ~ dnorm(0, 1/10^2)
       sigma ~ dunif(0, 100)
       tau <- 1/sigma^2
       
@@ -66,21 +65,21 @@ pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
       y[i] ~ dlnorm(log(mu[i]), tau)
       y.new[i] ~ dlnorm(log(mu[i]), tau)
       sq.error.data[i] <- (y[i] - mu[i])^2
-      sq.error.sim[i] <- (y.new[i] - mu[i])^2
+      sq.error.new[i] <- (y.new[i] - mu[i])^2
       }
 
       # bayesian p-values
       sd.data <- sd(y)
-      sd.sim <- sd(y.new)
-      p.sd <- step(sd.sim - sd.data)
+      sd.new <- sd(y.new)
+      p.sd <- step(sd.new - sd.data)
       
       mean.data <- mean(y)
-      mean.sim  <- mean(y.new)
-      p.mean <- step(mean.sim - mean.data)
+      mean.new  <- mean(y.new)
+      p.mean <- step(mean.new - mean.data)
       
       discrep.data <- sum(sq.error.data)
-      discrep.sim <- sum(sq.error.sim)
-      p.discrep <- step(discrep.sim - discrep.data)
+      discrep.new <- sum(sq.error.new)
+      p.discrep <- step(discrep.new - discrep.data)
       
       # Check sink
       

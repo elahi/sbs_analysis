@@ -27,16 +27,17 @@ n.update <- 1000
 n.iter <- 1000
 
 # Number of chains
-n_chains <- 1
+n_chains <- 2
 
 ##### LOTTIA #####
 dat <- hexDF 
 
 start_time <- proc.time()
 jm = hier1_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", 
+                                         "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
 end_time - start_time 
@@ -76,9 +77,10 @@ dat <- childsDF
 
 start_time <- proc.time()
 jm = hier1_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", 
+                                         "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
 end_time - start_time 

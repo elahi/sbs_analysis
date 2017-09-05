@@ -64,12 +64,12 @@ hier1_model <- function(dat, iter_adapt, iter_update, n_chains){
       model{
       
       # priors for within site model (process)
-      beta ~ dnorm(0, 10)
+      beta ~ dnorm(0, 1/10^2)
       sigma ~ dunif(0, 100)
       tau <- 1/sigma^2
       
       ### priors for intercept model
-      mu.alpha ~ dnorm(0, 100)
+      mu.alpha ~ dnorm(0, 1/100^2)
       sigma.alpha ~ dunif(0, 100)
       tau.alpha <- 1/sigma.alpha^2
       

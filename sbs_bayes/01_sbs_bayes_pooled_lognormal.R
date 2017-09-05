@@ -66,10 +66,10 @@ hist(dat$size1mm, breaks = 20, freq=FALSE)
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Lottia
-hex_coda_summary <- summary(zm)
-hex_coda_quantile <- data.frame(hex_coda_summary$quantile) %>% 
+coda_summary <- summary(zm)
+hex_coda_quantile <- data.frame(coda_summary$quantile) %>% 
   mutate(sp = "LODI", 
-         param = c("alpha", "beta", "sigma"))
+         param = rownames(coda_summary$quantile))
 
 ##### LITTORINA #####
 dat <- childsDF
@@ -108,10 +108,10 @@ hist(dat$size1mm, breaks = 20, freq=FALSE)
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Littorina
-childs_coda_summary <- summary(zm)
-childs_coda_quantile <- data.frame(childs_coda_summary$quantile) %>% 
+coda_summary <- summary(zm)
+childs_coda_quantile <- data.frame(coda_summary$quantile) %>% 
   mutate(sp = "LIKE", 
-         param = c("alpha", "beta", "sigma"))
+         param = rownames(coda_summary$quantile))
 
 ##### CHLOROSTOMA #####
 dat <- waraDF
@@ -155,18 +155,23 @@ wara_coda_quantile <- data.frame(wara_coda_summary$quantile) %>%
   mutate(sp = "CHFU", 
          param = c("alpha", "beta", "sigma"))
 
+coda_summary <- summary(zm)
+wara_coda_quantile <- data.frame(coda_summary$quantile) %>% 
+  mutate(sp = "CHFU", 
+         param = rownames(coda_summary$quantile))
+
 ##### SAVE CODA SUMMARIES #####
 
 ### Compile and save
 coda_quantile <- rbind(hex_coda_quantile, childs_coda_quantile, wara_coda_quantile)
 write.csv(coda_quantile, "sbs_bayes/bayes_output/coda_quantile_pooled_lognormal_median.csv")
 
-# library(ggplot2)
-# coda_quantile %>% 
-#   filter(param == "beta") %>%
-#   ggplot(aes(sp, X50.)) + 
-#   geom_point() + 
-#   geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) + 
-#   geom_hline(aes(yintercept = 0), color = "gray", linetype = "dashed")
+library(ggplot2)
+coda_quantile %>%
+  filter(param == "beta") %>%
+  ggplot(aes(sp, X50.)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
+  geom_hline(aes(yintercept = 0), color = "gray", linetype = "dashed")
 
 
