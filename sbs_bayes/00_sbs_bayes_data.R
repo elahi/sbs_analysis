@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Analyzing snail data with Bayes
+##' @title Prepare snail data
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -9,28 +9,19 @@
 ##' @log 
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
+rm(list=ls(all=TRUE)) 
 
-##### PREP DATA #####
-
-# load data
-source("03_identify_size_cutoff.R")
-
-### I need to recode some things for JAGS
-## Recode era: past = 0, present = 1
-## thc = scaled tidal height
-datJ <- dat4 %>% 
-  mutate(eraJ = ifelse(era == "past", 0, 1), 
-         thc = as.numeric(scale(sample_area_tidal_ht, scale = F)))
-head(datJ)
-summary(datJ)
+# Get function to load data
+source("sbs_bayes/sbs_load_data.R")
+datJ <- load_sbs_data(min_cutoff = FALSE)
+# Remove all but datJ
+rm(list = setdiff(ls(), "datJ"))
 
 ## Analyze species separately
 ## Use group level effects for Littorina and Lottia
 ## For Chlorostoma, analyze sites separately
 
 ## Make separate dataframes
-
 # Littorina keenae 
 childsDF <- droplevels(filter(datJ, sp == "LIKE"))
 childsPast <- childsDF %>% filter(era == "past")
