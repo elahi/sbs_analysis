@@ -12,7 +12,7 @@
 # rm(list=ls(all=TRUE)) 
 
 source("sbs_bayes/00_sbs_bayes_data.R")
-source("sbs_bayes/model_hier2_lognormal.R")
+source("sbs_bayes/model_hier2_normal.R")
 
 median_change <- function(dat){
   dat_summary <- dat %>% group_by(era) %>% 
@@ -34,9 +34,9 @@ dat <- hexDF
 
 start_time <- proc.time()
 jm = hier2_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha"), 
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", 
                                          "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
@@ -63,7 +63,7 @@ mean(zj$p.sd)
 mean(zj$p.discrep)
 
 # Compared observed vs simulated
-hist(dat$size1mm, breaks = 20, freq=FALSE) 
+hist(log(dat$size1mm), breaks = 20, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Lottia
@@ -76,10 +76,10 @@ hex_coda_quantile <- data.frame(coda_summary$quantile) %>%
 dat <- childsDF
 
 start_time <- proc.time()
-jm = hier1_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha"), 
+jm = hier2_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", 
                                          "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
@@ -106,7 +106,7 @@ mean(zj$p.sd)
 mean(zj$p.discrep)
 
 # Compared observed vs simulated
-hist(dat$size1mm, breaks = 20, freq=FALSE) 
+hist(log(dat$size1mm), breaks = 20, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Littorina
@@ -123,11 +123,11 @@ childs_coda_quantile <- data.frame(coda_summary$quantile) %>%
 
 ### Compile and save
 coda_quantile <- rbind(hex_coda_quantile, childs_coda_quantile)
-write.csv(coda_quantile, "sbs_bayes/bayes_output/coda_quantile_hier1_lognormal_median.csv")
+write.csv(coda_quantile, "sbs_bayes/bayes_output/coda_quantile_hier2_normal_median.csv")
 
 library(ggplot2)
 coda_quantile %>%
-  filter(param == "beta") %>%
+  filter(param == "mu.beta") %>%
   ggplot(aes(sp, X50.)) +
   geom_point() +
   geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +

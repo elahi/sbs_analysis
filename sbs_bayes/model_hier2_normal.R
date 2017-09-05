@@ -28,7 +28,7 @@ hier2_model <- function(dat, iter_adapt, iter_update, n_chains){
   
   ## Get data
   data = list(
-    y = as.double(dat$size1mm),
+    y = as.double(log(dat$size1mm)),
     k = as.double(length(dat$size1mm)), 
     thc = as.double(dat$thc), 
     era = as.double(dat$eraJ), 
@@ -45,7 +45,7 @@ hier2_model <- function(dat, iter_adapt, iter_update, n_chains){
     inits = list(
       B = B, 
       sigma = 1, 
-      mu.alpha = runif(1, 0, 30), 
+      mu.alpha = runif(1, 0, 5), 
       mu.beta = runif(1, -10, 10), 
       sigma.alpha = 1, 
       sigma.beta = 1, 
@@ -57,7 +57,7 @@ hier2_model <- function(dat, iter_adapt, iter_update, n_chains){
       list(
         B = B, 
         sigma = 1, 
-        mu.alpha = runif(1, 0, 30), 
+        mu.alpha = runif(1, 0, 5), 
         mu.beta = runif(1, -10, 10), 
         sigma.alpha = 1, 
         sigma.beta = 1, 
@@ -65,16 +65,16 @@ hier2_model <- function(dat, iter_adapt, iter_update, n_chains){
     list(
       B = B*0.5, 
       sigma = 10, 
-      mu.alpha = runif(1, 0, 30), 
+      mu.alpha = runif(1, 0, 5), 
       mu.beta = runif(1, -10, 10), 
-      sigma.alpha = 10, 
-      sigma.beta = 10, 
+      sigma.alpha = 5, 
+      sigma.beta = 5, 
       rho = 0.5)
     )
   }
   
   ## JAGS model
-  sink("sbs_bayes/models/hier2_lognormal_JAGS.R")
+  sink("sbs_bayes/models/hier2_normal_JAGS.R")
   cat(" 
       model{
       
@@ -86,12 +86,12 @@ hier2_model <- function(dat, iter_adapt, iter_update, n_chains){
       for(j in 1:y.n.sites){
       alpha[j] <- B[j, 1] # group level intercept
       beta[j] <- B[j, 2] # group level slope
-      B[j, 1:2] ~ dmlnorm(B.hat[j, 1:2], Tau.B)
+      B[j, 1:2] ~ dmnorm(B.hat[j, 1:2], Tau.B)
       B.hat[j, 1] <- mu.alpha # required by JAGS syntax
       B.hat[j, 2] <- mu.beta # required by JAGS syntax
       }
 
-      mu.alpha ~ dnorm(0, 1/100^2)
+      mu.alpha ~ dnorm(0, 1/5^2)
       mu.beta ~ dnorm(0, 1/10^2)
       # Inverse of covariance matrix required by JAGS
       Tau.B[1:2, 1:2] <- inverse(Sigma.B[1:2, 1:2])
@@ -106,11 +106,11 @@ hier2_model <- function(dat, iter_adapt, iter_update, n_chains){
       
       # likelihood
       for(i in 1:length(y)){
-      mu[i] <- exp(alpha[y.group[i]] + beta*era[i])
-      y[i] ~ dlnorm(log(mu[i]), tau)
+      mu[i] <- alpha[y.group[i]] + beta[y.group[i]]*era[i]
+      y[i] ~ dnorm(mu[i], tau)
       
       # Simulated data for posterior predictive checks
-      y.new[i] ~ dlnorm(log(mu[i]), tau)
+      y.new[i] ~ dnorm(mu[i], tau)
       sq.error.data[i] <- (y[i] - mu[i])^2
       sq.error.new[i] <- (y.new[i] - mu[i])^2
       }
@@ -133,7 +133,7 @@ hier2_model <- function(dat, iter_adapt, iter_update, n_chains){
   sink()
   
   
-  jm = jags.model("sbs_bayes/models/hier2_lognormal_JAGS.R", data = data, inits = inits, 
+  jm = jags.model("sbs_bayes/models/hier2_normal_JAGS.R", data = data, inits = inits, 
                   n.chains = length(inits), n.adapt = n.adapt)
   update(jm, n.iter = n.update)
   
