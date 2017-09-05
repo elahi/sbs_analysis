@@ -30,9 +30,11 @@ load_sbs_data <- function(min_cutoff = FALSE){
   
   # Recode era for JAGS
   # Center tidal height (thc)
+  # Remove NA values for size
   datJ <- datJ %>% 
     mutate(eraJ = ifelse(era == "past", 0, 1), 
-           thc = as.numeric(scale(sample_area_tidal_ht, scale = F)))
+           thc = as.numeric(scale(sample_area_tidal_ht, scale = F))) %>% 
+    filter(!is.na(size1mm))
   
   return(datJ)
 }
