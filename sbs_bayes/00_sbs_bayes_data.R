@@ -36,3 +36,16 @@ waraPres <- waraDF %>% filter(era == "present")
 hexDF <- droplevels(filter(datJ, sp == "LODI"))
 hexPast <- hexDF %>% filter(era == "past")
 hexPres <- hexDF %>% filter(era == "present")
+
+##### TIDAL HEIGHT #####
+
+# Create range of tidal height values for plotting
+summary(datJ$thc)
+range(datJ$sample_area_tidal_ht)
+thc <- scale(datJ$sample_area_tidal_ht, scale = FALSE)
+summary(thc)
+mu_th <- mean(datJ$sample_area_tidal_ht)
+sd_th <- sd(datJ$sample_area_tidal_ht)
+th_predict <- seq(min(datJ$sample_area_tidal_ht) * 0.95, 
+                  max(datJ$sample_area_tidal_ht * 1.05), by = 0.1)
+thc_predict <- th_predict - mu_th

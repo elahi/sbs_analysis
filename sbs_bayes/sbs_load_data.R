@@ -32,9 +32,9 @@ load_sbs_data <- function(min_cutoff = FALSE){
   # Center tidal height (thc)
   # Remove NA values for size
   datJ <- datJ %>% 
+    filter(!is.na(size1mm)) %>% 
     mutate(eraJ = ifelse(era == "past", 0, 1), 
-           thc = as.numeric(scale(sample_area_tidal_ht, scale = F))) %>% 
-    filter(!is.na(size1mm))
+           thc = as.numeric(scale(sample_area_tidal_ht, scale = F))) 
   
   return(datJ)
 }

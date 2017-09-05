@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Run hierarchical intercept and slope model - lognormal distribution
+##' @title Run pooled model - tidal height - normal distribution
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -12,7 +12,7 @@
 # rm(list=ls(all=TRUE)) 
 
 source("sbs_bayes/00_sbs_bayes_data.R")
-source("sbs_bayes/model_hier2_normal.R")
+source("sbs_bayes/model_pooled_lognormal_thc.R")
 
 median_change <- function(dat){
   dat_summary <- dat %>% group_by(era) %>% 
@@ -33,10 +33,10 @@ n_chains <- 2
 dat <- hexDF 
 
 start_time <- proc.time()
-jm = hier2_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta"), 
+jm = pooled_model_thc(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa", 
                                          "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
@@ -63,7 +63,7 @@ mean(zj$p.sd)
 mean(zj$p.discrep)
 
 # Compared observed vs simulated
-hist(log(dat$size1mm), breaks = 20, freq=FALSE) 
+hist(dat$size1mm, breaks = 20, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Lottia
@@ -76,10 +76,10 @@ hex_coda_quantile <- data.frame(coda_summary$quantile) %>%
 dat <- childsDF
 
 start_time <- proc.time()
-jm = hier2_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta"), 
+jm = pooled_model_thc(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa", 
                                          "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
@@ -106,7 +106,7 @@ mean(zj$p.sd)
 mean(zj$p.discrep)
 
 # Compared observed vs simulated
-hist(log(dat$size1mm), breaks = 20, freq=FALSE) 
+hist(dat$size1mm, breaks = 20, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Littorina
@@ -116,32 +116,65 @@ childs_coda_quantile <- data.frame(coda_summary$quantile) %>%
          param = rownames(coda_summary$quantile))
 
 ##### CHLOROSTOMA #####
+dat <- waraDF
 
-## not run, only two sample areas
+start_time <- proc.time()
+jm = pooled_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa"), 
+                  n.iter = n.iter, n.thin = 1)
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa", 
+                                         "y.new", "p.mean", "p.sd", "p.discrep"), 
+                  n.iter = n.iter, n.thin = 1)
+end_time <- proc.time()
+end_time - start_time 
+
+#Produce a summary table for the parameters. 
+summary(zm)
+exp(summary(zm)$stat[1]) # size intercept (past)
+summary(zm)$stat[2] 
+
+# Compare with median values
+dat %>% group_by(era) %>% summarise(median(size1mm))
+median_change(dat)
+
+#Produce trace plots of the chains for model parameters. 
+plot(zm)
+
+# Test for convergence using the Gelman diagnostic.
+gelman.diag(zm, multivariate = F)
+
+# Check Bayesian pvals
+mean(zj$p.mean)
+mean(zj$p.sd)
+mean(zj$p.discrep)
+
+# Compared observed vs simulated
+hist(dat$size1mm, breaks = 20, freq=FALSE) 
+lines(density(zj$y.new), col="red")
+
+### Save coda summary - Chlorostoma
+wara_coda_summary <- summary(zm)
+wara_coda_quantile <- data.frame(wara_coda_summary$quantile) %>% 
+  mutate(sp = "CHFU", 
+         param = c("alpha", "beta", "sigma"))
+
+coda_summary <- summary(zm)
+wara_coda_quantile <- data.frame(coda_summary$quantile) %>% 
+  mutate(sp = "CHFU", 
+         param = rownames(coda_summary$quantile))
 
 ##### SAVE CODA SUMMARIES #####
 
 ### Compile and save
-coda_quantile <- rbind(hex_coda_quantile, childs_coda_quantile)
-write.csv(coda_quantile, "sbs_bayes/bayes_output/coda_quantile_hier2_normal_median.csv")
+coda_quantile <- rbind(hex_coda_quantile, childs_coda_quantile, wara_coda_quantile)
+write.csv(coda_quantile, "sbs_bayes/bayes_output/coda_quantile_pooled_lognormal_median.csv")
 
 library(ggplot2)
 coda_quantile %>%
-  filter(param == "mu.beta") %>%
+  filter(param == "beta") %>%
   ggplot(aes(sp, X50.)) +
   geom_point() +
   geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
   geom_hline(aes(yintercept = 0), color = "gray", linetype = "dashed")
 
-## Get tidal heights
-datJ %>% 
-  group_by(sp, species, thc, sampleArea, sample_area_tidal_ht) %>% 
-  distinct()
-
-# Create sample area groups
-dat <- dat %>% mutate(group_j = as.integer(as.factor(sampleArea)))
-
-hexDF %>% 
-  group_by(sp, species, thc, sampleArea, sample_area_tidal_ht, group_j) %>% 
-  distinct()
 

@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Run hierarchical intercept and slope model - lognormal distribution
+##' @title Run hierarchical intercept and slope model - normal distribution
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -12,7 +12,7 @@
 # rm(list=ls(all=TRUE)) 
 
 source("sbs_bayes/00_sbs_bayes_data.R")
-source("sbs_bayes/model_hier2_normal.R")
+source("sbs_bayes/model_hier3_normal.R")
 
 median_change <- function(dat){
   dat_summary <- dat %>% group_by(era) %>% 
@@ -33,10 +33,10 @@ n_chains <- 2
 dat <- hexDF 
 
 start_time <- proc.time()
-jm = hier2_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta"), 
+jm = hier3_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", "eta", "kappa"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", "eta", "kappa",
                                          "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
@@ -76,10 +76,10 @@ hex_coda_quantile <- data.frame(coda_summary$quantile) %>%
 dat <- childsDF
 
 start_time <- proc.time()
-jm = hier2_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta"), 
+jm = hier3_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", "eta", "kappa"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", "eta", "kappa",
                                          "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
