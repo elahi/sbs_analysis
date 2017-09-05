@@ -48,11 +48,11 @@ hier1_model <- function(dat, iter_adapt, iter_update, n_chains){
   if(n_chains == 2){
     inits = list(
       list(
-      alpha = runif(1, 0, 30), 
+      alpha = rep(runif(1, 0, 30), y.n.sites), 
       beta = runif(1, -10, 10), 
       sigma = 1), 
     list(
-      alpha = runif(1, 0, 30), 
+      alpha = rep(runif(1, 0, 30), y.n.sites), 
       beta = runif(1, -10, 10), 
       sigma = 1)
     )

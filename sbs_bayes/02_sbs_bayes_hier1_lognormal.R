@@ -125,12 +125,12 @@ childs_coda_quantile <- data.frame(coda_summary$quantile) %>%
 coda_quantile <- rbind(hex_coda_quantile, childs_coda_quantile)
 write.csv(coda_quantile, "sbs_bayes/bayes_output/coda_quantile_hier1_lognormal_median.csv")
 
-# library(ggplot2)
-# coda_quantile %>% 
-#   filter(param == "beta") %>%
-#   ggplot(aes(sp, X50.)) + 
-#   geom_point() + 
-#   geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) + 
-#   geom_hline(aes(yintercept = 0), color = "gray", linetype = "dashed")
+library(ggplot2)
+coda_quantile %>%
+  filter(param == "beta") %>%
+  ggplot(aes(sp, X50.)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
+  geom_hline(aes(yintercept = 0), color = "gray", linetype = "dashed")
 
 
