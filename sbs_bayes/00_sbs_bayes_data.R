@@ -37,20 +37,13 @@ hexDF <- droplevels(filter(datJ, sp == "LODI"))
 hexPast <- hexDF %>% filter(era == "past")
 hexPres <- hexDF %>% filter(era == "present")
 
-##### TIDAL HEIGHT #####
+##### PREDICTING NEW DATA #####
 
-# Create range of tidal height values for plotting
-summary(datJ$thc)
-range(datJ$sample_area_tidal_ht)
+### Create range of tidal height values for prediction
 thc <- scale(datJ$sample_area_tidal_ht, scale = FALSE)
-summary(thc)
 mu_th <- mean(datJ$sample_area_tidal_ht)
 sd_th <- sd(datJ$sample_area_tidal_ht)
 th_predict <- seq(min(datJ$sample_area_tidal_ht) * 0.95, 
                   max(datJ$sample_area_tidal_ht * 1.05), by = 0.05)
 thc_predict <- th_predict - mu_th
-
-# Create corresponding era categories
-era_predict <- c(rep(0, length(thc_predict)), rep(1, length(thc_predict)))
-thc_predict <- rep(thc_predict, 2)
 

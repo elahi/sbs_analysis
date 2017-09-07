@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Run pooled model - tidal height - normal distribution
+##' @title Run pooled model - tidal height - lognormal distribution
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -11,8 +11,10 @@
 
 # rm(list=ls(all=TRUE)) 
 
+##### PREPARE DATA FOR JAGS #####
+
 source("sbs_bayes/00_sbs_bayes_data.R")
-source("sbs_bayes/model_pooled_normal_thc.R")
+source("sbs_bayes/model_pooled_lognormal_thc.R")
 
 median_change <- function(dat){
   dat_summary <- dat %>% group_by(era) %>% 
@@ -29,6 +31,13 @@ n.iter <- 1000
 # Number of chains
 n_chains <- 2
 
+### For tidal predictions
+### Create era categories
+era_predict <- c(rep(0, length(thc_predict)), rep(1, length(thc_predict)))
+
+### Multiply by the number of eras (two)
+thc_predict <- rep(thc_predict, 2) 
+
 ##### LOTTIA #####
 dat <- hexDF 
 
@@ -37,8 +46,8 @@ jm = pooled_model_thc(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n
 zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa"), 
                   n.iter = n.iter, n.thin = 1)
 zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa", 
-                                         "y.new", "p.mean", "p.sd", "p.discrep", "y_pred", "beta_pred"), 
-                  n.iter = n.iter, n.thin = 1)
+                                         "y.new", "p.mean", "p.sd", "p.discrep", 
+                                         "y_pred", "beta_pred"), n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
 end_time - start_time 
 
@@ -118,9 +127,9 @@ start_time <- proc.time()
 jm = pooled_model_thc(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
 zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa", "y_pred", "beta_pred",  
-                                         "y.new", "p.mean", "p.sd", "p.discrep"), 
-                  n.iter = n.iter, n.thin = 1)
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa", 
+                                         "y.new", "p.mean", "p.sd", "p.discrep", 
+                                         "y_pred", "beta_pred"), n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
 end_time - start_time 
 
