@@ -34,7 +34,9 @@ hier3_model <- function(dat, iter_adapt, iter_update, n_chains){
     era = as.double(dat$eraJ), 
     y.group = dat$group_j, 
     y.n.sites = length(unique(dat$group_j)), 
-    thc_predict = as.double(thc_predict)
+    thc_predict = as.double(pred_df$thc_predict), 
+    era_predict = as.double(pred_df$era_predict) 
+    #group_predict = as.double(pred_df$group_predict)
   )
   
   ## Iterations
@@ -138,8 +140,11 @@ hier3_model <- function(dat, iter_adapt, iter_update, n_chains){
       p.discrep <- step(discrep.new - discrep.data)
       
       # Derived quantities
-      for(k in 1:length(thc_predict)){
-      y_pred[k] <- eta*thc_predict[k] 
+      for(j in 1:length(thc_predict)){
+      # y_pred[j] <- alpha[group_predict[j]] + beta[group_predict[j]]*era_predict[j] + eta*thc_predict[j] + kappa*thc_predict[j]*era_predict[j]
+      # beta_pred[j] <- y_pred[j] - alpha[group_predict[j]] - eta*thc_predict[j]
+      y_pred[j] <- mu.alpha + mu.beta*era_predict[j] + eta*thc_predict[j] + kappa*thc_predict[j]*era_predict[j]
+      beta_pred[j] <- y_pred[j] - mu.alpha - eta*thc_predict[j]
       }
 
       }

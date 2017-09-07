@@ -13,7 +13,7 @@ rm(list=ls(all=TRUE))
 
 # Get function to load data
 source("sbs_bayes/sbs_load_data.R")
-datJ <- load_sbs_data(min_cutoff = TRUE)
+datJ <- load_sbs_data(min_cutoff = FALSE)
 # Remove all but datJ
 rm(list = setdiff(ls(), "datJ"))
 
