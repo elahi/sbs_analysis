@@ -22,7 +22,8 @@ pooled_model_thc <- function(dat, iter_adapt, iter_update, n_chains){
     k = as.double(length(dat$size1mm)), 
     thc = as.double(dat$thc), 
     era = as.double(dat$eraJ), 
-    thc_predict = as.double(thc_predict)
+    thc_predict = as.double(thc_predict), 
+    era_predict = as.double(era_predict)
   )
   
   ## Iterations
@@ -90,10 +91,11 @@ pooled_model_thc <- function(dat, iter_adapt, iter_update, n_chains){
       discrep.new <- sum(sq.error.new)
       p.discrep <- step(discrep.new - discrep.data)
       
-      # # Derived quantities
-      # for(k in 1:length(thc_predict)){
-      # y_pred[k] <- alpha + beta*era + eta*thc_predict[k] #+ kappa*thc_predict[k]*era
-      # }
+      # Derived quantities
+      for(j in 1:length(thc_predict)){
+      y_pred[j] <- exp(alpha + beta*era_predict[j] + eta*thc_predict[j] + kappa*thc_predict[j]*era_predict[j])
+      beta_pred[j] <- log(y_pred[j]) - alpha - eta*thc_predict[j]
+      }
       
       }
       ", fill = TRUE)

@@ -30,10 +30,11 @@
       discrep.new <- sum(sq.error.new)
       p.discrep <- step(discrep.new - discrep.data)
       
-      # # Derived quantities
-      # for(k in 1:length(thc_predict)){
-      # y_pred[k] <- alpha + beta*era + eta*thc_predict[k] #+ kappa*thc_predict[k]*era
-      # }
+      # Derived quantities
+      for(j in 1:length(thc_predict)){
+      y_pred[j] <- exp(alpha + beta*era_predict[j] + eta*thc_predict[j] + kappa*thc_predict[j]*era_predict[j])
+      beta_pred[j] <- log(y_pred[j]) - alpha - eta*thc_predict[j]
+      }
       
       }
       

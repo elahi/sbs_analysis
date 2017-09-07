@@ -13,7 +13,7 @@ rm(list=ls(all=TRUE))
 
 # Get function to load data
 source("sbs_bayes/sbs_load_data.R")
-datJ <- load_sbs_data(min_cutoff = FALSE)
+datJ <- load_sbs_data(min_cutoff = TRUE)
 # Remove all but datJ
 rm(list = setdiff(ls(), "datJ"))
 
@@ -47,5 +47,10 @@ summary(thc)
 mu_th <- mean(datJ$sample_area_tidal_ht)
 sd_th <- sd(datJ$sample_area_tidal_ht)
 th_predict <- seq(min(datJ$sample_area_tidal_ht) * 0.95, 
-                  max(datJ$sample_area_tidal_ht * 1.05), by = 0.1)
+                  max(datJ$sample_area_tidal_ht * 1.05), by = 0.05)
 thc_predict <- th_predict - mu_th
+
+# Create corresponding era categories
+era_predict <- c(rep(0, length(thc_predict)), rep(1, length(thc_predict)))
+thc_predict <- rep(thc_predict, 2)
+

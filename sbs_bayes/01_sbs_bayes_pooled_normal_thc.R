@@ -12,7 +12,7 @@
 # rm(list=ls(all=TRUE)) 
 
 source("sbs_bayes/00_sbs_bayes_data.R")
-source("sbs_bayes/model_pooled_lognormal_thc.R")
+source("sbs_bayes/model_pooled_normal_thc.R")
 
 median_change <- function(dat){
   dat_summary <- dat %>% group_by(era) %>% 
@@ -37,7 +37,7 @@ jm = pooled_model_thc(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n
 zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa"), 
                   n.iter = n.iter, n.thin = 1)
 zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa", 
-                                         "y.new", "p.mean", "p.sd", "p.discrep"), 
+                                         "y.new", "p.mean", "p.sd", "p.discrep", "y_pred", "beta_pred"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
 end_time - start_time 
@@ -72,6 +72,45 @@ hex_coda_quantile <- data.frame(coda_summary$quantile) %>%
   mutate(sp = "LODI", 
          param = rownames(coda_summary$quantile))
 
+## Plot predictions
+y <- summary(zj$y_pred, quantile, c(.025, .5, .975))$stat
+y <- data.frame(t(y))
+x <- data.frame(thc_predict, era_predict)
+xy <- cbind(x, y) %>% 
+  mutate(era = ifelse(era_predict == 0, "past", "present"), 
+         th = thc_predict + mu_th, 
+         size_median = exp(X50.), 
+         size_lower = exp(X2.5.), 
+         size_upper = exp(X97.5.))
+
+xy %>% 
+  filter(th > 1.5 & th < 2.75) %>% 
+  ggplot(aes(x = th, y = X50., color = era)) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = X2.5., ymax = X97.5., color = NULL, group = era), 
+              fill = "gray", alpha = 0.5) + 
+  geom_jitter(data = dat, aes(sample_area_tidal_ht, size1mm, color = era), alpha = 0.5)
+
+## Plot - beta
+y <- summary(zj$beta_pred, quantile, c(.025, .5, .975))$stat
+y <- data.frame(t(y))
+x <- data.frame(thc_predict, era_predict)
+xy <- cbind(x, y) %>% 
+  mutate(era = ifelse(era_predict == 0, "past", "present"), 
+         th = thc_predict + mu_th, 
+         size_median = exp(X50.), 
+         size_lower = exp(X2.5.), 
+         size_upper = exp(X97.5.))
+
+xy %>% 
+  filter(era == "present") %>%
+  filter(th > 1.5 & th < 2.75) %>% 
+  ggplot(aes(x = th, y = X50., color = era)) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = X2.5., ymax = X97.5., color = NULL, group = era), 
+              fill = "gray", alpha = 0.5) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray")
+
 ##### LITTORINA #####
 dat <- childsDF
 
@@ -79,7 +118,7 @@ start_time <- proc.time()
 jm = pooled_model_thc(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
 zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa", 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "eta", "kappa", "y_pred", "beta_pred",  
                                          "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
@@ -114,6 +153,45 @@ coda_summary <- summary(zm)
 childs_coda_quantile <- data.frame(coda_summary$quantile) %>% 
   mutate(sp = "LIKE", 
          param = rownames(coda_summary$quantile))
+
+## Plot predictions
+y <- summary(zj$y_pred, quantile, c(.025, .5, .975))$stat
+y <- data.frame(t(y))
+x <- data.frame(thc_predict, era_predict)
+xy <- cbind(x, y) %>% 
+  mutate(era = ifelse(era_predict == 0, "past", "present"), 
+         th = thc_predict + mu_th, 
+         size_median = exp(X50.), 
+         size_lower = exp(X2.5.), 
+         size_upper = exp(X97.5.))
+
+xy %>% 
+  filter(th > 2 & th < 8) %>% 
+  ggplot(aes(x = th, y = X50., color = era)) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = X2.5., ymax = X97.5., color = NULL, group = era), 
+              fill = "gray", alpha = 0.5) + 
+  geom_jitter(data = dat, aes(sample_area_tidal_ht, size1mm, color = era), alpha = 0.5)
+
+## Plot - beta
+y <- summary(zj$beta_pred, quantile, c(.025, .5, .975))$stat
+y <- data.frame(t(y))
+x <- data.frame(thc_predict, era_predict)
+xy <- cbind(x, y) %>% 
+  mutate(era = ifelse(era_predict == 0, "past", "present"), 
+         th = thc_predict + mu_th, 
+         size_median = exp(X50.), 
+         size_lower = exp(X2.5.), 
+         size_upper = exp(X97.5.))
+
+xy %>% 
+  filter(era == "present") %>%
+  filter(th > 2 & th < 8) %>% 
+  ggplot(aes(x = th, y = X50., color = era)) +
+  geom_line() + 
+  geom_ribbon(aes(ymin = X2.5., ymax = X97.5., color = NULL, group = era), 
+              fill = "gray", alpha = 0.5) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray")
 
 ##### CHLOROSTOMA #####
 dat <- waraDF
