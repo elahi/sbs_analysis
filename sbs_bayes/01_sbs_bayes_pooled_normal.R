@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Run hierarchical intercept and slope model - normal distribution
+##' @title Run pooled model - normal distribution - for each sample area separately, Chlorostoma
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -12,7 +12,7 @@
 # rm(list=ls(all=TRUE)) 
 
 source("sbs_bayes/00_sbs_bayes_data.R")
-source("sbs_bayes/model_hier2_normal.R")
+source("sbs_bayes/model_pooled_normal.R")
 
 median_change <- function(dat){
   dat_summary <- dat %>% group_by(era) %>% 
@@ -24,20 +24,18 @@ median_change <- function(dat){
 # Number of chains
 n_chains <- 2
 
-##### LOTTIA #####
+##### CHLOROSTOMA - WARA B #####
 # Number of iterations
 n.adapt <- 10000
 n.update <- 10000
 n.iter <- 10000
-
-dat <- hexDF 
+dat <- waraDF %>% filter(site == "Wara.B")
 
 start_time <- proc.time()
-jm = hier2_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta"), 
+jm = pooled_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", 
-                                         "y.new", "p.mean", "p.sd", "p.discrep"), 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
 end_time - start_time 
@@ -66,31 +64,30 @@ mean(zj$p.discrep)
 hist(log(dat$size1mm), breaks = 20, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
-### Save coda summary - Lottia
+### Save coda summary - Chlorostoma
 coda_summary <- summary(zm)
-hex_coda_quantile <- data.frame(coda_summary$quantile) %>% 
-  mutate(sp = "LODI", 
-         param = rownames(coda_summary$quantile))
+waraB_coda_quantile <- data.frame(coda_summary$quantile) %>% 
+  mutate(sp = "CHFU", 
+         param = rownames(coda_summary$quantile), 
+         site = "Wara.B")
 
-### Save coda and jags objects - Littorina
-hex_hier2_normal <- list(dat, zm, zj)
+### Save coda and jags objects - Chlorostoma B
+waraB_pooled_normal <- list(dat, zm, zj)
 path_to_sd <- "/Volumes/sdxc1/sbs_bayes_output/"
-save(hex_hier2_normal, file = paste(path_to_sd, "hex_hier2_normal.RData", sep = ""))
+save(waraB_pooled_normal, file = paste(path_to_sd, "waraB_pooled_normal.RData", sep = ""))
 
-##### LITTORINA #####
+##### CHLOROSTOMA - WARA D #####
 # Number of iterations
 n.adapt <- 10000
 n.update <- 10000
 n.iter <- 10000
-
-dat <- childsDF
+dat <- waraDF %>% filter(site == "Wara.D")
 
 start_time <- proc.time()
-jm = hier2_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
-zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta"), 
+jm = pooled_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "mu.alpha", "mu.beta", 
-                                         "y.new", "p.mean", "p.sd", "p.discrep"), 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
 end_time <- proc.time()
 end_time - start_time 
@@ -119,32 +116,20 @@ mean(zj$p.discrep)
 hist(log(dat$size1mm), breaks = 20, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
-### Save coda summary - Littorina
+### Save coda summary - Chlorostoma
 coda_summary <- summary(zm)
-childs_coda_quantile <- data.frame(coda_summary$quantile) %>% 
-  mutate(sp = "LIKE", 
-         param = rownames(coda_summary$quantile))
+waraD_coda_quantile <- data.frame(coda_summary$quantile) %>% 
+  mutate(sp = "CHFU", 
+         param = rownames(coda_summary$quantile), 
+         site = "Wara.D")
 
-### Save coda and jags objects - Littorina
-childs_hier2_normal <- list(dat, zm, zj)
+### Save coda and jags objects - Chlorostoma B
+waraD_pooled_normal <- list(dat, zm, zj)
 path_to_sd <- "/Volumes/sdxc1/sbs_bayes_output/"
-save(childs_hier2_normal, file = paste(path_to_sd, "childs_hier2_normal.RData", sep = ""))
-
-##### CHLOROSTOMA #####
-
-## not run, only two sample areas
+save(waraD_pooled_normal, file = paste(path_to_sd, "waraD_pooled_normal.RData", sep = ""))
 
 ##### SAVE CODA SUMMARIES #####
 
 ### Compile and save
-coda_quantile <- rbind(hex_coda_quantile, childs_coda_quantile)
-write.csv(coda_quantile, "sbs_bayes/bayes_output/coda_quantile_hier2_normal.csv")
-
-library(ggplot2)
-coda_quantile %>%
-  filter(param == "mu.beta") %>%
-  ggplot(aes(sp, X50.)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) +
-  geom_hline(aes(yintercept = 0), color = "gray", linetype = "dashed")
-
+coda_quantile <- rbind(waraB_coda_quantile, waraD_coda_quantile)
+write.csv(coda_quantile, "sbs_bayes/bayes_output/coda_quantile_pooled_normal_wara.csv")

@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Hierarchical intercept and slope model - lognormal distribution
+##' @title Hierarchical intercept and slope model - normal distribution
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
