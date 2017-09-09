@@ -95,3 +95,8 @@ datJ %>%
   geom_jitter(alpha = 0.25) + 
   facet_wrap(~ species)
 
+dat <- childsDF
+dat <- dat %>% mutate(group_j = as.integer(as.factor(sampleArea)))
+dat %>% group_by(sampleArea, group_j, era) %>%
+  summarise(mean = mean(size1mm))
+childs_groups

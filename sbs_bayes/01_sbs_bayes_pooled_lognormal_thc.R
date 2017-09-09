@@ -138,6 +138,9 @@ summary(zm)
 exp(summary(zm)$stat[1]) # size intercept (past)
 summary(zm)$stat[2] 
 
+# 0.75 quantile: alpha = 2.44, beta = -0.44; kappa = 0.05
+# median: alpha = 2.19, beta = -0.44; kappa = 0.048
+
 # Compare with median values
 dat %>% group_by(era) %>% summarise(median(size1mm))
 median_change(dat)
