@@ -40,38 +40,41 @@ pred_df <- expand.grid(thc_predict, era_predict) %>%
 truncate_data <- function(dat, quant = 0.5, subtract_value = 1){
   
   my_quantile = quant
-  size0.5 <- dat %>% filter(era == "past") %>% 
-    summarise(size0.5 = quantile(size1mm, probs = my_quantile)) %>% unlist(use.names = FALSE)
-  dat$size0.5 <- size0.5
+  size_threshold <- dat %>% filter(era == "past") %>% 
+    summarise(size_threshold = quantile(size1mm, probs = my_quantile)) %>% unlist(use.names = FALSE)
+  dat$size_threshold <- size_threshold
   
-  dat <- dat %>% filter(size1mm >= size0.5)
+  dat <- dat %>% filter(size1mm >= size_threshold)
   
   # Need to subtract minimum size so that I can use a distribution appropriately
   dat <- dat %>%
     mutate(size_min = min(size1mm) - subtract_value, 
            size_centered = size1mm - size_min)
+  
+  return(dat)
+  
 }
+
+# What quantile will I use for this run?
+my_quantile = 0.5
 
 ##### LOTTIA #####
 dat <- hexDF 
+subtract_value = 0.5
+dat <- truncate_data(dat, quant = my_quantile, subtract_value = subtract_value)
+summary(dat$size_centered)
 
-start_time <- proc.time()
-jm = pooled_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
+jm = model_jags(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
 zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", 
+                                         "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
-end_time <- proc.time()
-end_time - start_time 
 
 #Produce a summary table for the parameters. 
 summary(zm)
 exp(summary(zm)$stat[1]) # size intercept (past)
 summary(zm)$stat[2] 
-
-# Compare with median values
-dat %>% group_by(era) %>% summarise(median(size1mm))
-median_change(dat)
 
 #Produce trace plots of the chains for model parameters. 
 plot(zm)
@@ -85,7 +88,7 @@ mean(zj$p.sd)
 mean(zj$p.discrep)
 
 # Compared observed vs simulated
-hist(dat$size1mm, breaks = 20, freq=FALSE) 
+hist(dat$size_centered, breaks = 10, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Lottia
@@ -96,51 +99,21 @@ hex_coda_quantile <- data.frame(coda_summary$quantile) %>%
 
 ##### LITTORINA #####
 dat <- childsDF
-dat <- dat %>% group_by(era) %>% mutate(era0.5 = median(size1mm)) %>% ungroup() %>% 
-  filter(size1mm >= era0.5)
-dat %>% ggplot(aes(size1mm, color = era)) + geom_histogram(binwidth = 1) 
-
-# Need to subtract minimum size so that I can use a distribution appropriately
-dat <- dat %>%
-  mutate(size_min = min(size1mm) - 1, 
-         size_centered = size1mm - size_min)
-dat %>% ggplot(aes(size_centered, color = era)) + geom_histogram(binwidth = 1) 
+subtract_value = 0.1
+dat <- truncate_data(dat, quant = my_quantile, subtract_value = subtract_value)
 summary(dat$size_centered)
 
-# 
-# dat$size0.5 <- median(childsPast$size1mm)
-# dat$size0.25 <- quantile(childsPast$size1mm, probs = 0.25)
-# 
-# dat %>% 
-#   ggplot(aes(size1mm)) + geom_histogram(binwidth = 1) + facet_wrap(~ era) + 
-#   geom_vline(aes(xintercept = era0.5), color = "red") + 
-#   geom_vline(aes(xintercept = size0.25), color = "blue", linetype = "dashed") + 
-#   geom_vline(aes(xintercept = size0.5), color = "red", linetype = "dashed")
-# 
-# dat2 <- dat %>% filter(size1mm >= era0.5)
-# dat2 %>% count(sampleArea, era)
-# dat2 %>% count(era)
-# 
-# dat2 %>% 
-#   ggplot(aes(size1mm)) + geom_histogram(binwidth = 1) + facet_wrap(~ era)
-
-start_time <- proc.time()
 jm = model_jags(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
 zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", 
+                                         "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
-end_time <- proc.time()
-end_time - start_time 
 
 #Produce a summary table for the parameters. 
 summary(zm)
 exp(summary(zm)$stat[1]) # size intercept (past)
 summary(zm)$stat[2] 
-
-# Compare with median values
-dat %>% group_by(era) %>% summarise(median(size_centered))
-median_change(dat)
 
 #Produce trace plots of the chains for model parameters. 
 plot(zm)
@@ -154,7 +127,7 @@ mean(zj$p.sd)
 mean(zj$p.discrep)
 
 # Compared observed vs simulated
-hist(dat$size_centered, breaks = 20, freq=FALSE) 
+hist(dat$size_centered, breaks = 15, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Littorina
@@ -164,30 +137,21 @@ childs_coda_quantile <- data.frame(coda_summary$quantile) %>%
          param = rownames(coda_summary$quantile))
 
 ##### CHLOROSTOMA #####
-dat <- waraDF #%>% filter(sampleArea == "Wara.B")
-dat %>% ggplot(aes(size1mm)) + geom_histogram(binwidth = 1) + facet_wrap(~ era) 
-dat <- truncate_data(dat, subtract_value = 2)
-dat %>% ggplot(aes(size1mm)) + geom_histogram(binwidth = 1) + facet_wrap(~ era) 
-dat %>% count(sampleArea, era)
-dat %>% count(era)
+dat <- waraDF 
+subtract_value = 2
+dat <- truncate_data(dat, quant = my_quantile, subtract_value = subtract_value)
 
-start_time <- proc.time()
 jm = model_jags(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
 zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"), 
                   n.iter = n.iter, n.thin = 1)
-zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd", "p.discrep"), 
+zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", 
+                                         "p.mean", "p.sd", "p.discrep"), 
                   n.iter = n.iter, n.thin = 1)
-end_time <- proc.time()
-end_time - start_time 
 
 #Produce a summary table for the parameters. 
 summary(zm)
 exp(summary(zm)$stat[1]) # size intercept (past)
 summary(zm)$stat[2] 
-
-# Compare with median values
-dat %>% group_by(era) %>% summarise(median(size1mm))
-median_change(dat)
 
 #Produce trace plots of the chains for model parameters. 
 plot(zm)
@@ -205,13 +169,8 @@ hist(dat$size_centered, breaks = 20, freq=FALSE)
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Chlorostoma
-wara_coda_summary <- summary(zm)
-wara_coda_quantile <- data.frame(wara_coda_summary$quantile) %>% 
-  mutate(sp = "CHFU", 
-         param = c("alpha", "beta", "sigma"))
-
 coda_summary <- summary(zm)
-wara_coda_quantile <- data.frame(coda_summary$quantile) %>% 
+childs_coda_quantile <- data.frame(coda_summary$quantile) %>% 
   mutate(sp = "CHFU", 
          param = rownames(coda_summary$quantile))
 

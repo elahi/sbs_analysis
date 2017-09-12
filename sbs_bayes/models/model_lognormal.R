@@ -9,8 +9,8 @@
     # likelihood
     for (i in 1:k){
     mu[i] <- exp(alpha + beta * era[i])
-    y[i] ~ dlnorm(log(mu[i]), tau)
-    y.new[i] ~ dlnorm(log(mu[i]), tau)
+    y[i] ~ dlnorm(log(mu[i]) - 0.67*sigma, tau)
+    y.new[i] ~ dlnorm(log(mu[i]) - 0.67*sigma, tau)
     sq.error.data[i] <- (y[i] - mu[i])^2
     sq.error.new[i] <- (y.new[i] - mu[i])^2
     }

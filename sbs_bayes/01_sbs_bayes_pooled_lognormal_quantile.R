@@ -12,7 +12,7 @@
 # rm(list=ls(all=TRUE)) 
 
 source("sbs_bayes/00_sbs_bayes_data.R")
-source("sbs_bayes/model_pooled_lognormal.R")
+source("sbs_bayes/model_pooled_lognormal_quantile.R")
 
 median_change <- function(dat){
   dat_summary <- dat %>% group_by(era) %>% 
@@ -22,20 +22,16 @@ median_change <- function(dat){
 }
 
 # Number of iterations
-n.adapt <- 1000
-n.update <- 1000
-n.iter <- 1000
+n.adapt <- 3000
+n.update <- 3000
+n.iter <- 3000
 
 # Number of chains
 n_chains <- 2
 
 ##### LOTTIA #####
 dat <- hexDF 
-
-# median alpha = 2.5
-# 0.75 alpha = 2.7 # using chris' method
-# 0.75 alpha = 2.7 # using p method
-# 
+dat$p <- 0.5
 
 start_time <- proc.time()
 jm = pooled_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
@@ -50,6 +46,10 @@ end_time - start_time
 summary(zm)
 exp(summary(zm)$stat[1]) # size intercept (past)
 summary(zm)$stat[2] 
+
+# median, orginal: alpha = 2.54; beta = -0.25
+# 0.5, p-method: alpha = 2.7; beta = -0.24 # not the same!!!
+
 
 # Compare with median values
 dat %>% group_by(era) %>% summarise(median(size1mm))
@@ -78,7 +78,10 @@ hex_coda_quantile <- data.frame(coda_summary$quantile) %>%
          param = rownames(coda_summary$quantile))
 
 ##### LITTORINA #####
-dat <- childsDF
+dat <- childsDF #%>% filter(sampleArea == "HighRock_zoneD")
+
+# Choose quantile
+dat$p <- 0.75
 
 start_time <- proc.time()
 jm = pooled_model(dat = dat, iter_adapt = n.adapt, iter_update = n.update, n_chains = n_chains)
@@ -93,6 +96,11 @@ end_time - start_time
 summary(zm)
 exp(summary(zm)$stat[1]) # size intercept (past)
 summary(zm)$stat[2] 
+
+## Pmethod (0.25): alpha = 2.27; beta = -0.6
+## Pmethod (0.5): alpha = 2.45; beta = -0.51
+## Pmethod (0.75): alpha = 2.64; beta = -0.35
+## Pmethod (0.9): alpha = 2.62; beta = 0.16
 
 # Compare with median values
 dat %>% group_by(era) %>% summarise(median(size1mm))
@@ -110,7 +118,7 @@ mean(zj$p.sd)
 mean(zj$p.discrep)
 
 # Compared observed vs simulated
-hist(dat$size1mm, breaks = 20, freq=FALSE) 
+hist(log(dat$size1mm), breaks = 20, freq=FALSE) 
 lines(density(zj$y.new), col="red")
 
 ### Save coda summary - Littorina

@@ -11,6 +11,7 @@
 
 # rm(list=ls(all=TRUE)) 
 
+## Chris' method (75th quantile)
 pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
   
   # load jags
@@ -62,8 +63,10 @@ pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
       # likelihood
       for (i in 1:k){
       mu[i] <- exp(alpha + beta * era[i])
-      y[i] ~ dlnorm(log(mu[i]) - 0.67*sigma, tau)
-      y.new[i] ~ dlnorm(log(mu[i]) - 0.67*sigma, tau)
+      #y[i] ~ dlnorm(log(mu[i]) - 0.67*sigma, tau)
+      #y.new[i] ~ dlnorm(log(mu[i]) - 0.67*sigma, tau)
+      y[i] ~ dlnorm(log(mu[i]), tau)
+      y.new[i] ~ dlnorm(log(mu[i]), tau)      
       sq.error.data[i] <- (y[i] - mu[i])^2
       sq.error.new[i] <- (y.new[i] - mu[i])^2
       }
@@ -81,8 +84,6 @@ pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
       discrep.new <- sum(sq.error.new)
       p.discrep <- step(discrep.new - discrep.data)
       
-      # Check sink
-      
       }
       ", fill = TRUE)
   sink()
@@ -94,7 +95,6 @@ pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
   return(jm)
 
 }
-
 
 ## With quantile - p formula
 pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
@@ -108,7 +108,7 @@ pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
     k = as.double(length(dat$size1mm)), 
     thc = as.double(dat$thc), 
     era = as.double(dat$eraJ), 
-    p = 0.75
+    p = as.double(dat$p[1])
   )
   
   ## Iterations
@@ -157,7 +157,7 @@ pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
 
       y[i] ~ dnorm(me[i], pe[i])
 
-      y.new[i] ~ dnorm(mu[i], tau)
+      y.new[i] ~ dnorm(me[i], pe[i])
       sq.error.data[i] <- (y[i] - mu[i])^2
       sq.error.new[i] <- (y.new[i] - mu[i])^2
       }
@@ -174,8 +174,6 @@ pooled_model <- function(dat, iter_adapt, iter_update, n_chains){
       discrep.data <- sum(sq.error.data)
       discrep.new <- sum(sq.error.new)
       p.discrep <- step(discrep.new - discrep.data)
-      
-      # Check sink
       
       }
       ", fill = TRUE)
