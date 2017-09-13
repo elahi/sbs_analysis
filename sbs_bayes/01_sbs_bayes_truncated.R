@@ -24,9 +24,9 @@ median_change <- function(dat){
 }
 
 # Number of iterations
-n.adapt <- 3000
-n.update <- 3000
-n.iter <- 3000
+n.adapt <- 1000
+n.update <- 1000
+n.iter <- 1000
 
 # Number of chains
 n_chains <- 2
