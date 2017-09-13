@@ -115,9 +115,9 @@ cat("
 sink()
 
 ## Iterations
-n.adapt = 1000
-n.update = 1000
-n.iter = 1000
+n.adapt = 3000
+n.update = 3000
+n.iter = 3000
 p_vector = c(0, 0.05, 0.1, 0.25, 0.5, 0.75)
 
 ##### FUNCTION TO RUN LOOP FOR EACH SPECIES #####
@@ -280,137 +280,6 @@ pval_df_wara <- loop_pval_df(coda_list, species_abbrev = my_sp)
 # Create and rename coda summary
 coda_df_wara <- loop_coda_df(coda_list, species_abbrev = my_sp)
 
-##### RUN MODELS - LITTORINA #####
-##### RUN MODELS - LITTORINA #####
-##### RUN MODELS - LITTORINA #####
-coda_list <- list()
-
-for(i in 1:length(p_vector)){
-  
-  my_p = p_vector[i]
-  
-  ## Truncate data
-  dat <- truncate_data(childsDF, quant = my_p)
-  #dat <- truncate_data_unique(childsDF, quant = my_p)
-  
-  ## Data
-  data = list(
-    y = as.double(dat$size_log),
-    era = as.double(dat$eraJ),
-    k = as.double(length(dat$size1mm)),
-    p = as.double(my_p)
-  )
-  
-  jm = jags.model("sbs_bayes/models/model_JAGS.R", data = data, inits = inits, 
-                  n.chains = length(inits), n.adapt = n.adapt)
-  update(jm, n.iter = n.update)
-  zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"),
-                    n.iter = n.iter, n.thin = 1)
-  zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd"),
-                    n.iter = n.iter, n.thin = 1)
-  
-  # Test for convergence using the Gelman diagnostic.
-  gd <- gelman.diag(zm, multivariate = F)[[1]]
-  
-  # Check Bayesian pvals
-  pvals <- c(p.mean = mean(zj$p.mean), p.sd = mean(zj$p.sd))
-  
-  # Save coda summary
-  coda_summary <- summary(zm)
-  summary_name <- paste("quantile", my_p, sep = "_")
-  coda_quantile <- data.frame(coda_summary$quantile) %>%
-    mutate(coda_quantile = summary_name,
-           param = rownames(coda_summary$quantile))
-  
-  # Create list of all desired objects
-  coda_list.i <- list(coda_quantile, gd, pvals)
-  coda_list[[i]] <- coda_list.i
-  
-}
-
-# Compared observed vs simulated
-hist(dat$size_log, breaks = 10, freq=FALSE, ylim = c(0,5))
-lines(density(zj$y.new), col="red")
-
-# Rbind results
-coda_df <- coda_list[[1]][[1]]
-for(i in 2:length(p_vector)){
-  coda_df <- rbind(coda_df, coda_list[[i]][[1]])
-}
-
-cc       <- strsplit(coda_df$coda_quantile, split = "_")
-part1    <- unlist(cc)[2*(1:length(coda_df$coda_quantile))-1]
-part2    <- unlist(cc)[2*(1:length(coda_df$coda_quantile))  ]
-coda_df <- coda_df %>% mutate(quant = part2)
-
-# Rename
-coda_df_childs <- coda_df
-
-##### RUN MODELS - CHLOROSTOMA #####
-coda_list <- list()
-rm(my_p)
-
-for(i in 1:length(p_vector)){
-  
-  my_p = p_vector[i]
-  
-  ## Truncate data
-  dat <- truncate_data(waraDF, quant = my_p)
-  #dat <- truncate_data_unique(waraDF, quant = my_p)
-  
-  ## Data
-  data = list(
-    y = as.double(dat$size_log),
-    era = as.double(dat$eraJ),
-    k = as.double(length(dat$size1mm)),
-    p = as.double(my_p)
-  )
-  
-  jm = jags.model("sbs_bayes/models/model_JAGS.R", data = data, inits = inits, 
-                  n.chains = length(inits), n.adapt = n.adapt)
-  update(jm, n.iter = n.update)
-  zm = coda.samples(jm, variable.names = c("alpha", "beta", "sigma"),
-                    n.iter = n.iter, n.thin = 1)
-  zj = jags.samples(jm, variable.names = c("alpha", "beta", "sigma", "y.new", "p.mean", "p.sd"),
-                    n.iter = n.iter, n.thin = 1)
-  
-  # Test for convergence using the Gelman diagnostic.
-  gd <- gelman.diag(zm, multivariate = F)[[1]]
-  
-  # Check Bayesian pvals
-  pvals <- c(p.mean = mean(zj$p.mean), p.sd = mean(zj$p.sd))
-  
-  # Save coda summary
-  coda_summary <- summary(zm)
-  summary_name <- paste("quantile", my_p, sep = "_")
-  coda_quantile <- data.frame(coda_summary$quantile) %>%
-    mutate(coda_quantile = summary_name,
-           param = rownames(coda_summary$quantile))
-  
-  # Create list of all desired objects
-  coda_list.i <- list(coda_quantile, gd, pvals)
-  coda_list[[i]] <- coda_list.i
-  
-}
-
-# Compared observed vs simulated
-hist(dat$size_log, breaks = 10, freq=FALSE, ylim = c(0,5))
-lines(density(zj$y.new), col="red")
-
-# Rbind results
-coda_df <- coda_list[[1]][[1]]
-for(i in 2:length(p_vector)){
-  coda_df <- rbind(coda_df, coda_list[[i]][[1]])
-}
-
-cc       <- strsplit(coda_df$coda_quantile, split = "_")
-part1    <- unlist(cc)[2*(1:length(coda_df$coda_quantile))-1]
-part2    <- unlist(cc)[2*(1:length(coda_df$coda_quantile))  ]
-coda_df <- coda_df %>% mutate(quant = part2)
-
-# Rename
-coda_df_wara <- coda_df
-
 ##### PLOT BETAS #####
 coda_df_childs$sp <- "LIKE"
 coda_df_hex$sp <- "LODI"
@@ -418,6 +287,13 @@ coda_df_wara$sp <- "CHFU"
 
 coda_df_all <- rbind(coda_df_wara, coda_df_hex, coda_df_childs)
 write.csv(coda_df_all, "sbs_bayes/bayes_output/truncated_normal_coda_df_all.csv")
+
+gelman_df_all <- rbind(gelman_df_wara, gelman_df_hex, gelman_df_childs)
+write.csv(gelman_df_all, "sbs_bayes/bayes_output/truncated_normal_gelman_df_all.csv")
+
+pval_df_all <- rbind(pval_df_wara, pval_df_hex, pval_df_childs)
+write.csv(pval_df_all, "sbs_bayes/bayes_output/truncated_normal_pval_df_all.csv")
+
 
 coda_df %>% 
   filter(param == "beta") %>% 
@@ -444,7 +320,8 @@ coda_df_all %>%
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
   ylab("Proportional change in size (mm)") + 
   xlab("Size threshold (quantile of past size)") + 
-  theme(legend.position = "top")
+  theme(legend.position = "top") + 
+  coord_cartesian(ylim = c(-0.4, 0.4))
 
 ggsave("sbs_bayes/bayes_figs/truncated_normal_beta_quantile_plot.png", height = 3.5, width = 3.5)
 
