@@ -11,7 +11,7 @@
 ##' 2016-11-08 Checking other weather stations against Monterey
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
+#rm(list=ls(all=TRUE)) 
 
 ##### LOAD PACKAGES, DATA #####
 
@@ -170,8 +170,6 @@ decade_obs_long <- decade_obs %>%
 
 decade_dat <- rbind(decade_max_long, decade_min_long, decade_obs_long)
 decade_dat
-
-
 
 ##### SEASONAL PLOTS #####
   
