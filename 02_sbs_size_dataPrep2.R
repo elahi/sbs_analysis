@@ -168,3 +168,4 @@ unique(dat2$year)
 dat2 %>% group_by(species, era) %>% 
   summarise(minDate = min(date), 
             maxDate = max(date))
+
