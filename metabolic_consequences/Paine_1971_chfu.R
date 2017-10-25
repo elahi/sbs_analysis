@@ -136,7 +136,7 @@ sum(my_snail_grams)
 # ln(R) = b*ln(M) - E(1/kT) + log(a)
 
 b = 0.86
-a = 1
+a = 0.2
 Ea = 0.65
 tempK = 17 + 273.15
 x = my_snail_grams
@@ -153,3 +153,7 @@ sum(my_snail_resp)
 # 
 kelvin_vec <- seq(0, 20, by = 1) + 273.15
 k * kelvin_vec * ln(1)
+
+##### TRY TO DUPLICATE PAINES KCAL ESTIMATES USING Q10 #####
+
+

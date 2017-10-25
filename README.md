@@ -15,9 +15,6 @@ Then we relocated sites and collected size-frequency data in 2014-2015.
 
 ####  Next steps
 
-5. 2 panel plot of temperature time-series
-6. Compare submersion time across tidal height range for all three species
-
 #### Other observational studies to follow up on:
 Frank - Tegula
 Paine - Tegula

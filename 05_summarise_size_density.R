@@ -9,11 +9,11 @@
 ##' @log 
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
+#rm(list=ls(all=TRUE)) 
 
 # load data
 source("03_identify_size_cutoff.R")
-
+source("R/length_to_biomass.R")
 dat4 # complete dataset
 dat5 # subset without smallest size classes
 
@@ -100,12 +100,14 @@ density_vector <- c(160, 180, 450, 390, 290)
 total_snails_vector <- transect_length_vector * 2 * density_vector
 sum(total_snails_vector)
 
-
 ##### SUMMARISE SIZE-DENSITY DATA FOR ALL THREE SPECIES #####
-
 dat4 %>% group_by(sp, site, era, year, nest1, nest2) %>% tally() %>% ungroup() %>% View()
 
 unique(dat4$sampleArea)
+
+## CRITICAL - CHOOSE DATASET, AND SIZE METRIC
+# dat4 - complete
+# dat5 - subset
 
 datMeans <- dat4 %>% filter(!is.na(size1mm)) %>% 
   group_by(species, sp, site, era, year, nest1, nest2, sampleArea) %>% 
@@ -122,13 +124,16 @@ datMeans <- dat4 %>% filter(!is.na(size1mm)) %>%
 waraPres <- datMeans %>% filter(sp == "CHFU" & era == "present") %>% 
   mutate(area_sampled = 0.25, 
          density_factor = 1/area_sampled, 
-         density_m2 = size_n * density_factor)
+         density_m2 = size_n * density_factor, 
+         mass_mean_g = chfu_mmTOg(size_mean))
 
 # Ribbed limpets sampled in 0.25m2 quadrats in present
 hexPres <- datMeans %>% filter(sp == "LODI" & era == "present") %>% 
   mutate(area_sampled = 0.25, 
          density_factor = 1/area_sampled, 
-         density_m2 = size_n * density_factor)
+         density_m2 = size_n * density_factor, 
+         mass_mean_g = lodi_mmTOg(size_mean))
+summary(hexPres)
 
 # Ribbed limpets sampled in past:
 # areaA = 0.61 x 0.61 m = 0.37m2
@@ -136,13 +141,16 @@ hexPres <- datMeans %>% filter(sp == "LODI" & era == "present") %>%
 hexPast <- datMeans %>% filter(sp == "LODI" & era == "past") %>% 
   mutate(area_sampled = ifelse(site == "areaA", 0.37, 0.55), 
          density_factor = 1/area_sampled, 
-         density_m2 = size_n * density_factor)
+         density_m2 = size_n * density_factor, 
+         mass_mean_g = lodi_mmTOg(size_mean))
 
 # Periwinkles sampled in 2.3m2 quadrats in present and past
 childsPres <- datMeans %>% filter(sp == "LIKE" & era == "present") %>% 
   mutate(area_sampled = 2.3, 
          density_factor = 1/area_sampled, 
-         density_m2 = size_n * density_factor)
+         density_m2 = size_n * density_factor, 
+         mass_mean_g = like_mmTOg(size_mean))
+summary(childsPres)
 
 childs_tide <- childsPres %>% group_by(nest1) %>%
   summarise(tide_mean = mean(tide_mean))
@@ -150,7 +158,8 @@ childs_tide <- childsPres %>% group_by(nest1) %>%
 childsPast <- datMeans %>% filter(sp == "LIKE" & era == "past") %>% 
   mutate(area_sampled = 2.3, 
          density_factor = 1/area_sampled, 
-         density_m2 = size_n * density_factor)
+         density_m2 = size_n * density_factor, 
+         mass_mean_g = like_mmTOg(size_mean))
 
 childsPast$tide_mean <- childs_tide$tide_mean
 
@@ -160,17 +169,27 @@ datMeans2
 names(datMeans2)
 datMeans3 <- datMeans2 %>% 
   select(species, sp, site, era, tide_mean, size_mean, density_m2, 
-         sampleArea, nest1, nest2, size_n) %>% 
+         sampleArea, nest1, nest2, size_n, mass_mean_g) %>% 
   rename(tideHTm = tide_mean, 
          size_mm = size_mean)
 datMeans3
 unique(datMeans3$sampleArea)
 
+range(waraPres$tide_mean)
+range(waraPast$tideHTm)
+
+# Limit to plus or minus 0.5m on either side 
+min_wara_tide <- min(waraPres$tide_mean) - 0.5
+
 waraPast <- waraPast %>%
   mutate(sampleArea = site, 
          nest1 = NA, 
          nest2 = NA, 
-         size_n = NA)
+         size_n = NA, 
+         mass_mean_g = chfu_mmTOg(size_mm))
+
+# Remove very low tides for WaraPast
+waraPast <- waraPast %>% filter(tideHTm > min_wara_tide)
 datMeans4 <- datMeans3 %>% rbind(., waraPast)
 
 # Reorder levels
@@ -178,6 +197,11 @@ species <- factor(datMeans4$species, levels = rev(c("Littorina keenae",
                                                "Lottia digitalis", 
                                                "Chlorostoma funebralis")))
 datMeans4$species <- species
+
+datMeans4 %>% 
+  ggplot(aes(tideHTm, mass_mean_g, color = era)) + 
+  geom_point() + 
+  facet_wrap(~ species)
 
 ##### GET LOG CHANGE IN DENSITY #####
 

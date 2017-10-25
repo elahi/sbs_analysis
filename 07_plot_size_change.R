@@ -27,7 +27,10 @@ size_change_text <- data.frame(x = rep(7.5, 3),
                                   "Lottia digitalis", 
                                   "Littorina keenae"))
 
-ggDat <- dm2 %>% filter(studySub == "subset")
+## Choose data to plot
+#ggDat <- dm2 %>% filter(studySub == "subset")
+ggDat <- dm2 %>% filter(studySub == "complete")
+
 ggDat_gray <- ggDat %>% select(- species)
 dodge <- position_dodge(0.1)
 
@@ -49,6 +52,25 @@ ggDat %>%
 
 #ggsave("figs/elahi_size_era_tidal_3panel.png", height = 3.5, width = 7)
 ggsave("figs/elahi_size_era_tidal_3panel.pdf", height = 3.5, width = 7)
+ggsave("figs/elahi_size_era_tidal_3panel_complete.pdf", height = 3.5, width = 7)
+
+ggDat %>% 
+  ggplot(aes(tidalHeight, size_mean, color = era, shape = species, size = size_n)) + 
+  geom_point(alpha = 0.8) + 
+  scale_size(trans = "log10") + 
+  geom_errorbar(aes(ymax = size_mean + size_CI, 
+                    ymin = size_mean - size_CI, size = NULL), width = 0.1, alpha = 0.8) + 
+  labs(x = "Tidal height (m)", y = "Size (mm)") + 
+  theme(strip.background = element_blank(), 
+        strip.text = element_text(face = "italic")) + 
+  facet_wrap(~ species) + 
+  guides(shape = FALSE) + 
+  theme(legend.position = c(0.025, 0.025), legend.justification = c(0.025, 0.025)) + 
+  theme(legend.title = element_blank()) + 
+  scale_color_manual(values = c("darkgray", "black")) + 
+  geom_text(aes(x, y, label = text1, color = NULL, shape = NULL), 
+            data = size_change_text, size = 5, hjust = 1, show.legend = FALSE) 
+
 
 
 ##### PLOT MEAN SIZES TIDAL HEIGHT - ONE PANEL #####

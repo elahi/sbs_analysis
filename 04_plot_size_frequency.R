@@ -13,6 +13,10 @@
 
 library(grid)
 
+# load data - repeated size bins
+# dat <- choose_size_data(method = "approximated")
+# dat <- choose_size_data() # old method
+
 # load data
 source("03_identify_size_cutoff.R")
 
