@@ -10,7 +10,7 @@
 ##' @log Add a log here
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
+rm(list=ls(all=TRUE)) 
 
 ##### LOAD PACKAGES, DATA #####
 
@@ -23,7 +23,12 @@ library(lubridate)
 source("R/buttonPositions.R")
 
 # load data - repeated size bins
-dat <- choose_size_data(method = "approximated")
+source("R/choose_size_data.R")
+# dat <- choose_size_data(method = "approximated")
+# dat <- choose_size_data()
+
+summary(dat)
+unique(dat$date)
 
 ##### PREPARE DATA #####
 

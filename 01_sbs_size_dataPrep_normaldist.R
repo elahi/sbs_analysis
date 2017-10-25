@@ -10,16 +10,33 @@
 # I will use a normal distribution to expand size-frequency data from old studies
 #################################################
 
-library(dplyr)
-
 rm(list=ls(all=TRUE)) 
+
+library(dplyr)
+library(lubridate)
 
 # Functions to convert histogram data to vector of raw sizes
 source("R/convert_histo_to_raw.R")
 
 # load modern data, along with historic data for Lottia (Hexter)
 mod <- read.csv("./data/SBSmaster_150717.csv", na.strings = c("NA"))
-summary(mod)
+mod %>% distinct(era, year, date)
+
+# Historic data for Lottia are already presented as individual values to the nearest 0.1 mm
+mod %>% filter(sp == "LODI" & era == "past")
+
+# Separate Lottia data and change year
+hexPast <- mod %>% filter(era == "past") %>% 
+  mutate(date = "7/1/1950") %>% 
+  mutate(date = mdy(date), 
+         year = lubridate::year(date))
+hexPast %>% distinct(era, year, date)
+
+mod <- mod %>% 
+  filter(era == "present") %>% 
+  mutate(date = mdy(date), 
+         year = lubridate::year(date))
+mod %>% distinct(era, year, date)
 
 # load historic data
 childs <- read.csv("./data/childs_raw.csv", na.strings = c("NA", ""))
@@ -28,9 +45,6 @@ wara <- read.csv("./data/wara_raw.csv", na.strings = c("NA", ""))
 # need to expand these size-frequency tables
 childs
 wara # only resampled area B and area D
-
-# Historic data for Lottia are already presented as individual values to the nearest 0.1 mm
-mod %>% filter(sp == "LODI" & era == "past")
 
 ##### CHILDS #####
 # Childs - Littorina keenae
@@ -46,7 +60,7 @@ childsPast <- data.frame(row = "",
                          sp = "LIKE", 
                          site = "HighRock", 
                          era = "past", 
-                         date = "6/14/47", 
+                         date = "1947-06-14",
                          nest1 = c(rep("zoneA", length(childsA)), 
                                    rep("zoneB", length(childsB)), 
                                    rep("zoneC", length(childsC)), 
@@ -65,6 +79,7 @@ childsPast <- data.frame(row = "",
                          notes2 = ""
                          )
 
+childsPast <- childsPast %>% mutate(year = lubridate::year(date))
 min(childsPast$size1mm)
 
 # For comparison
@@ -77,7 +92,6 @@ childs_past_repeat <- c(childsA, childsB, childsC, childsD)
 plot(density(childs_past_repeat), main = "")
 
 lines(density(childsPast$size1mm), col = "red")
-
 
 ##### WARA #####
 wara
@@ -93,7 +107,7 @@ waraPast <- data.frame(row = "",
                          site = c(rep("Wara.B", length(waraB)), 
                                 rep("Wara.D", length(waraD))), 
                          era = "past", 
-                         date = "6/1/63", 
+                         date = "1963-06-01", 
                          nest1 = NA, 
                          nest2 = NA, 
                          nest3 = NA, 
@@ -109,6 +123,7 @@ waraPast <- data.frame(row = "",
                          notes2 = ""
 )
 
+waraPast <- waraPast %>% mutate(year = lubridate::year(date))
 min(waraPast$size1mm)
 
 plot(density(waraPast$size1mm))
@@ -123,8 +138,8 @@ lines(density(waraPast$size1mm), col = "red")
 
 #################################################
 # Combine all three
-library(dplyr)
-sbsMaster <- rbind(mod, childsPast, waraPast)
+sbsMaster <- rbind(mod, childsPast, waraPast, hexPast)
+unique(sbsMaster$date)
 glimpse(sbsMaster)
 summary(sbsMaster)
 sbsMaster$row <- seq(1:length(sbsMaster$sp))
@@ -151,4 +166,3 @@ unique(sbsMaster3$notes)
 with(sbsMaster3, table(notes))
 
 write.csv(sbsMaster3, './output/sbsMaster_norm.csv')
-
