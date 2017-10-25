@@ -7,30 +7,32 @@
 ##' @date 2016-08-05
 ##' 
 ##' @log 
+##' 2017-10-24 Wrote functions to get data and choose size thresholds for better automation
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
+rm(list=ls(all=TRUE)) 
 
 library(grid)
 
 source("R/choose_size_data.R")
+source("R/choose_size_threshold.R")
 
 # load data - repeated size bins
 # dat <- choose_size_data(method = "approximated")
 dat <- choose_size_data() # old method
 names(dat)
 
-# load data
-source("03_identify_size_cutoff.R")
+dat2 <- choose_size_threshold(x = dat, era = "past", filter_data = F) %>% 
+  filter(!is.na(size1mm))
+names(dat2)
+unique(dat2$species)
 
 # plotting functions
 source("./R/multiplotF.R")
 
-head(dat4)
+##### QUICK FACETTED GGPLOT #####
 
-##### TRY FACETTING #####
-
-facet_panels <- dat4 %>% select(species, era) %>% distinct() %>%
+facet_panels <- dat2 %>% select(species, era) %>% distinct() %>%
   arrange(species, era)
 
 facet_panels
@@ -39,42 +41,38 @@ facet_panels <- facet_panels %>%
   mutate(facet_labels = paste(LETTERS)[1:6]) %>% 
   arrange(facet_labels)
 
-dat6 <- dat4 %>% 
+dat3 <- dat2 %>% 
   inner_join(., facet_panels, by = c("species", "era"))
 
-dat6 %>% 
+dat3 %>% 
   ggplot(aes(size1mm)) + 
   geom_histogram(aes(y = ..density.. * 100), binwidth = 1, 
                  color = "black", fill = "gray") +   
   facet_grid(era ~ species, switch = "y") + 
-  geom_vline(aes(xintercept = size0.05), linetype = "dashed", color = "red") + 
+  geom_vline(aes(xintercept = size_threshold), linetype = "dashed", color = "red") + 
   labs(x = "Size (mm)", y = "Frequency (%)") + 
   theme(strip.background = element_blank()) + 
   geom_text(data = facet_panels, aes(0.1, 18, label = facet_labels), 
             inherit.aes = FALSE) 
-
-#ggsave("figs/sbs_fig1.png", height = 3.5, width = 7)
 
 ##### SEPARATE PANEL WITH MULTIPLOT #####
 
 ## Make separate dataframes
 
 # Littorina keenae 
-childsDF <- droplevels(filter(dat6, sp == "LIKE"))
+childsDF <- droplevels(filter(dat2, sp == "LIKE"))
 childsPast <- childsDF %>% filter(era == "past")
 childsPres <- childsDF %>% filter(era == "present")
 
 # Chlorostoma funebralis
-waraDF <- droplevels(filter(dat6, sp == "CHFU"))
+waraDF <- droplevels(filter(dat2, sp == "CHFU"))
 waraPast <- waraDF %>% filter(era == "past")
 waraPres <- waraDF %>% filter(era == "present")
 
 # Lottia digitalis
-hexDF <- droplevels(filter(dat6, sp == "LODI"))
+hexDF <- droplevels(filter(dat2, sp == "LODI"))
 hexPast <- hexDF %>% filter(era == "past")
 hexPres <- hexDF %>% filter(era == "present")
-
-
 
 # Basic function to plot histogram for any subset of data
 
@@ -84,7 +82,7 @@ plot_histo_panel <- function(df, bin_width = 1) {
     geom_histogram(aes(y = ..count../sum(..count..)), binwidth = bin_width, 
                    color = "black", fill = "gray") +
     xlab("Size (mm)") + ylab("Proportion") +
-    geom_vline(aes(xintercept = size0.05), 
+    geom_vline(aes(xintercept = size_threshold), 
                linetype = "dashed", color = "black", alpha = 0.65) 
   
   return(p)
@@ -112,7 +110,7 @@ fig1a <- plot_histo_panel(waraPast, bin_width = 2) +
 fig1b <- plot_histo_panel(waraPres, bin_width = 2) + 
   scale_x_continuous(limits = c(2, 32)) + 
   scale_y_continuous(limits = c(0, 0.31)) + 
-  annotate("text", label = "2014\nn = 5995", 
+  annotate("text", label = "2014\nn = 5646", 
            x = 32, y = 0.31, size = 2.2, vjust = 1, hjust = 1) +
   annotate("text", label = "B", 
            x = 2, y = 0.31, vjust = 1, hjust = -0.05) 
@@ -120,7 +118,7 @@ fig1b <- plot_histo_panel(waraPres, bin_width = 2) +
 fig1c <- plot_histo_panel(hexPast) + 
   scale_x_continuous(limits = c(5, 25)) + 
   scale_y_continuous(limits = c(0, 0.2)) + 
-  annotate("text", label = "1950\nn = 492", 
+  annotate("text", label = "1950\nn = 493", 
            x = 25, y = 0.2, size = 2.2, vjust = 1, hjust = 1) +
   annotate("text", label = "C", 
            x = 5, y = 0.2, vjust = 1, hjust = -0.05) + 
@@ -131,7 +129,7 @@ fig1c <- plot_histo_panel(hexPast) +
 fig1d <- plot_histo_panel(hexPres) + 
   scale_x_continuous(limits = c(5, 25)) + 
   scale_y_continuous(limits = c(0, 0.2)) + 
-  annotate("text", label = "2015\nn = 587", 
+  annotate("text", label = "2015\nn = 605", 
            x = 25, y = 0.2, size = 2.2, vjust = 1, hjust = 1) +
   annotate("text", label = "D", 
            x = 5, y = 0.2, vjust = 1, hjust = -0.05) 
@@ -154,7 +152,9 @@ fig1f <- plot_histo_panel(childsPres) +
            x = 21, y = 0.2, size = 2.2, vjust = 1, hjust = 1) +
   annotate("text", label = "F", 
            x = 1, y = 0.2, vjust = 1, hjust = -0.05) 
-  
+
+multiplot(fig1a, fig1b, fig1c, fig1d, fig1e, fig1f, cols = 3)
+
 ###############################
 # save as 7 x 3.5 pdf
 pdf("./figs/sbs_fig1.pdf", 7, 3.5)
@@ -177,6 +177,8 @@ ks.test(hexPast$size1mm, hexPres$size1mm)
 ####################################################
 ####################################################
 ####################################################
+
+##### NOT UPDATED BELOW HERE #####
 
 ##### SEPARATE PANEL WITH MULTIPLOT - FOR PPT #####
 
