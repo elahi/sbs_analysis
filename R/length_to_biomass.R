@@ -1,3 +1,5 @@
+## Write functions to go from mm to mg
+
 
 ## Paine 1971, Table 2
 #' Chlorostoma funebralis
@@ -6,9 +8,9 @@
 #' y = ln dry weight (mg)
 #' ln(y) = -5.016 + 3.670*ln(x) 
 
-chfu_mmTOg <- function(x){
+chfu_mmTOmg <- function(x){
   
-  exp(-5.016 + 3.670 * log(x)) / 1000 # divide by 1000 to return grams instead of mg
+  exp(-5.016 + 3.670 * log(x)) 
   
 } 
 
@@ -19,13 +21,17 @@ chfu_mmTOg <- function(x){
 #' y = ln dry weight (g)
 #' ln(y) = -4.29 + 3.30*ln(x)
 
-lodi_mmTOg <- function(x){
+lodi_mmTOmg <- function(x){
   
   # First convert mm to cm
   x_cm <- x / 10
   
   # Regression takes length in cm, returns weight in g
-  exp(-4.29 + 3.30 * log(x_cm))
+  y <- exp(-4.29 + 3.30 * log(x_cm))
+  
+  y <- y * 1000 # convert to mg
+  
+  return(y)
   
 }
 
@@ -48,9 +54,9 @@ the_coef <- data.frame(sex = c(rep("M", 4), rep("F", 4)),
 mean_slope <- mean(the_slope$the_slope)
 mean_coef <- mean(the_coef$the_coef)
 
-like_mmTOg <- function(x){
+like_mmTOmg <- function(x){
   
-  exp(mean_coef + mean_slope * log(x)) / 1000 # divide by 1000 to return grams instead of mg
+  exp(mean_coef + mean_slope * log(x))
   
   
 }

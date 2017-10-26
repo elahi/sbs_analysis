@@ -7,15 +7,22 @@
 ##' @date 2017-02-10
 ##' 
 ##' @log 
+##' 2017-10-26 Updating size data
 ################################################################################
 
-#rm(list=ls(all=TRUE)) 
+rm(list=ls(all=TRUE)) 
 
-# load data
-source("03_identify_size_cutoff.R")
-source("R/length_to_biomass.R")
-dat4 # complete dataset
-dat5 # subset without smallest size classes
+##### LOAD PACKAGES, DATA #####
+
+source("R/choose_size_data.R")
+source("R/choose_size_threshold.R")
+
+# load data - approximated sizes
+dat <- choose_size_data(method = "approximated")
+
+# Do not remove any data
+dat <- choose_size_threshold(x = dat, era = "past", filter_data = F) %>% 
+  filter(!is.na(size1mm))
 
 ##### UNDERSTANDING THE WARA HISTOGRAM #####
 # Load the raw data from wara size-frequency distribution
@@ -101,15 +108,11 @@ total_snails_vector <- transect_length_vector * 2 * density_vector
 sum(total_snails_vector)
 
 ##### SUMMARISE SIZE-DENSITY DATA FOR ALL THREE SPECIES #####
-dat4 %>% group_by(sp, site, era, year, nest1, nest2) %>% tally() %>% ungroup() %>% View()
+dat %>% group_by(sp, site, era, year, nest1, nest2) %>% tally() %>% ungroup() %>% View()
+unique(dat$sampleArea)
 
-unique(dat4$sampleArea)
-
-## CRITICAL - CHOOSE DATASET, AND SIZE METRIC
-# dat4 - complete
-# dat5 - subset
-
-datMeans <- dat4 %>% filter(!is.na(size1mm)) %>% 
+## CHOOSE SIZE METRIC
+datMeans <- dat %>% filter(!is.na(size1mm)) %>% 
   group_by(species, sp, site, era, year, nest1, nest2, sampleArea) %>% 
   summarise(size_mean = mean(size1mm), 
             size_med = median(size1mm), 
@@ -125,14 +128,14 @@ waraPres <- datMeans %>% filter(sp == "CHFU" & era == "present") %>%
   mutate(area_sampled = 0.25, 
          density_factor = 1/area_sampled, 
          density_m2 = size_n * density_factor, 
-         mass_mean_g = chfu_mmTOg(size_mean))
+         mass_mean_mg = chfu_mmTOmg(size_mean))
 
 # Ribbed limpets sampled in 0.25m2 quadrats in present
 hexPres <- datMeans %>% filter(sp == "LODI" & era == "present") %>% 
   mutate(area_sampled = 0.25, 
          density_factor = 1/area_sampled, 
          density_m2 = size_n * density_factor, 
-         mass_mean_g = lodi_mmTOg(size_mean))
+         mass_mean_mg = lodi_mmTOmg(size_mean))
 summary(hexPres)
 
 # Ribbed limpets sampled in past:
@@ -142,14 +145,14 @@ hexPast <- datMeans %>% filter(sp == "LODI" & era == "past") %>%
   mutate(area_sampled = ifelse(site == "areaA", 0.37, 0.55), 
          density_factor = 1/area_sampled, 
          density_m2 = size_n * density_factor, 
-         mass_mean_g = lodi_mmTOg(size_mean))
+         mass_mean_mg = lodi_mmTOmg(size_mean))
 
 # Periwinkles sampled in 2.3m2 quadrats in present and past
 childsPres <- datMeans %>% filter(sp == "LIKE" & era == "present") %>% 
   mutate(area_sampled = 2.3, 
          density_factor = 1/area_sampled, 
          density_m2 = size_n * density_factor, 
-         mass_mean_g = like_mmTOg(size_mean))
+         mass_mean_mg = like_mmTOmg(size_mean))
 summary(childsPres)
 
 childs_tide <- childsPres %>% group_by(nest1) %>%
@@ -159,7 +162,7 @@ childsPast <- datMeans %>% filter(sp == "LIKE" & era == "past") %>%
   mutate(area_sampled = 2.3, 
          density_factor = 1/area_sampled, 
          density_m2 = size_n * density_factor, 
-         mass_mean_g = like_mmTOg(size_mean))
+         mass_mean_mg = like_mmTOmg(size_mean))
 
 childsPast$tide_mean <- childs_tide$tide_mean
 
@@ -169,7 +172,7 @@ datMeans2
 names(datMeans2)
 datMeans3 <- datMeans2 %>% 
   select(species, sp, site, era, tide_mean, size_mean, density_m2, 
-         sampleArea, nest1, nest2, size_n, mass_mean_g) %>% 
+         sampleArea, nest1, nest2, size_n, mass_mean_mg) %>% 
   rename(tideHTm = tide_mean, 
          size_mm = size_mean)
 datMeans3
@@ -186,7 +189,7 @@ waraPast <- waraPast %>%
          nest1 = NA, 
          nest2 = NA, 
          size_n = NA, 
-         mass_mean_g = chfu_mmTOg(size_mm))
+         mass_mean_mg = chfu_mmTOmg(size_mm))
 
 # Remove very low tides for WaraPast
 waraPast <- waraPast %>% filter(tideHTm > min_wara_tide)
@@ -198,35 +201,27 @@ species <- factor(datMeans4$species, levels = rev(c("Littorina keenae",
                                                "Chlorostoma funebralis")))
 datMeans4$species <- species
 
+# Log-transform data
+datMeans4 <- datMeans4 %>% 
+  mutate(dens_log = log10(density_m2), 
+         mass_log = log10(mass_mean_mg))
+
+### plots
+
 datMeans4 %>% 
-  ggplot(aes(tideHTm, mass_mean_g, color = era)) + 
-  geom_point() + 
-  facet_wrap(~ species)
-
-##### GET LOG CHANGE IN DENSITY #####
-
-datAreaMeans <- datMeans4 %>% 
-  group_by(species, site, sampleArea, era) %>%
-  summarise(tideHTm = mean(tideHTm), 
-            size_mm = mean(size_mm), 
-            density_m2 = mean(density_m2)) %>% 
-  mutate(size_lrr = log10(size_mm/lag(size_mm)), 
-         dens_rr = log10(density_m2/lag(density_m2))) %>%
-           ungroup()
-
-datAreaMeans %>% 
-  ggplot(aes(dens_rr, size_lrr, color = species, shape = species)) + 
-  geom_smooth(method = "lm") + 
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") + 
-  scale_x_continuous(limits = c(-1.1, 1.1)) + 
-  scale_y_continuous(limits = c(-1.1, 1.1)) + 
-  geom_point(alpha = 0.75, size = 2) + 
-  theme(legend.position = "top")
-
-ggsave("figs/size_dens_log_change.png", height = 3.5, width = 3.5)
+  ggplot(aes(tideHTm, mass_mean_mg, color = era)) + 
+  geom_point() +
+  scale_y_log10() + 
+  facet_wrap(~ species) + 
+  geom_smooth(method = "lm")
 
 
-
+datMeans4 %>% 
+  ggplot(aes(density_m2, mass_mean_mg, color = era)) + 
+  geom_point(alpha = 0.5) +
+  scale_y_log10() + 
+  scale_x_log10() + 
+  facet_wrap(~ species) + 
+  geom_smooth(method = "lm")
 
 
