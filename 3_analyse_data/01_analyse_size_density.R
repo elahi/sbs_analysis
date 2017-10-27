@@ -13,6 +13,7 @@
 # rm(list=ls(all=TRUE)) 
 library(broom)
 library(ggplot2)
+library(cowplot)
 
 # Load data
 source("05_summarise_size_density.R")
@@ -73,6 +74,11 @@ frank <- frank %>%
          mass_log = log10(mass_mean_mg))
 
 frank %>% 
+  ggplot(aes(Density_m2, Width_mm, color = State)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", aes(color = NULL))
+
+frank %>% 
   ggplot(aes(dens_log, mass_log, color = State)) + 
   geom_point() + 
   geom_smooth(method = "lm", aes(color = NULL))
@@ -80,6 +86,7 @@ frank %>%
 lm1 <- lm(mass_log ~ dens_log, data = frank)
 summary(lm1)
 
+slope_prior <- -0.3
 
 ##### PREPARE DATA FOR JAGS #####
 library(rjags)
@@ -94,6 +101,11 @@ x_min <- min(statDat$dens_log)
 x_max <- max(statDat$dens_log)
 x_predict <- seq(x_min, x_max, length.out = 100)
 
+# For prediction
+era_predict <- c(0,1)
+pred_df <- expand.grid(x_predict, era_predict) %>% 
+  rename(x_predict = Var1, era_predict = Var2) %>% tbl_df()
+
 # Number of iterations
 n.adapt <- 1000
 n.update <- 1000
@@ -105,27 +117,35 @@ data = list(
   y = as.double(statDat$mass_log), # number of oasis detections
   era = as.double(statDat$era01), 
   x = as.double(statDat$dens_log),
-  x_predict = as.double(x_predict) 
+  x_predict = as.double(pred_df$x_predict), 
+  era_predict = as.double(pred_df$era_predict) 
 )
 
 ##### MODEL 1: ERA X SIZE ####
+
+#' mass_log ~ b0 + b1*era + b2*dens + b3*era*dens
 
 # JAGS model
 sink("3_analyse_data/bayes_models/model1.R")
 cat("
     model{
     # priors
-    p ~ dbeta(1, 1)
-    for(i in 1:2){
-    beta[i] ~ dnorm(0, 0.1)
-    }
+    beta0 ~ dnorm(0, 1/10^2)
+    beta1 ~ dnorm(0, 1/10^2) 
+    beta2 ~ dnorm(-0.3, 1/0.05^2) # informative prior
+    #beta2 ~ dnorm(-0, 1/10^2) # flat prior
+    beta3 ~ dnorm(0, 1/10^2)
+    sigma ~ dunif(0, 10)
+    
+    tau <- 1/sigma^2
     
     # likelihood
-    for(i in 1:N){
-    logit(psi[i]) <- beta[1] + beta[2]*hpd[i]
-    z[i] ~ dbern(psi[i])
-    y[i] ~ dbin(z[i] * p, n[i])
-    y.new[i] ~ dbin(z[i] * p, n[i])
+    for (i in 1:N){
+    mu[i] <- beta0 + beta1*era[i] + beta2*x[i] + beta3*era[i]*x[i]
+    y[i] ~ dnorm(mu[i], tau)
+    y.new[i] ~ dnorm(mu[i], tau)
+    sq.error.data[i] <- (y[i] - mu[i])^2
+    sq.error.new[i] <- (y.new[i] - mu[i])^2
     }
     
     # bayesian p-values
@@ -137,44 +157,35 @@ cat("
     mean.new  <- mean(y.new)
     p.mean <- step(mean.new - mean.data)
     
-    # derived quantities
-    for(j in 1:length(hpd_predict_stand)){
-    logit(psi_predict[j]) <- beta[1] + beta[2]*hpd_predict_stand[j]
+    discrep.data <- sum(sq.error.data)
+    discrep.new <- sum(sq.error.new)
+    p.discrep <- step(discrep.new - discrep.data)
+    
+    # Derived quantities
+    for(j in 1:length(x_predict)){
+    y_pred[j] <- beta0 + beta1*era_predict[j] + beta2*x_predict[j] + beta3*era_predict[j]*x_predict[j]
     }
     
     }
     ", fill = TRUE)
 sink()
 
-# # Inits
-# inits = list(
-#   list(p = 0.2,
-#        beta = runif(2, -2, 2)),
-#   list(p = 0.1,
-#        beta = runif(2, -2, 2))
-# )
-
 inits = list(
-  list(z = rep(1, nrow(statDat)), p = 0.1, beta = runif(2, -2, 2)), 
-  list(z = rep(1, nrow(statDat)), p = 0.1, beta = runif(2, -2, 2)), 
-  list(z = rep(1, nrow(statDat)), p = 0.1, beta = runif(2, -2, 2)), 
-  list(z = rep(1, nrow(statDat)), p = 0.1, beta = runif(2, -2, 2))
-)
+  list(beta0 = 1, beta1 = 0.5, beta2 = 0, beta3 = 0, sigma = 1))
 
-# Number of iterations
-n.adapt <- 10000
-n.update <- 10000
-n.iter <- 10000
-
-jm <- jags.model("bv_test/models/model2.R", data = data, inits = inits, n.chains = length(inits), 
+## Run model
+jm <- jags.model("3_analyse_data/bayes_models/model1.R", data = data, 
+                 inits = inits, n.chains = length(inits), 
                  n.adapt = n.adapt)
 
 update(jm, n.iter = n.update)
 
-zm = coda.samples(jm, variable.names = c("p", "beta"), 
+zm = coda.samples(jm, variable.names = c("beta0", "beta1", "beta2", "beta3", 
+                                         "sigma"), 
                   n.iter = n.iter, n.thin = 1)
 
-zj = jags.samples(jm, variable.names = c("p", "beta", "psi_predict", "p.mean", "p.sd"), n.iter = n.iter, n.thin = 1)
+zj = jags.samples(jm, variable.names = c("y_pred", "p.mean", "p.sd", "p.discrep"), 
+                  n.iter = n.iter, n.thin = 1)
 
 #Produce a summary table for the parameters. 
 summary(zm)
@@ -189,60 +200,42 @@ gelman.diag(zm, multivariate = F)
 # Check Bayesian pvals
 mean(zj$p.mean)
 mean(zj$p.sd)
+mean(zj$p.discrep)
 
 ##### FIGURES #####
 
-# Plot predicted psi as function of human population density
-psi <- summary(zj$psi_predict, quantile, c(0.025, 0.5, 0.975))$stat
+# Plot prediction 
+y_predict <- summary(zj$y_pred, quantile, c(0.025, 0.5, 0.975))$stat
 
-png("bv_test/bv_test_figs/psi_predict.png", height = 3.5, width = 3.5, units = "in", res = 300)
-par(mar = c(5,5,1,1))
-plot(hpd_predict/1e6, psi[2, ], type = "l", ylim = c(0, 1), 
-     xlab = "Human population density\n(x1e6; within 50 km)", 
-     ylab = "Posterior probability\nof a coral oasis", lwd = 2)
-points(statDat$hpd/1e6, jitter(statDat$oasis_present, factor = 0.1), col = "gray")
-lines(hpd_predict/1e6, psi[1, ], type = "l", ylim = c(0, 1), lty = "dashed", lwd = 2)
-lines(hpd_predict/1e6, psi[3, ], type = "l", ylim = c(0, 1), lty = "dashed", lwd = 2)
-dev.off()
+pred_df$y_median <- y_predict[2, ]
+pred_df$y_lower <- y_predict[1, ]
+pred_df$y_upper <- y_predict[3, ]
 
-# Plot probability density of p (probability of oasis detection)
-png("bv_test/bv_test_figs/p_histo.png", height = 3.5, width = 3.5, units = "in", res = 300)
-par(mar = c(5,5,1,1))
-hist(zj$p, breaks = 100, main = "", 
-     xlab = "Probability of detection", 
-     ylab = "Posterior density", 
-     freq = FALSE, col = "azure1")
-abline(v = summary(zj$p, quantile, c(.975))$stat, lty = "dashed", lwd = 2)
-abline(v = summary(zj$p, quantile, c(.5))$stat, lty = "solid", lwd = 2)
-abline(v = summary(zj$p, quantile, c(.025))$stat, lty = "dashed", lwd = 2)
-box()
-dev.off()
+pred_df$era <- ifelse(pred_df$era_predict == 0, "past", "present")
 
-# Plot beta coefficients
-beta_coefs <- summary(zj$beta, quantile, c(0.025, 0.5, 0.975))$stat
-t(beta_coefs)
+p1_bayes <- pred_df %>% 
+  ggplot(aes(x_predict, y_median, color = era)) + 
+  geom_line() + 
+  # geom_line(aes(x_predict, y_lower), linetype = "dashed") + 
+  # geom_line(aes(x_predict, y_upper), linetype = "dashed") + 
+  geom_ribbon(aes(ymin = y_lower, ymax = y_upper, fill = era, color = NULL), 
+              alpha = 0.5) + 
+  geom_point(data = statDat, aes(dens_log, mass_log, color = era), alpha = 0.5) + 
+  ggtitle("Bayesian model") + 
+  theme(legend.position = c(0.01, 0.01), legend.justification = c(0.01, 0.01))
 
-beta_df <- as.data.frame(t(beta_coefs))
-names(beta_df) <- c("lower", "median", "upper")
+lm1 <- lm(mass_log ~ era*dens_log, data = statDat)
+summary(lm1)
 
-beta_df <- beta_df %>% 
-  mutate(beta = c("beta0_intercept", "beta1_hpd"))
-
-beta_df %>%
-  ggplot(aes(beta, median)) + 
-  geom_point() + 
-  geom_errorbar(aes(ymin = lower, ymax = upper), width = 0.2) + 
-  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
-  ylab("Standardized coefficient") + 
-  xlab("")
-
-ggsave("bv_test/bv_test_figs/beta_coefs.png", height = 3.5, width = 3.5)
+p2_lm <- statDat %>% 
+  ggplot(aes(dens_log, mass_log, color = era)) + 
+  geom_point(alpha = 0.5) + 
+  geom_smooth(method = "lm") + 
+  ggtitle("Linear model") + 
+  theme(legend.position = c(0.01, 0.01), legend.justification = c(0.01, 0.01))
 
 
-
-
-
-
-
-
+wara_2panel <- plot_grid(p1_bayes, p2_lm, labels = c("A", "B"))
+save_plot("3_analyse_data/bayes_figs/wara_2panel_strongprior.png", wara_2panel, 
+          base_height = 3.5, base_width = 7)
 
