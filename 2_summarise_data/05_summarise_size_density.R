@@ -16,6 +16,7 @@ rm(list=ls(all=TRUE))
 
 source("R/choose_size_data.R")
 source("R/choose_size_threshold.R")
+source("R/length_to_biomass.R")
 
 # load data - approximated sizes
 dat <- choose_size_data(method = "approximated")

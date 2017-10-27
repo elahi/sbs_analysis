@@ -3,8 +3,8 @@
     # priors
     beta0 ~ dnorm(0, 1/10^2)
     beta1 ~ dnorm(0, 1/10^2) 
-    beta2 ~ dnorm(-0.3, 1/0.05^2) # informative prior
-    #beta2 ~ dnorm(-0, 1/10^2) # flat prior
+    #beta2 ~ dnorm(-0.3, 1/0.15^2) # informative prior
+    beta2 ~ dnorm(0, 1/10^2) # flat prior
     beta3 ~ dnorm(0, 1/10^2)
     sigma ~ dunif(0, 10)
     

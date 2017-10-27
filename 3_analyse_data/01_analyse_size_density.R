@@ -24,6 +24,19 @@ dens_wara <- statDat %>% filter(sp == "CHFU")
 dens_hex <- statDat %>% filter(sp == "LODI")
 dens_childs <- statDat %>% filter(sp == "LIKE")
 
+##### DENSITY ONLY #####
+
+statDat <- datMeans4
+lm1 <- lm(dens_log ~ era*species, data = statDat)
+summary(lm1)
+plot(lm1)
+
+lm_fits <- statDat %>% group_by(species) %>% 
+  do(fit = lm(dens_log ~ era, data = .))
+lm_fits %>% glance(fit)
+lm_fits %>% tidy(fit) %>% filter(term != "(Intercept)")
+
+
 ##### LM #####
 
 ## Wara
@@ -92,6 +105,8 @@ slope_prior <- -0.3
 library(rjags)
 
 statDat <- dens_wara %>% filter(!is.na(dens_log) & !is.na(mass_log))
+statDat <- dens_childs %>% filter(!is.na(dens_log) & !is.na(mass_log))
+statDat <- dens_hex %>% filter(!is.na(dens_log) & !is.na(mass_log))
 
 # Get era as 0 or 1
 statDat <- statDat %>% mutate(era01 = ifelse(era == "past", 0, 1))
@@ -132,8 +147,8 @@ cat("
     # priors
     beta0 ~ dnorm(0, 1/10^2)
     beta1 ~ dnorm(0, 1/10^2) 
-    beta2 ~ dnorm(-0.3, 1/0.05^2) # informative prior
-    #beta2 ~ dnorm(-0, 1/10^2) # flat prior
+    #beta2 ~ dnorm(-0.3, 1/0.15^2) # informative prior
+    beta2 ~ dnorm(0, 1/10^2) # flat prior
     beta3 ~ dnorm(0, 1/10^2)
     sigma ~ dunif(0, 10)
     
@@ -237,5 +252,13 @@ p2_lm <- statDat %>%
 
 wara_2panel <- plot_grid(p1_bayes, p2_lm, labels = c("A", "B"))
 save_plot("3_analyse_data/bayes_figs/wara_2panel_strongprior.png", wara_2panel, 
+          base_height = 3.5, base_width = 7)
+
+childs_2panel <- plot_grid(p1_bayes, p2_lm, labels = c("A", "B"))
+save_plot("3_analyse_data/bayes_figs/childs_2panel_flatprior.png", childs_2panel, 
+          base_height = 3.5, base_width = 7)
+
+hex_2panel <- plot_grid(p1_bayes, p2_lm, labels = c("A", "B"))
+save_plot("3_analyse_data/bayes_figs/hex_2panel_flatprior.png", hex_2panel, 
           base_height = 3.5, base_width = 7)
 
