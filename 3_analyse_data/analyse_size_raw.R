@@ -90,7 +90,7 @@ slope_prior <- -0.3
 library(rjags)
 
 statDat <- dens_childs %>% filter(!is.na(dens_log) & !is.na(mass_log))
-statDat <- dens_wara %>% filter(!is.na(dens_log) & !is.na(mass_log))
+# statDat <- dens_wara %>% filter(!is.na(dens_log) & !is.na(mass_log))
 statDat <- dens_hex %>% filter(!is.na(dens_log) & !is.na(mass_log))
 
 # Get era as 0 or 1
@@ -126,25 +126,23 @@ data = list(
 
 ##### MODEL 1: ERA X SIZE ####
 
-#' size ~ b0 + b1*era + b2*dens + b3*era*dens
+#' size ~ b0 + b1*era 
 
 
 # JAGS model
-sink("3_analyse_data/bayes_models/model_size_density.R")
+sink("3_analyse_data/bayes_models/model_size.R")
 cat("
     model{
     # priors
     beta0 ~ dnorm(0, 1/10^2)
     beta1 ~ dnorm(0, 1/10^2) 
-    beta2 ~ dnorm(0, 1/10^2) 
-    beta3 ~ dnorm(0, 1/10^2)
     sigma ~ dunif(0, 5)
     
     tau <- 1/sigma^2
     
     # likelihood
     for (i in 1:N){
-    mu[i] <- exp(beta0 + beta1*era[i] + beta2*x[i] + beta3*era[i]*x[i])
+    mu[i] <- exp(beta0 + beta1*era[i])
     y[i] ~ dlnorm(log(mu[i]), tau) 
     y.new[i] ~ dlnorm(log(mu[i]), tau)
     sq.error.data[i] <- (y[i] - mu[i])^2
@@ -166,7 +164,7 @@ cat("
     
     # Derived quantities
     for(j in 1:length(x_predict)){
-    y_pred[j] <- exp(beta0 + beta1*era_predict[j] + beta2*x_predict[j] + beta3*era_predict[j]*x_predict[j])
+    y_pred[j] <- exp(beta0 + beta1*era_predict[j])
     }
     
     }
@@ -185,13 +183,13 @@ n.update <- 1000
 n.iter <- 1000
 
 ## Run model
-jm <- jags.model("3_analyse_data/bayes_models/model_size_density.R", data = data, 
+jm <- jags.model("3_analyse_data/bayes_models/model_size.R", data = data, 
                  inits = inits, n.chains = length(inits), 
                  n.adapt = n.adapt)
 
 update(jm, n.iter = n.update)
 
-zm = coda.samples(jm, variable.names = c("beta0", "beta1", "beta2", "beta3", 
+zm = coda.samples(jm, variable.names = c("beta0", "beta1", 
                                          "sigma"), 
                   n.iter = n.iter, n.thin = 10)
 

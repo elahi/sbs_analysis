@@ -5,7 +5,7 @@
     beta1 ~ dnorm(0, 1/10^2) 
     beta2 ~ dnorm(0, 1/10^2) 
     beta3 ~ dnorm(0, 1/10^2)
-    sigma ~ dunif(0, 10)
+    sigma ~ dunif(0, 5)
     
     tau <- 1/sigma^2
     

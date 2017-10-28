@@ -101,6 +101,7 @@ dens_mu <- mean(statDat$density_m2)
 dens_sd <- sd(statDat$density_m2)
 dens_cent <- statDat$density_m2 - dens_mu
 statDat$dens_stand <- dens_cent/dens_sd
+statDat$tideHTm_stand <- as.numeric(scale(statDat$tideHTm))
 
 # For plotting predicted values
 x_min <- min(statDat$density_m2)
@@ -113,6 +114,7 @@ era_predict <- c(0,1)
 pred_df <- expand.grid(x_predict_stand, era_predict) %>% 
   rename(x_predict_stand = Var1, era_predict = Var2) %>% tbl_df()
 pred_df$x_predict <- x_predict
+pred_df$tideHTm_stand <- 0
 
 # Get data
 data = list(
@@ -120,17 +122,19 @@ data = list(
   y = as.double(statDat$size1mm), # number of oasis detections
   era = as.double(statDat$era01), 
   x = as.double(statDat$dens_stand),
+  tideHTm = as.double(statDat$tideHTm_stand), 
   x_predict = as.double(pred_df$x_predict_stand), 
-  era_predict = as.double(pred_df$era_predict) 
+  era_predict = as.double(pred_df$era_predict), 
+  tide_predict = as.double(pred_df$tideHTm_stand)
 )
 
-##### MODEL 1: ERA X SIZE ####
+##### MODEL 1: ERA X SIZE x DENSITY x TIDE ####
 
-#' size ~ b0 + b1*era + b2*dens + b3*era*dens
+#' size ~ b0 + b1*era + b2*dens + b3*era*dens + b4*tide + b5*era*tide
 
 
 # JAGS model
-sink("3_analyse_data/bayes_models/model_size_density.R")
+sink("3_analyse_data/bayes_models/model_size_density_tide.R")
 cat("
     model{
     # priors
@@ -138,13 +142,15 @@ cat("
     beta1 ~ dnorm(0, 1/10^2) 
     beta2 ~ dnorm(0, 1/10^2) 
     beta3 ~ dnorm(0, 1/10^2)
+    beta4 ~ dnorm(0, 1/10^2)
+    beta5 ~ dnorm(0, 1/10^2)
     sigma ~ dunif(0, 5)
     
     tau <- 1/sigma^2
     
     # likelihood
     for (i in 1:N){
-    mu[i] <- exp(beta0 + beta1*era[i] + beta2*x[i] + beta3*era[i]*x[i])
+    mu[i] <- exp(beta0 + beta1*era[i] + beta2*x[i] + beta3*era[i]*x[i] + beta4*tideHTm[i] + beta5*era[i]*tideHTm[i])
     y[i] ~ dlnorm(log(mu[i]), tau) 
     y.new[i] ~ dlnorm(log(mu[i]), tau)
     sq.error.data[i] <- (y[i] - mu[i])^2
@@ -166,7 +172,7 @@ cat("
     
     # Derived quantities
     for(j in 1:length(x_predict)){
-    y_pred[j] <- exp(beta0 + beta1*era_predict[j] + beta2*x_predict[j] + beta3*era_predict[j]*x_predict[j])
+    y_pred[j] <- exp(beta0 + beta1*era_predict[j] + beta2*x_predict[j] + beta3*era_predict[j]*x_predict[j] + beta4*tide_predict[j] + beta5*era[j]*tide_predict[j])
     }
     
     }
@@ -177,7 +183,7 @@ inits = list(
   #list(beta0 = 1, beta1 = 0.5, beta2 = 0.1, beta3 = 1, sigma = 1), 
   #list(beta0 = -1, beta1 = -0.5, beta2 = -0.1, beta3 = 0, sigma = 0.2), 
   #list(beta0 = 2, beta1 = 0.1, beta2 = 0, beta3 = -0.01, sigma = 10), 
-  list(beta0 = 0, beta1 = -0.1, beta2 = 0.4, beta3 = -4, sigma = 4))
+  list(beta0 = 0, beta1 = -0.1, beta2 = 0.4, beta3 = -4, beta4 = 0, beta5 = 0, sigma = 4))
 
 # Number of iterations
 n.adapt <- 1000
@@ -185,14 +191,14 @@ n.update <- 1000
 n.iter <- 1000
 
 ## Run model
-jm <- jags.model("3_analyse_data/bayes_models/model_size_density.R", data = data, 
+jm <- jags.model("3_analyse_data/bayes_models/model_size_density_tide.R", data = data, 
                  inits = inits, n.chains = length(inits), 
                  n.adapt = n.adapt)
 
 update(jm, n.iter = n.update)
 
-zm = coda.samples(jm, variable.names = c("beta0", "beta1", "beta2", "beta3", 
-                                         "sigma"), 
+zm = coda.samples(jm, variable.names = c("beta0", "beta1", "beta2", "beta3", "beta4",  
+                                         "beta5","sigma"), 
                   n.iter = n.iter, n.thin = 10)
 
 zj = jags.samples(jm, variable.names = c("y_pred", "p.mean", "p.sd", "p.discrep"), 
@@ -229,7 +235,7 @@ pred_df %>%
   geom_line() + 
   geom_ribbon(aes(ymin = y_lower, ymax = y_upper, fill = era, color = NULL), 
               alpha = 0.5) + 
-  #geom_point(data = statDat, aes(density_m2, size1mm, color = era), alpha = 0.5) + 
-  geom_boxplot(data = statDat, aes(density_m2, size1mm, group = density_m2)) + 
+  geom_point(data = statDat, aes(density_m2, size1mm, color = era), alpha = 0.5) + 
+  #geom_boxplot(data = statDat, aes(density_m2, size1mm, group = density_m2)) + 
   ggtitle("Bayesian model") + 
   theme(legend.position = c(0.01, 0.01), legend.justification = c(0.01, 0.01))

@@ -5,13 +5,15 @@
     beta1 ~ dnorm(0, 1/10^2) 
     beta2 ~ dnorm(0, 1/10^2) 
     beta3 ~ dnorm(0, 1/10^2)
-    sigma ~ dunif(0, 10)
+    beta4 ~ dnorm(0, 1/10^2)
+    beta5 ~ dnorm(0, 1/10^2)
+    sigma ~ dunif(0, 5)
     
     tau <- 1/sigma^2
     
     # likelihood
     for (i in 1:N){
-    mu[i] <- exp(beta0 + beta1*era[i] + beta2*x[i] + beta3*era[i]*x[i])
+    mu[i] <- exp(beta0 + beta1*era[i] + beta2*x[i] + beta3*era[i]*x[i] + beta4*tideHTm[i] + beta5*era[i]*tideHTm[i])
     y[i] ~ dlnorm(log(mu[i]), tau) 
     y.new[i] ~ dlnorm(log(mu[i]), tau)
     sq.error.data[i] <- (y[i] - mu[i])^2
@@ -33,7 +35,7 @@
     
     # Derived quantities
     for(j in 1:length(x_predict)){
-    y_pred[j] <- exp(beta0 + beta1*era_predict[j] + beta2*x_predict[j] + beta3*era_predict[j]*x_predict[j])
+    y_pred[j] <- exp(beta0 + beta1*era_predict[j] + beta2*x_predict[j] + beta3*era_predict[j]*x_predict[j] + beta4*tide_predict[j] + beta5*era[j]*tide_predict[j])
     }
     
     }
