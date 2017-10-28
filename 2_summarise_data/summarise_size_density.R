@@ -178,7 +178,8 @@ dat_dens <- dat_dens %>%
                           ifelse(sp == "LODI", lodi_mmTOmg(size1mm), 
                                  like_mmTOmg(size1mm))), 
          mass_log = log10(mass_mg), 
-         dens_log = log10(density_m2))
+         dens_log = log10(density_m2), 
+         size_log = log10(size1mm))
 
 
 dat_dens %>% filter(era == "present" & sp == "LODI") %>% 

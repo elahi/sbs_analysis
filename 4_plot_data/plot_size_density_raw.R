@@ -28,15 +28,12 @@ names(dat_dens)
 my_quants <- c(0.1, 0.5, 0.9)
 
 ##### PLOT SIZE VS DENSITY #####
-# Unlogged mass
+# Mass
 dat_dens %>% 
   ggplot(aes(density_m2, mass_mg, shape = NULL, color = era)) + 
   geom_point(alpha = 0.75, size = 0.1) + 
-  scale_x_log10() + 
   scale_y_log10() + 
-  facet_wrap(~ species) + 
-  #geom_point(data = subset(wara_dens, era == "past"), aes(density_m2, size_mm), size = 2, alpha = 0.75) + 
-  #geom_smooth(method = "lm", data = wara_dens, aes(density_m2, size_mm)) + 
+  facet_wrap(~ species, scales = "free") + 
   theme(legend.position = c(0.01, 0.01), legend.justification = c(0.01, 0.01)) + 
   theme(legend.title = element_blank()) +
   theme(legend.key = element_rect(fill = "white")) + 
@@ -47,9 +44,21 @@ dat_dens %>%
   scale_color_manual(values = c("darkgray", "black")) + 
   geom_smooth(method = "lm", data = dat_dens) 
 
-  #geom_quantile(quantiles = my_quants)
+# Length, logged
+dat_dens %>% 
+  ggplot(aes(density_m2, log10(size1mm), shape = NULL, color = era)) + 
+  geom_point(alpha = 0.75, size = 0.5) + 
+  facet_wrap(~ species, scales = "free_x") + 
+  theme(legend.position = c(0.99, 0.99), legend.justification = c(0.99, 0.99)) + 
+  theme(legend.title = element_blank()) +
+  theme(legend.key = element_rect(fill = "white")) + 
+  xlab(expression(paste("Density (no. ", m^-2, ")"))) + 
+  ylab("Size (mm)") + 
+  guides(shape = FALSE) + 
+  scale_color_manual(values = c("darkgray", "black")) + 
+  geom_smooth(method = "lm", data = dat_dens) 
 
-# Not logged, length
+# Length, not logged
 dat_dens %>% 
   ggplot(aes(density_m2, size1mm, shape = NULL, color = era)) + 
   geom_point(alpha = 0.75, size = 0.5) + 
@@ -62,6 +71,7 @@ dat_dens %>%
   guides(shape = FALSE) + 
   scale_color_manual(values = c("darkgray", "black")) + 
   geom_smooth(method = "lm", data = dat_dens) 
+
 ggsave("figs/elahi_size_era_density_raw_scatter.png", height = 3.5, width = 7)
 
 # Log-log plots
@@ -104,7 +114,7 @@ dat_dens2 %>%
 
 # Unlogged length
 dat_dens2 %>% 
-  ggplot(aes(tideHTm_offset, size1mm, shape = NULL, color = era)) + 
+  ggplot(aes(tideHTm_offset, size_log, shape = NULL, color = era)) + 
   geom_point(alpha = 0.75, size = 0.5) + 
   #scale_y_log10() + 
   facet_wrap(~ species, scales = "free") + 
