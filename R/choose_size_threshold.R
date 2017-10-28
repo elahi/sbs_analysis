@@ -43,7 +43,18 @@ choose_size_threshold <- function(x, era = "past", my_quantile = 0.05, filter_da
                                                  "Chlorostoma funebralis")))
   x$species <- species
   
+  # Tidal heights for past data need fixing
+  dat_pres <- x %>% filter(era == "present")
+  dat_past <- x %>% filter(era == "past")
   
-  return(x)
+  # LODI is ok, but CHFU and LIKE need fixing
+  # For past data, sampleUnit and sampleArea are the same
+  dat_past2 <- dat_past %>% 
+    mutate(sampleUnit = sampleArea, 
+           tideHTm = ifelse(sp == "LODI", tideHTm, sample_area_tidal_ht))
+  
+  x2 <- rbind(dat_past2, dat_pres)
+  
+  return(x2)
   
 }

@@ -13,7 +13,7 @@
 library(cowplot)
 
 # Load data
-source("05_summarise_size_density.R")
+source("summarise_size_density.R")
 
 glimpse(datMeans4)
 
@@ -130,7 +130,7 @@ size_dens_text <- data.frame(x = rep(1500, 3),
                                          "Littorina keenae"))
 
 datMeans4 %>% 
-  ggplot(aes(density_m2, mass_mean_g, shape = species, color = era)) + 
+  ggplot(aes(density_m2, mass_mean_mg, shape = species, color = era)) + 
   geom_point(alpha = 0.75, size = 2) + 
   facet_wrap(~ species) + 
   scale_x_log10() + 

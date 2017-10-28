@@ -10,13 +10,14 @@
 ##' 2017-10-26 Updating size data
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
+rm(list=ls(all=TRUE)) 
+options(tibble.print_max = 100, tibble.print_min = 10)
 library(broom)
 library(ggplot2)
 library(cowplot)
 
 # Load data
-source("05_summarise_size_density.R")
+source("2_summarise_data/summarise_size_density.R")
 
 statDat <- datMeans4
 # Subset data by species
