@@ -11,12 +11,11 @@
     
     # likelihood
     for (i in 1:N){
-    mu[i] <- beta0 + beta1*era[i] + beta2*x[i] + beta3*tideHTm[i]
-    y[i] ~ dnorm(mu[i], tau) 
+    mu[i] <- beta0 + beta1*era[i] + beta2*x[i] + beta3*era[i]*x[i]
+    y[i] ~ dnorm(mu[i], tau)
     y.new[i] ~ dnorm(mu[i], tau)
     sq.error.data[i] <- (y[i] - mu[i])^2
     sq.error.new[i] <- (y.new[i] - mu[i])^2
-
     }
     
     # bayesian p-values
@@ -34,12 +33,9 @@
     
     # Derived quantities
     for(j in 1:length(x_predict)){
-    # For credible interval on mean
-    y_pred[j] <- beta0 + beta1*era_predict[j] + beta2*x_predict[j] + beta3*tide_predict[j]
-    # For prediction interval
+    y_pred[j] <- beta0 + beta1*era_predict[j] + beta2*x_predict[j] + beta3*era_predict[j]*x_predict[j]
     y_new[j] ~ dnorm(y_pred[j], tau)
-
     }
-
+    
     }
     
