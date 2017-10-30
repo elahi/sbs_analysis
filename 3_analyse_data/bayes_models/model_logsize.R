@@ -3,15 +3,13 @@
     # priors
     beta0 ~ dnorm(0, 1/5^2)
     beta1 ~ dnorm(0, 1/5^2) 
-    beta2 ~ dnorm(0, 1/5^2) 
-    beta3 ~ dnorm(0, 1/5^2)
     sigma ~ dunif(0, 5)
     
     tau <- 1/sigma^2
     
     # likelihood
     for (i in 1:N){
-    mu[i] <- beta0 + beta1*era[i] + beta2*x[i] + beta3*era[i]*x[i]
+    mu[i] <- beta0 + beta1*era[i] 
     y[i] ~ dnorm(mu[i], tau)
     y.new[i] ~ dnorm(mu[i], tau)
     sq.error.data[i] <- (y[i] - mu[i])^2
@@ -33,7 +31,7 @@
     
     # Derived quantities
     for(j in 1:length(x_predict)){
-    y_pred[j] <- beta0 + beta1*era_predict[j] + beta2*x_predict[j] + beta3*era_predict[j]*x_predict[j]
+    y_pred[j] <- beta0 + beta1*era_predict[j]
     y_new[j] ~ dnorm(y_pred[j], tau)
     }
     

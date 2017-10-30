@@ -133,7 +133,9 @@ datMeans4$species <- species
 # Log-transform data
 datMeans4 <- datMeans4 %>% 
   mutate(dens_log = log10(density_m2), 
-         mass_log = log10(mass_mean_mg))
+         mass_log = log10(mass_mean_mg), 
+         size1mm = size_mm, 
+         size_log = log10(size_mm))
 
 ##### SUMMARISE SIZE-DENSITY RAW #####
 ## Summarise Wara density data to area B and D
