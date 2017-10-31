@@ -42,7 +42,7 @@ pred_like <- pred_df %>% filter(sp == "LIKE" & quant == 0)
 
 ##### PLOT LOG SIZE VS DENSITY #####
 
-plot_logsize_density <- function(my_data, my_pred, past_color = "darkgray", present_color = "black"){
+plot_logsize_density <- function(my_data, my_pred, past_color = "darkgray", present_color = "black", my_letter = "A"){
   
   # Get density limits for plotting the bayesian predictions
   era_density_limits <- my_data %>% group_by(era) %>% 
@@ -75,7 +75,8 @@ plot_logsize_density <- function(my_data, my_pred, past_color = "darkgray", pres
     scale_shape_manual(values = c(1, 1)) + 
     facet_wrap(~ species, scales = "free_x") + 
     geom_point(data = subset(my_data, era == "past"), alpha = 0.75, size = 1) + 
-    scale_y_continuous(limits = c(0, 1.6))
+    scale_y_continuous(limits = c(0, 1.6)) + 
+    annotate("text", label = my_letter, x = 0, y = 1.5, vjust = 0, hjust = -0.05, size = 6) 
   
 }
 
@@ -83,15 +84,13 @@ add_my_legend <-  theme(legend.position = c(0.01, 0.01), legend.justification = 
   theme(legend.title = element_blank()) +
   theme(legend.key = element_rect(fill = "white")) 
 
-p1 <- plot_logsize_density(my_data = wara_means, my_pred = pred_chfu_means, past_color = "red")
+p1 <- plot_logsize_density(my_data = wara_means, my_pred = pred_chfu_means, past_color = "red", my_letter = "A")
 p1
-p2 <- plot_logsize_density(my_data = waraDF, my_pred = pred_chfu, past_color = "red")
-p3 <- plot_logsize_density(my_data = hexDF, my_pred = pred_lodi, past_color = "red")
-p4 <- plot_logsize_density(my_data = childsDF, my_pred = pred_like, past_color = "red")
+p2 <- plot_logsize_density(my_data = waraDF, my_pred = pred_chfu, past_color = "red", my_letter = "B")
+p3 <- plot_logsize_density(my_data = hexDF, my_pred = pred_lodi, past_color = "red", my_letter = "C")
+p4 <- plot_logsize_density(my_data = childsDF, my_pred = pred_like, past_color = "red", my_letter = "D")
 
-plot_logsize_density_4panel <- plot_grid(p1 + add_my_legend, 
-                                         p2, p3, p4, 
-                                         labels = c("A", "B", "C", "D", ncol = 2))
+plot_logsize_density_4panel <- plot_grid(p1 + add_my_legend, p2, p3, p4, ncol = 2)
 
-save_plot("3_analyse_data/bayes_figs/plot_logsize_density_4panel.png", plot_logsize_density_4panel, 
+save_plot("figs_ms/plot_size_density_4panel.pdf", plot_logsize_density_4panel, 
           ncol = 2, nrow = 2, base_height = 3.5, base_width = 3.5)

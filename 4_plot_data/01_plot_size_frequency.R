@@ -18,7 +18,7 @@ source("R/choose_size_data.R")
 source("R/choose_size_threshold.R")
 
 # load data - repeated size bins
-# dat <- choose_size_data(method = "approximated")
+dat <- choose_size_data(method = "approximated")
 dat <- choose_size_data() # old method
 names(dat)
 
@@ -30,30 +30,59 @@ unique(dat2$species)
 # plotting functions
 source("./R/multiplotF.R")
 
-##### QUICK FACETTED GGPLOT #####
+theme_set(theme_bw(base_size = 12) + 
+            theme(strip.background = element_blank(), 
+                  #panel.grid = element_blank()),
+                  strip.text = element_text(face = "italic")))
 
-facet_panels <- dat2 %>% select(species, era) %>% distinct() %>%
-  arrange(species, era)
+##### DENSITY PLOT #####
+
+n_df <- dat2 %>% filter(!is.na(size1mm)) %>%
+  group_by(species, era) %>% summarise(n = n()) %>% 
+  ungroup()
+n_df
+
+yr_df <- dat2 %>% filter(!is.na(size1mm)) %>%
+  group_by(species, era) %>% distinct(year) %>% ungroup()
+
+facet_panels <- dat2 %>% select(species) %>% distinct() %>%
+  arrange(species)
 
 facet_panels
 
 facet_panels <- facet_panels %>% 
-  mutate(facet_labels = paste(LETTERS)[1:6]) %>% 
-  arrange(facet_labels)
+  mutate(facet_labels = paste(LETTERS)[1:3]) %>% 
+  arrange(facet_labels) %>% 
+  mutate(past_text = c("1963; n=817", "1950; n=493", "1947; n=682"), 
+         present_text = c("2014; n=5646", "2015; n=605", "2014; n=733"))
 
 dat3 <- dat2 %>% 
-  inner_join(., facet_panels, by = c("species", "era"))
+  inner_join(., facet_panels, by = c("species"))
+
+theme_set(theme_bw(base_size = 12) + 
+            theme(strip.background = element_blank(), 
+                  panel.grid = element_blank(),
+                  strip.text = element_text(face = "italic")))
 
 dat3 %>% 
-  ggplot(aes(size1mm)) + 
-  geom_histogram(aes(y = ..density.. * 100), binwidth = 1, 
-                 color = "black", fill = "gray") +   
-  facet_grid(era ~ species, switch = "y") + 
-  geom_vline(aes(xintercept = size_threshold), linetype = "dashed", color = "red") + 
-  labs(x = "Size (mm)", y = "Frequency (%)") + 
-  theme(strip.background = element_blank()) + 
-  geom_text(data = facet_panels, aes(0.1, 18, label = facet_labels), 
-            inherit.aes = FALSE) 
+  ggplot(aes(size1mm, fill = era)) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap( ~ species) + 
+  scale_fill_manual(values = c("red", "black")) + 
+  xlab("Size (mm)") + 
+  ylab("Probability density") + 
+  # theme(legend.position = c(0.99, 0.99), legend.justification = c(0.99, 0.99)) +
+  # theme(legend.title = element_blank()) + 
+  theme(legend.position = "none") + 
+  geom_text(data = facet_panels, aes(0, 0.15, label = facet_labels), 
+            inherit.aes = FALSE, size = 6, nudge_x = 1, nudge_y = 0.01) + 
+  geom_text(data = facet_panels, aes(15, 0.115, label = past_text), 
+            inherit.aes = FALSE, size = 4, nudge_x = 1, nudge_y = 0.01, color = "red", hjust = 0) + 
+  geom_text(data = facet_panels, aes(15, 0.1, label = present_text), 
+            inherit.aes = FALSE, size = 4, nudge_x = 1, nudge_y = 0.01, color = "black", hjust = 0) 
+
+ggsave("figs_ms/plot_size_frequency_density.pdf", height = 3.5, width = 7)  
+
 
 ##### SEPARATE PANEL WITH MULTIPLOT #####
 

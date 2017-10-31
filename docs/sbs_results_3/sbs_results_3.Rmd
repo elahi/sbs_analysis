@@ -1,0 +1,37 @@
+---
+title: "Inferences on historical changes in body size are sensitive to population density"
+author: "Robin Elahi"
+date: "October 31, 2017"
+output: pdf_document
+---
+
+```{r setup, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, 
+                      fig.path = 'figs/', cache.path = 'cache/graphics-', 
+                      fig.align = 'center', fig.width = 5, fig.height = 5, 
+                      fig.show = 'hold', cache = TRUE, par = TRUE)
+knitr::opts_knit$set(root.dir = "../../")
+```
+
+```{r r_packages}
+# tidyverse
+library(dplyr); library(ggplot2); library(tidyr); library(readr)
+theme_set(theme_bw(base_size = 12))
+
+library(knitr)
+
+```
+
+# Introduction
+
+
+
+# Figures {-}
+
+![Probability densities of three intertidal gastropods sampled in the past and present.](../../figs_ms/plot_size_frequency_density.pdf)
+
+
+![Gastropod size (log10) plotted against populaton density. For *Chlorostoma funebralis*, we present mean sizes (A), as well as raw data (B), because mean size was presented for a greater number of sampling units with estimates of population size (see Methods). Fitted lines represent Bayesian regressions with 95% credible intervals.](../../figs_ms/plot_size_density_4panel.pdf)
+
+
+![Proportional change in body size (relative to past size) derived from Bayesian regressions with and without coefficients for density and era x density. The x-axis represents the size threshold (i.e., minimum) for inclusion in the analysis, with 0 representing the baseline situation where no data were removed.  For size thresholds > 0, we removed all individuals smaller than the size quantile *i* (*i* = 0.05, 0.1, 0.2, 0.3, 0.4, 0.5) for the historical population. Error bars represent 95% credible intervals. ](../../figs_ms/plot_prop_change.pdf)
