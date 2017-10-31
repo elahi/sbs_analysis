@@ -1,5 +1,5 @@
 ---
-title: "Inferences on historical changes in body size are sensitive to population density"
+title: "Inferences on historical changes in body size are sensitive to population density and data availability"
 author: "Robin Elahi"
 date: "October 31, 2017"
 output: pdf_document
@@ -24,14 +24,81 @@ library(knitr)
 
 # Introduction
 
+Paragraphs with the following themes:
 
+1. Body size is affected by many processes
+  - individual level
+  - population level
+  
+2. Recently, historical declines in body size in the context of climate warming has drawn attention to the temperature-size rule
+  - hard to ascribe mechanism, especially in the context of competing hypotheses
+  - in particular, population density and resulting intraspecific competition (therefore smaller body sizes)
+  - in addition to smaller body size, theory predicts smaller population sizes at warmer temperatures due to greater per-capita metabolic demand (metbaolic scaling theory, assuming all else remains equal)
 
+3. Most historical comparisons involve museum specimens
+  - therefore, consequences of density are ignored
+  - moreover, these studies typically focus on metrics of maximum body size, because collections are typically biased towards larger sizes
+  - but the temperature-size rule can be manifested in multiple ways
+    - including an increase in the abundance of the smallest size classes, which museum specimens cannot capture
+    
+4. We address these gaps (density and choice of size metric) using unpublished and published manuscripts, and test the following hypotheses:
+  - Body size has declined in concert with climate warming in three intertidal snails
+  - Body size decline is consistent across population density (alternatively, body size decline may be exacerbated at higher population density)
+  - Inferences of body size decline are sensitive to the choice of size metric (relevant to museum specimens)
+  
+5. Need paragraph on climate change in the rocky intertidal somewhere
+
+\newpage
+# Discussion
+
+Main points:
+
+  1. Population density and choice of size metric matter
+    - 2 of three species showed consistent body size declines, but LIKE was different
+  
+  2. However, the increases in body size occurred at low densities
+  
+  3. Moreover, omitting density frome the model overestimated the present-day body size increases
+  
+  4. Inferences of body size change were sensitive to whether all the data were included, or if the size-frequency distributions were truncated (as they often are for museum specimens)
+  
+  5. What does this all mean? 
+    
+    - in general, these three species showed body size declines that were consistent with climate warming
+    
+      * but the evidence for warming is strongest for seawater, less so for air temperature
+      
+      * discuss the role of air temperature for LIKE
+      
+    - need more tests of whether body size decline are more readily apparent at higher population densities
+    
+    - should we be more careful about inferring body size change from museum specimens? Our analyses suggest that we would have gotten the story wrong for LIKE if we had, for example, museum specimens that were only larger than 10mm. Alternatively, one could argue that the shift is merely a recruitment pulse, so I am not sure how hard to push on this point. 
+
+Wild card: I have time-series data from the Hewatt-Sagarin transect that shows clearly an increase (over 70 years, ~ 15 time points) in Chlorostoma funebralis in the area adjacent to where I sampled for body sizes of Chlorostoma. Not sure what to make of it, but is consistent with the idea of a trade-off between population density and body size. 
+
+Target journals:
+
+  - bioRxiv/peerJ preprint
+  - Ecology
+  - American Naturalist
+  
+
+# Supplement
+
+Potential figures include:
+
+  1. coefficient plots
+  2. temperature time-series data (or monthly comparison)
+  3. intertidal temperature gradients (though I am leaning towards dropping this in the interest of a simple story)
+
+\newpage
 # Figures {-}
 
+\newpage
 ![Probability densities of three intertidal gastropods sampled in the past and present.](../../figs_ms/plot_size_frequency_density.pdf)
 
-
+\newpage
 ![Gastropod size (log10) plotted against populaton density. For *Chlorostoma funebralis*, we present mean sizes (A), as well as raw data (B), because mean size was presented for a greater number of sampling units with estimates of population size (see Methods). Fitted lines represent Bayesian regressions with 95% credible intervals.](../../figs_ms/plot_size_density_4panel.pdf)
 
-
+\newpage
 ![Proportional change in body size (relative to past size) derived from Bayesian regressions with and without coefficients for density and era x density. The x-axis represents the size threshold (i.e., minimum) for inclusion in the analysis, with 0 representing the baseline situation where no data were removed.  For size thresholds > 0, we removed all individuals smaller than the size quantile *i* (*i* = 0.05, 0.1, 0.2, 0.3, 0.4, 0.5) for the historical population. Error bars represent 95% credible intervals. ](../../figs_ms/plot_prop_change.pdf)
