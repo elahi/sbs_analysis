@@ -65,10 +65,11 @@ glimpse(wL)
 # What are the warmest and coldest months?
 wL %>% group_by(month, climate_var) %>% 
   summarise(meanTemp = mean(value, na.rm = TRUE)) %>% ungroup() %>% 
-  arrange(climate_var, meanTemp) %>% View()
+  arrange(climate_var, meanTemp) %>% 
+  filter(climate_var == "air_obs") %>% View()
 
-# Coldest == Dec, Jan, Feb
-# Warmest == Aug, Sep, Oct
+# Coldest == 12, 1, 2 - dec, jan, feb
+# Warmest == 7, 8, 9 - july, august, sept
 
 ##### SUMMARISE MONTHLY #####
 # Use air_obs, air_max, air_min
