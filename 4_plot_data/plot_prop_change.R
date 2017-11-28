@@ -60,6 +60,9 @@ facet_panels <- facet_panels %>%
 coda_df_all <- coda_df_all %>% 
   inner_join(., facet_panels, by = c("species"))
 
+str(coda_df_all$model)
+coda_df_all$model <- factor(coda_df_all$model, levels = c("Without density", "With density"))
+
 coda_df_all %>% 
   filter(param == "prop_change") %>% 
   filter(sp != "CHFU_means") %>% 
@@ -74,9 +77,28 @@ coda_df_all %>%
   theme(legend.position = c(0.99, 0.01), legend.justification = c(0.99, 0.01)) + 
   #coord_cartesian(ylim = c(-0.4, 0.4)) + 
   facet_wrap(~ species) + 
-  scale_color_manual(values = c("darkgray", "black")) + 
+  scale_color_manual(values = c("black", "darkgray")) + 
+  #scale_linetype_manual(values = c("black", "darkgray")) + 
   geom_text(data = facet_panels, aes(0, 0.18, label = facet_labels), 
             inherit.aes = FALSE, size = 6, nudge_x = 0, nudge_y = 0.00) 
 
 ggsave("figs_ms/plot_prop_change.pdf", height = 3.5, width = 7)
+
+## Plot Littorina only
+coda_df_all %>% 
+  filter(param == "prop_change") %>% 
+  filter(sp == "LIKE") %>% 
+  ggplot(aes(quant, X50., color = model)) + 
+  geom_point() + 
+  geom_line(aes(linetype = model)) + 
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.025) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  ylab("Proportional change in size") + 
+  xlab("Size threshold for inclusion\n (quantile of past size)") + 
+  theme(legend.title = element_blank()) +
+  theme(legend.position = c(0.99, 0.01), legend.justification = c(0.99, 0.01)) + 
+  #coord_cartesian(ylim = c(-0.4, 0.4)) + 
+  facet_wrap(~ species) + 
+  scale_color_manual(values = c("black", "red")) 
+ggsave("figs_ms/plot_prop_change_like.pdf", height = 3.5, width = 3.5)
 
