@@ -8,6 +8,7 @@
 ##' @date 2017-10-24
 ##' 
 ##' @log Add a log here
+##' 2017-11-29: Included uniformly approximated option
 ################################################################################
 
 
@@ -29,9 +30,16 @@ choose_size_data <- function(method = 'repeated'){
   }
 
   # load data - normally approximated sizes
-  if(method == "approximated"){
+  if(method == "normal"){
     dat <- read.csv("./output/sbsMaster_norm.csv", na.strings = "NA", 
              stringsAsFactors = FALSE) %>%
+      select(-c(X, row))
+  }
+  
+  # load data - uniformly approximated sizes
+  if(method == "uniform"){
+    dat <- read.csv("./output/sbsMaster_unif.csv", na.strings = "NA", 
+                    stringsAsFactors = FALSE) %>%
       select(-c(X, row))
   }
   

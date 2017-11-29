@@ -11,6 +11,7 @@
 #################################################
 
 library(dplyr)
+library(readr)
 
 rm(list=ls(all=TRUE)) 
 
@@ -24,21 +25,34 @@ names(ackerman)
 
 ackerman <- ackerman %>% mutate(Shaw_hab = NA, notes = "", notes2 = "")
 
-# Get normally distributed sizes
+# Get random sizes from binned data
 ack_past <- ackerman %>% 
   filter(era == "past")
 
 ack_past_histo <- ack_past %>% count(size1mm)
 
+# Normally distributed sizes
 ack_past_size_norm <- get_random_sizes(size_bin_vector = ack_past_histo$size1mm, 
-                                       count_vector = ack_past_histo$n, size_interval = 1)
+                                       count_vector = ack_past_histo$n, size_interval = 1, 
+                                       distribution = "normal")
+# Uniformally distributed sizes
+ack_past_size_unif <- get_random_sizes(size_bin_vector = ack_past_histo$size1mm, 
+                                       count_vector = ack_past_histo$n, size_interval = 1, 
+                                       distribution = "uniform")
 
 plot(ack_past$size1mm, ack_past_size_norm)
+plot(ack_past$size1mm, ack_past_size_unif)
 
-ack_past$size1mm_norm <- ack_past_size_norm
+hist(ack_past_size_norm, breaks = 30)
+hist(ack_past_size_unif, breaks = 30)
+
+names(ack_past)
+
+# Use uniformly distributed sizes
+ack_past$size1mm_rand <- ack_past_size_unif
 
 ack_pres <- ackerman %>% filter(era == "present") %>% 
-  mutate(size1mm_norm = size1mm)
+  mutate(size1mm_rand = size1mm)
 
 ackerman2 <- rbind(ack_pres, ack_past)
 
@@ -73,7 +87,7 @@ frank_present <- data.frame(
                        nest3note = NA, 
                        sampleUnit = frank$SampleID, 
                        size1mm = round(frank$Width.mm, 1), 
-                       size1mm_norm = round(frank$Width.mm, 1), 
+                       size1mm_rand = round(frank$Width.mm, 1), 
                        habitat = NA, 
                        tideHTm = frank$Elevation.above.MLLW, 
                        lat = frank$lat,  
@@ -94,11 +108,20 @@ frank_past_size <- repeat_sizes(size_bin_vector = frank_past_bins,
                                            count_vector = frank_past_n)
 
 frank_past_size_norm <- get_random_sizes(size_bin_vector = frank_past_bins, 
-                                       count_vector = frank_past_n, size_interval = 3.5)
+                                       count_vector = frank_past_n, size_interval = 3.5, 
+                                       distribution = "normal")
+
+frank_past_size_unif <- get_random_sizes(size_bin_vector = frank_past_bins, 
+                                         count_vector = frank_past_n, size_interval = 3.5, 
+                                         distribution = "uniform")
 
 hist(frank_past_size, breaks = 5)
 hist(frank_past_size_norm, breaks = 5)
+par(mfrow = c(1,2))
+hist(frank_past_size_norm, breaks = 25)
+hist(frank_past_size_unif, breaks = 25)
 
+# Use uniformly distributed sizes
 frank_past <- data.frame(
   study = "Galloway", 
   studySub = NA, 
@@ -113,7 +136,7 @@ frank_past <- data.frame(
   nest3note = NA, 
   sampleUnit = NA, 
   size1mm = frank_past_size, 
-  size1mm_norm = round(frank_past_size_norm, 1), 
+  size1mm_rand = round(frank_past_size_unif, 1), 
   habitat = NA, 
   tideHTm = NA, 
   lat = NA,  
@@ -125,24 +148,28 @@ frank_past <- data.frame(
 
 frank2 <- rbind(frank_present, frank_past)
 frank2 %>% count(era)
-with(frank2, plot(size1mm, size1mm_norm))
+with(frank2, plot(size1mm, size1mm_rand))
 
 master <- rbind(ackerman2, frank2)
 names(master)
 
 ##### Load Elahi data #####
 
-# load cleaned up data
-source("02_sbs_size_dataPrep2.R")
-names(dat2)
+# Function to load cleaned data
+source("R/choose_size_data.R")
+
+# load data - approximated sizes
+dat <- choose_size_data(method = "uniform")
+names(dat)
 names(master)
 unique(master$date)
 
-dat3 <- dat2 %>% 
+dat2 <- dat %>% 
   select(-c(habitat, tideHTm_orig, sample_area_tidal_ht, size_prop, LL, Shaw_hab)) %>% 
   mutate(study = "Elahi2015", 
-         studySub = NA)
-names(dat3)
+         studySub = NA, 
+         size1mm_rand = size1mm)
+names(dat2)
 
 master <- master %>% 
   mutate(year = lubridate::year(mdy(date)), 
@@ -150,10 +177,23 @@ master <- master %>%
   select(-c(habitat, Shaw_hab))
 names(master)
 
-master2 <- rbind(master, dat3)
+dim(dat2); dim(master)
+
+master2 <- rbind(master, dat2)
+
+##### PRELIM PLOTS #####
 
 master2 %>% 
-  ggplot(aes(era, size1mm_norm)) + 
+  ggplot(aes(era, size1mm_rand)) + 
   geom_violin() + 
   facet_wrap(~ species + study)
+
+master2 %>% 
+  ggplot(aes(size1mm_rand, fill = era)) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap(~ study + species, scales = "free_y") + 
+  xlab("Size (mm)") + 
+  ylab("Probability density") + 
+  theme(legend.position = "top")
+ggsave("sbs_meta/meta_figs/meta_density_era.pdf", height = 5, width = 7)
 
