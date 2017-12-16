@@ -19,6 +19,7 @@ rm(list = setdiff(ls(), c("dat_dens", "datMeans4")))
 
 source("R/HighstatLibV6.R")
 
+# Raw data
 statDat <- dat_dens 
 
 # Subset data by species

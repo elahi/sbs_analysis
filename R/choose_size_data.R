@@ -43,11 +43,7 @@ choose_size_data <- function(method = 'repeated'){
       select(-c(X, row))
   }
   
-
-  # change ft to meters
-  # dat$tideHTm <- dat$tideHTm/3.28084
   # apply tidal correction, using mod1 (all three species included)
-  
   dat <- dat %>% 
     mutate(tideHTm_orig = tideHTm/3.28084, 
            tideHTm = tideHTm_orig * coef(mod1)[2] + coef(mod1)[1])

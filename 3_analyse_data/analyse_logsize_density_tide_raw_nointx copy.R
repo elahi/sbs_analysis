@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Analyze logsize-density raw
+##' @title Analyze logsize-density-tide raw
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -13,23 +13,55 @@
 
 ##### PACKAGES, DATA #####
 
+source("3_analyse_data/01_sbs_bayes_data.R")
+
 library(broom)
 library(ggplot2)
 library(cowplot)
 
-# Load data
-source("2_summarise_data/summarise_size_density.R")
-source("R/HighstatLibV6.R")
-
 statDat <- dat_dens 
+
+statDat %>% 
+  distinct(sp, site, era, tideHTm, density_m2, dens_log) %>% 
+  ggplot(aes(density_m2, fill = era)) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap(~sp, scales = "free")
+
+statDat %>% 
+  distinct(sp, site, era, tideHTm, density_m2, dens_log) %>% 
+  ggplot(aes(dens_log, fill = era)) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap(~sp, scales = "free")
+
+
 # Subset data by species
 dens_wara <- statDat %>% filter(sp == "CHFU")
 dens_hex <- statDat %>% filter(sp == "LODI")
 dens_childs <- statDat %>% filter(sp == "LIKE")
 
-dens_wara %>% select(density_m2, tideHTm) %>% Mypairs()
-dens_hex %>% select(density_m2, tideHTm) %>% Mypairs()
-dens_childs %>% select(density_m2, tideHTm) %>% Mypairs()
+dens_wara %>% select(density_m2, tideHTm, size1mm) %>% Mypairs()
+dens_hex %>% select(density_m2, tideHTm, size1mm) %>% Mypairs()
+dens_childs %>% select(density_m2, tideHTm, size1mm) %>% Mypairs()
+
+wara_means %>% select(density_m2, tideHTm, size_mm) %>% Mypairs()
+
+wara_means %>%
+  ggplot(aes(tideHTm, size1mm, color = era)) +
+  geom_point(alpha = 0.5) +
+  facet_wrap(~ site) +
+  geom_smooth(method = "lm")
+
+wara_means %>%
+  ggplot(aes(density_m2, size_log, color = era)) +
+  geom_point(alpha = 0.5) +
+  facet_wrap(~ site) +
+  geom_smooth(method = "lm")
+
+wara_means %>%
+  ggplot(aes(tideHTm, density_m2, color = era)) +
+  geom_point(alpha = 0.5) +
+  facet_wrap(~ site) +
+  geom_smooth(method = "lm")
 
 ##### PREPARE DATA FOR JAGS #####
 library(rjags)
@@ -38,6 +70,7 @@ library(rjags)
 statDat <- dens_childs %>% filter(!is.na(dens_log) & !is.na(mass_log))
 statDat <- dens_wara %>% filter(!is.na(dens_log) & !is.na(mass_log))
 statDat <- dens_hex %>% filter(!is.na(dens_log) & !is.na(mass_log))
+statDat <- wara_means %>% filter(!is.na(dens_log) & !is.na(mass_log))
 
 # Get era as 0 or 1
 statDat <- statDat %>% mutate(era01 = ifelse(era == "past", 0, 1))
@@ -126,7 +159,7 @@ sink()
 inits = list(
   #list(beta0 = 1, beta1 = 0.5, beta2 = 0.1, beta3 = 1, sigma = 1), 
   #list(beta0 = -1, beta1 = -0.5, beta2 = -0.1, beta3 = 0, sigma = 0.2), 
-  #list(beta0 = 2, beta1 = 0.1, beta2 = 0, beta3 = -0.01, sigma = 10), 
+  list(beta0 = 2, beta1 = 0.1, beta2 = 0, beta3 = -0.01, sigma = 2), 
   list(beta0 = 0, beta1 = -0.1, beta2 = 0.4, beta3 = -4, sigma = 4))
 
 # Number of iterations
@@ -151,10 +184,11 @@ zj = jags.samples(jm, variable.names = c("y_pred", "y_new",
 
 #Produce a summary table for the parameters. 
 summary(zm)
-exp(summary(zm)$stat[1]) # intercept
+10^(summary(zm)$stat[1]) # intercept
 
 #Produce trace plots of the chains for model parameters. 
-plot(zm)
+traceplot(zm)
+densplot(zm)
 
 # Test for convergence using the Gelman diagnostic.
 gelman.diag(zm, multivariate = F)

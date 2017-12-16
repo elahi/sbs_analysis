@@ -22,7 +22,7 @@ source("1_prepare_data/prep_wara_past_transect.R")
 options(tibble.print_max = 100, tibble.print_min = 10)
 
 # load data - approximated sizes
-dat <- choose_size_data(method = "approximated")
+dat <- choose_size_data(method = "normal")
 
 # Do not remove any data
 dat <- choose_size_threshold(x = dat, era = "past", filter_data = F) %>% 
