@@ -17,9 +17,7 @@ source("3_analyse_data/01_sbs_bayes_data.R")
 source("R/truncate_data.R")
 source("3_analyse_data/bayes_R/bayes_functions_general.R")
 
-library(broom)
-library(ggplot2)
-library(cowplot)
+#library(broom)
 
 ##### SET UP JAGS MODEL #####
 # load jags
@@ -30,6 +28,7 @@ n.adapt = 1000
 n.update = 1000
 n.iter = 1000
 p_vector = c(0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5)
+p_vector = c(0)
 
 # JAGS model
 sink("3_analyse_data/bayes_models/modelJags.R")
@@ -76,13 +75,32 @@ my_model = "modelJags.R"
 ## Choose the folder to output diagnostic plots
 output_location = "3_analyse_data/bayes_output/logsize_density_tide/"
 
-##### LODI #####
-my_sp <- "LODI"
+## My formula
+my_formula = ~ zx[,1] + zx[,2] + zx[,3]
+
+##### LIKE #####
+my_sp <- "LIKE"
+childsDF
+
+# Truncate data
+p_vector = c(0)
+i = 1
+my_p = p_vector[i]
+dat <- truncate_data(childsDF, quant = my_p)
+predictedName = "size_log"
+predictorNames = c("era01", "density_m2", "tideHTm")
+
+# Get predictors
+zx <- get_jags_predictors(dat, predictorNames, standardize = T)
+head(zx)
+
+
+
 
 # Run models and save diagnostic plots
-coda_list <- loop_coda_list(hexDF, species_abbrev = my_sp, my_model = my_model, 
+coda_list <- loop_coda_list(childsDF, species_abbrev = my_sp, my_model = my_model, 
                             figs_location = output_location, 
-                            my_formula = ~ zx[,1] + zx[,2] + zx[,3])
+                            my_formula = my_formula)
 
 # Create and rename diagnostic summary
 gelman_df_hex <- loop_gelman_df(coda_list, species_abbrev = my_sp)

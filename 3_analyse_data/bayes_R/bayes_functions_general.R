@@ -11,17 +11,41 @@
 
 ##### FUNCTIONS TO RUN LOOP FOR EACH SPECIES #####
 
-my_sp = "LIKE"
-species_abbrev = my_sp
-dat = childsDF
-i = 1
-my_model = "modelJags.R"
-figs_location = "3_analyse_data/bayes_output/logsize_density_tide/"
+# my_sp = "LIKE"
+# species_abbrev = my_sp
+# dat = childsDF
+# i = 1
+# my_model = "modelJags.R"
+# figs_location = "3_analyse_data/bayes_output/logsize_density_tide/"
+# predictedName = "size_log"
+# predictorNames = c("era01", "density_m2", "tideHTm")
+# my_formula = ~ zx[,1] + zx[,2] + zx[,3]
+# = ~ zx[,1] * zx[,2] + zx[,1] * zx[,3]
+
+get_jags_predictors <- function(dat, predictorNames, standardize = TRUE){
+  
+  # Change era to 0,1
+  dat <- dat %>% mutate(era01 = ifelse(era == "past", 0, 1))
+
+  x <- as.matrix(dat[, predictorNames])
+  
+  if(standardize == T){
+    zx <- apply(x, MARGIN = 2, FUN = scale) 
+    my_col_names <- colnames(zx)
+    pred_mat <- zx
+  }
+  
+  if(standardize == F){
+    pred_mat <- x
+  }
+  return(pred_mat)
+}
+
 
 loop_coda_list <- function(dat, species_abbrev, my_model, figs_location, 
                            predictedName = "size_log",
                            predictorNames = c("era01", "density_m2", "tideHTm"), 
-                           my_formula = ~ zx[,1] * zx[,2] + zx[,1] * zx[,3]){
+                           my_formula){
   
   coda_list <- list()
   
