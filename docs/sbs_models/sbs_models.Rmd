@@ -1,0 +1,52 @@
+---
+title: "Modeling changes in snail body size at Hopkins Marine Station"
+author: "Robin Elahi"
+date: "2017-12-17"
+output: pdf_document
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r setup, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, 
+                      fig.path = 'figs/', cache.path = 'cache/graphics-', 
+                      fig.align = 'center', fig.width = 5, fig.height = 5, 
+                      fig.show = 'hold', cache = TRUE, par = TRUE)
+knitr::opts_knit$set(root.dir = "../../")
+```
+
+```{r r_packages}
+# tidyverse
+library(dplyr); library(ggplot2); library(tidyr); library(readr)
+theme_set(theme_bw(base_size = 12))
+
+library(knitr)
+
+```
+
+```{r load_snail_data}
+source("3_analyse_data/01_sbs_bayes_data.R")
+```
+
+```{r table_of_observations, include = TRUE}
+
+##### GET TABLE OF OBSERVATIONS #####
+
+## Unique combinations of era, density and tidal height
+table1 <- statDat %>% distinct(species, era, tideHTm, density_m2) %>% count(species, era) %>% 
+  spread(key = era, value = n) %>% 
+  mutate(data = "individual size", 
+         model = c("Era", rep("Era + Density + Tidal Height", 2)))
+
+## Unique combinations of era, density and tidal height
+table_wara_means <- wara_means %>% distinct(species, era, tideHTm, density_m2) %>% count(species, era) %>% 
+  spread(key = era, value = n) %>% 
+  mutate(data = "mean size", 
+         model = "Era x Density x Tidal Height")
+
+table1 <- rbind(table_wara_means, table1) 
+
+kable(table1, caption = "Unique combinations of density and tidal height by species, era (i.e., past and present), and data type. The model is listed for each analysis, and reflects the number of unique combinations of density and tidal height.")
+
+```
+

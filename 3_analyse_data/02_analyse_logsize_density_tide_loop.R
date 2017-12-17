@@ -94,7 +94,36 @@ predictorNames = c("era01", "density_m2", "tideHTm")
 zx <- get_jags_predictors(dat, predictorNames, standardize = T)
 head(zx)
 
+## For lm
+dat2 <- wara_means %>% 
+  mutate(dens_z = as.numeric(scale(density_m2)), 
+         tide_z = as.numeric(scale(tideHTm)))
 
+# lm
+lm1 <- lm(size_log ~ era * dens_z * tide_z, data = dat2)
+summary(lm1)
+
+lm2 <- lm(size_log ~ era * dens_z + era * tide_z, data = dat2)
+summary(lm2)
+AIC(lm1, lm2)
+
+lm3 <- lm(size_log ~ era + dens_z + tide_z, data = dat2)
+summary(lm3)
+AIC(lm1, lm2, lm3)
+
+lm4 <- lm(size_log ~ era + tide_z, data = dat2)
+summary(lm4)
+AIC(lm1, lm2, lm3, lm4)
+
+lm5 <- lm(size_log ~ era + dens_z, data = dat2)
+summary(lm5)
+AIC(lm1, lm2, lm3, lm4, lm5)
+
+library(broom)
+lm1 %>% augment() %>% 
+  ggplot(aes(dens_z, tide_z, fill = .fitted)) + 
+  geom_tile() + 
+  facet_grid(. ~ era) 
 
 
 # Run models and save diagnostic plots

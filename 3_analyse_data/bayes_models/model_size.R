@@ -29,11 +29,11 @@
     discrep.new <- sum(sq.error.new)
     p.discrep <- step(discrep.new - discrep.data)
     
-    # Derived quantities
-    for(j in 1:length(x_predict)){
-    y_pred[j] <- exp(beta0 + beta1*era_predict[j])
-    y_new[j] ~ dlnorm(log(y_pred[j]), tau)
-    }
+    # # Derived quantities
+    # for(j in 1:length(x_predict)){
+    # y_pred[j] <- exp(beta0 + beta1*era_predict[j])
+    # y_new[j] ~ dlnorm(log(y_pred[j]), tau)
+    # }
     
     }
     

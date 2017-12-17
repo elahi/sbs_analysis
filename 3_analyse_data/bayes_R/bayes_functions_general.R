@@ -9,7 +9,7 @@
 ##' @log 
 ################################################################################
 
-##### FUNCTIONS TO RUN LOOP FOR EACH SPECIES #####
+##### GET PREDICTORS FOR JAGS #####
 
 # my_sp = "LIKE"
 # species_abbrev = my_sp
@@ -41,7 +41,6 @@ get_jags_predictors <- function(dat, predictorNames, standardize = TRUE){
   return(pred_mat)
 }
 
-
 loop_coda_list <- function(dat, species_abbrev, my_model, figs_location, 
                            predictedName = "size_log",
                            predictorNames = c("era01", "density_m2", "tideHTm"), 
@@ -62,7 +61,7 @@ loop_coda_list <- function(dat, species_abbrev, my_model, figs_location,
     nData <- nrow(dat)
     y <- as.matrix(dat[, predictedName])
     x <- as.matrix(dat[, predictorNames])
-
+    
     # Standardize
     zx <- apply(x, MARGIN = 2, FUN = scale) 
     my_col_names <- colnames(zx)
@@ -190,67 +189,4 @@ loop_coda_list <- function(dat, species_abbrev, my_model, figs_location,
   }
   
   return(coda_list)
-}
-
-loop_coda_df <- function(coda_list, species_abbrev){
-  
-  # Rbind results
-  coda_df <- coda_list[[1]][[1]]
-  for(i in 2:length(p_vector)){
-    coda_df <- rbind(coda_df, coda_list[[i]][[1]])
-  }
-  
-  cc       <- strsplit(coda_df$coda_quantile, split = "_")
-  part1    <- unlist(cc)[2*(1:length(coda_df$coda_quantile))-1]
-  part2    <- unlist(cc)[2*(1:length(coda_df$coda_quantile))  ]
-  coda_df <- coda_df %>% mutate(quant = part2, sp = species_abbrev)
-  
-  return(coda_df)
-  
-}
-
-loop_gelman_df <- function(coda_list, species_abbrev){
-  
-  # Rbind results
-  coda_df <- coda_list[[1]][[2]]
-  for(i in 2:length(p_vector)){
-    coda_df <- rbind(coda_df, coda_list[[i]][[2]])
-  }
-  gelman_df <- as_data_frame(coda_df) %>% 
-    mutate(param = rownames(coda_df))
-  names(gelman_df)[1:2] <- c("point_estimate", "upper_ci")
-  n_rows <- dim(coda_list[[1]][[2]])[1]
-  gelman_df$quant <- sort(rep(p_vector, n_rows))
-  gelman_df$sp <- species_abbrev
-  
-  return(gelman_df)
-  
-}
-
-loop_pval_df <- function(coda_list, species_abbrev){
-  # Rbind results
-  coda_df <- data.frame(t(coda_list[[1]][[3]]))
-  for(i in 2:length(p_vector)){
-    coda_df <- rbind(coda_df, data.frame(t(coda_list[[i]][[3]])))
-  }
-  pval_df<- coda_df %>% mutate(quant = p_vector, sp = species_abbrev)
-  return(pval_df)
-}
-
-loop_pred_df <- function(coda_list, species_abbrev){
-  
-  # Rbind results
-  coda_df <- data.frame(coda_list[[1]][[4]]) %>% 
-    mutate(quant = p_vector[1], sp = species_abbrev)
-  head(coda_df)
-  
-  for(i in 2:length(p_vector)){
-    coda_df.i <- data.frame(coda_list[[i]][[4]]) %>% 
-      mutate(quant = p_vector[i], sp = species_abbrev)
-    coda_df <- rbind(coda_df, coda_df.i)
-  }
-  
-  pred_df <- coda_df 
-  return(pred_df)
-  
 }
