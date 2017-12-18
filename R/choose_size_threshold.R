@@ -21,10 +21,18 @@ choose_size_threshold <- function(x, era = "past", my_quantile = 0.05, filter_da
     x <- inner_join(x, size_threshold_df, by = c("species"))
   }
   
-  if(era == "both"){
+  if(era == "separate"){
     # Get size thresholds for each species x era combination
     x <- x %>% 
       group_by(era, species) %>% 
+      mutate(size_threshold = quantile(size1mm, probs = my_quantile, na.rm = TRUE)) %>% 
+      ungroup()
+  }
+  
+  if(era == "combined"){
+    # Get size thresholds for each species, across both eras
+    x <- x %>% 
+      group_by(species) %>% 
       mutate(size_threshold = quantile(size1mm, probs = my_quantile, na.rm = TRUE)) %>% 
       ungroup()
   }
