@@ -17,7 +17,7 @@ source("R/truncate_data.R")
 library(rjags)
 
 ##### PREPARE DATA FOR JAGS #####
-statDat <- childsDF
+statDat <- waraDF
 statDat <- truncate_data(statDat, era = "past", quant = 0.05)
 #statDat <- statDat %>% filter(site == "Wara.D")
 #statDat <- statDat %>% filter(nest1 == "zoneD")

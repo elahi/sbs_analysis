@@ -1,16 +1,17 @@
 
     model{
     # priors
-    beta0 ~ dnorm(0, 1/10^2)
-    beta1 ~ dnorm(0, 1/10^2) 
+    b0 ~ dnorm(0, 1/10^2)
+    b1 ~ dnorm(0, 1/10^2) 
     sigma ~ dunif(0, 5)
+    
     tau <- 1/sigma^2
     
     # likelihood
     for (i in 1:N){
-    mu[i] <- exp(beta0 + beta1*era[i])
-    y[i] ~ dlnorm(log(mu[i]), tau) 
-    y.new[i] ~ dlnorm(log(mu[i]), tau)
+    mu[i] <- b0 + b1*x1[i] 
+    y[i] ~ dnorm(mu[i], tau) 
+    y.new[i] ~ dnorm(mu[i], tau)
     sq.error.data[i] <- (y[i] - mu[i])^2
     sq.error.new[i] <- (y.new[i] - mu[i])^2
     }
