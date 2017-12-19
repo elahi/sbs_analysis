@@ -30,7 +30,7 @@ my_quants <- c(0.1, 0.5, 0.9)
 dat_dens %>% 
   ggplot(aes(density_m2, mass_mg, shape = NULL, color = era)) + 
   geom_point(alpha = 0.75, size = 0.1) + 
-  scale_y_log10() + 
+  #scale_y_log10() + 
   facet_wrap(~ species, scales = "free") + 
   theme(legend.position = c(0.01, 0.01), legend.justification = c(0.01, 0.01)) + 
   theme(legend.title = element_blank()) +

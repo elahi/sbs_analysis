@@ -19,6 +19,11 @@ rm(list = setdiff(ls(), c("dat_dens", "datMeans4")))
 
 source("R/HighstatLibV6.R")
 
+## Offset tidal height for plotting
+dat_dens <- dat_dens %>% 
+  mutate(tideHTm_offset = ifelse(era == "past" & sp == "LIKE", tideHTm + 0.125, 
+                                 ifelse(era == "past" & sp == "LODI", tideHTm + 0.025,
+                                        tideHTm)))
 # Raw data
 statDat <- dat_dens 
 
@@ -29,3 +34,4 @@ childsDF <- statDat %>% filter(sp == "LIKE")
 
 # Get Wara means
 wara_means <- datMeans4 %>% filter(sp == "CHFU")
+

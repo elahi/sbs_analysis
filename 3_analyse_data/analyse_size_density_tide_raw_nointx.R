@@ -12,32 +12,13 @@
 #rm(list=ls(all=TRUE)) 
 
 ##### PACKAGES, DATA #####
-
-library(broom)
-library(ggplot2)
-library(cowplot)
-
-# Load data
-source("2_summarise_data/summarise_size_density.R")
-source("R/HighstatLibV6.R")
-
-statDat <- dat_dens
-# Subset data by species
-dens_wara <- statDat %>% filter(sp == "CHFU")
-dens_hex <- statDat %>% filter(sp == "LODI")
-dens_childs <- statDat %>% filter(sp == "LIKE")
-
-dens_wara %>% select(density_m2, tideHTm) %>% Mypairs()
-dens_hex %>% select(density_m2, tideHTm) %>% Mypairs()
-dens_childs %>% select(density_m2, tideHTm) %>% Mypairs()
-
-##### PREPARE DATA FOR JAGS #####
+source("3_analyse_data/01_sbs_bayes_data.R")
+source("R/truncate_data.R")
 library(rjags)
 
-# Choose data to models
-statDat <- dens_childs %>% filter(!is.na(dens_log) & !is.na(mass_log))
-#statDat <- dens_wara %>% filter(!is.na(dens_log) & !is.na(mass_log))
-#statDat <- dens_hex %>% filter(!is.na(dens_log) & !is.na(mass_log))
+##### PREPARE DATA FOR JAGS #####
+statDat <- childsDF
+statDat <- truncate_data(statDat, era = "past", quant = 0.05)
 
 # Get era as 0 or 1
 statDat <- statDat %>% mutate(era01 = ifelse(era == "past", 0, 1))

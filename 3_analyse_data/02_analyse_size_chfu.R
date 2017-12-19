@@ -14,12 +14,13 @@
 ##### PACKAGES, DATA #####
 source("3_analyse_data/01_sbs_bayes_data.R")
 source("R/truncate_data.R")
+library(rjags)
 
 ##### PREPARE DATA FOR JAGS #####
-statDat <- waraDF %>% 
-  #filter(site == "Wara.D")
-
-#statDat <- truncate_data(statDat, quant = 0.05)
+statDat <- childsDF
+statDat <- truncate_data(statDat, era = "past", quant = 0.05)
+#statDat <- statDat %>% filter(site == "Wara.D")
+#statDat <- statDat %>% filter(nest1 == "zoneD")
 
 statDat %>% 
   ggplot(aes(era, size1mm)) + 
