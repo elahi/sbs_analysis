@@ -11,7 +11,6 @@
 
 ##### PACKAGES, DATA #####
 source("3_analyse_data/01_sbs_bayes_data.R")
-source("3_analyse_data/01_sbs_bayes_data.R")
 source("R/truncate_data.R")
 library(rjags)
 
@@ -22,14 +21,17 @@ library(rjags)
 
 ## My data
 statDat <- wara_means
-#statDat <- truncate_data(statDat, era = "past", quant = 0.05)
+
+## My quantile for size threshold
+my_quantile <- 0
+statDat <- truncate_data(statDat, era = "past", quant = my_quantile)
 statDat <- statDat %>% mutate(era01 = ifelse(era == "past", 0, 1))
 
 ## My species
-my_species <- "Chlorostoma funebralis"
+my_species <- "CHFU"
 
 ## My data type
-my_data <- "mean size"
+my_data <- "means"
 
 # Get means and sd of continuous variables
 x2_mu <- mean(statDat$density_m2)
@@ -71,6 +73,9 @@ data = list(
 
 ##### MODEL 1: ERA X DENSITY x TIDE ####
 
+my_model <- "eraXdensityXtide"
+output_location <- "3_analyse_data/bayes_output/by_species/"
+
 # JAGS model
 sink("3_analyse_data/bayes_models/modelJags.R")
 cat("
@@ -84,7 +89,6 @@ cat("
     b5 ~ dnorm(0, 1/10^2)
     b6 ~ dnorm(0, 1/10^2)
     b7 ~ dnorm(0, 1/10^2)
-
     sigma ~ dunif(0, 5)
     
     tau <- 1/sigma^2
@@ -116,7 +120,12 @@ cat("
 sink()
 
 inits = list(
-  list(b0 = 1, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0, b7 = 0, sigma = 4))
+  list(b0 = 1, b1 = 0, b2 = 0, b3 = 0, 
+       b4 = 0, b5 = 0, b6 = 0, b7 = 0, sigma = 4), 
+  list(b0 = 0.5, b1 = 0.1, b2 = -0.1, b3 = 0.5, 
+       b4 = -0.05, b5 = 0.2, b6 = 0, b7 = 0, sigma = 2), 
+  list(b0 = 2, b1 = -0.2, b2 = 0.3, b3 = -0.1, 
+       b4 = 0.1, b5 = 0.8, b6 = -0.5, b7 = 0.3, sigma = 1))
 
 # Number of iterations
 n.adapt <- 1000
@@ -142,17 +151,30 @@ zj = jags.samples(jm, variable.names = c("b0", "b1","p.mean", "p.sd", "p.discrep
 summary(zm)
 exp(summary(zm)$stat[1]) # intercept
 
-#Produce trace plots of the chains for model parameters. 
+# Save trace plots
+trace_file <-  paste(output_location, my_species, my_data, 
+                     my_model, my_quantile, "trace", sep = "_")
+png(filename = paste(trace_file, "png", sep = "."), 
+    height = 5, width = 5, units = "in", res = 150)
+par(mfrow = c(3,3))
 traceplot(zm)
+dev.off()
+
+# Save density plots
+density_file <-  paste(output_location, my_species, my_data, 
+                       my_model, my_quantile, "dens", sep = "_")
+png(filename = paste(density_file, "png", sep = "."), 
+    height = 5, width = 5, units = "in", res = 150)
+par(mfrow = c(3,3))
 densplot(zm)
+dev.off()
 
 # Test for convergence using the Gelman diagnostic.
-gelman.diag(zm, multivariate = F)
+gd <- gelman.diag(zm, multivariate = F)[[1]]
 
 # Check Bayesian pvals
-mean(zj$p.mean)
-mean(zj$p.sd)
-mean(zj$p.discrep)
+pvals <- c(p.mean = mean(zj$p.mean), p.sd = mean(zj$p.sd), 
+           p.discrep = mean(zj$p.discrep))
 
 # Get proportional change [assumes all other variable are at mean]
 str(zj)
@@ -163,7 +185,8 @@ past_size <- 10^zj_b0
 present_size <- 10^(zj_b0 + zj_b1)
 prop_change <- (present_size - past_size)/past_size
 prop_change_vec <- as.numeric(prop_change)
-prop_change_quantile <- t(quantile(prop_change_vec, probs = c(0.025, 0.25, 0.5, 0.75, 0.975)))
+prop_change_quantile <- t(quantile(prop_change_vec, 
+                                   probs = c(0.025, 0.25, 0.5, 0.75, 0.975)))
 rownames(prop_change_quantile) <- "prop_change"
 
 # Save coda summary
@@ -172,9 +195,20 @@ coda_quantile <- data.frame(rbind(coda_summary$quantile, prop_change_quantile))
 params <- rownames(coda_quantile)
 
 coda_quantile <- coda_quantile %>%
-  mutate(species = my_species,
+  mutate(spp = my_species,
          data = my_data, 
+         model = my_model, 
          param = params)
 
 ##### SAVE OUTPUT #####
-write.csv(x = coda_quantile, file = "3_analyse_data/bayes_output/by_species/chfu_logsize_means.csv")
+my_file <-  paste(output_location, my_species, my_data, my_model, my_quantile, sep = "_")
+
+## Coda quantile summary
+write.csv(x = coda_quantile, file = paste(my_file, "csv", sep = "."))
+
+## Pvals
+write.csv(x = pvals, file = paste(my_file, "pvals",  "csv", sep = "."))
+
+## Gelman
+write.csv(x = gd, file = paste(my_file, "gd", "csv", sep = "."))
+
