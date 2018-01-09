@@ -24,6 +24,12 @@ theme_set(theme_bw(base_size = 12))
 library(lubridate)
 
 # Get snail size data
+source("R/choose_size_data.R")
+options(tibble.print_max = 100, tibble.print_min = 10)
+
+# load data - approximated sizes
+dat <- choose_size_data(method = "normal")
+
 source("05_summarise_size_data.R")
 
 source("R/process_weather_data.R")

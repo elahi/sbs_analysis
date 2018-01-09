@@ -1,10 +1,7 @@
 ################################################################################
 ##' @title Function to process weather data
-##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
-##' @contributor 
-##' 
 ##' @date 2016-11-08
 ################################################################################
 
@@ -12,13 +9,16 @@
 ##' weather_file = name of file to be loaded
 ##' back_up = if FALSE, then raw weather data did not include back_ups
 
+# weather_file <- "monterey.txt"
+# path_to_weather_data = "data/uc_ipm/"
+# lines_to_skip <- 55
 
-
-weather_file <- "monterey_weather_backup.txt"
-
-
-format_weather_data <- function(path, weather_file, 
-                                lines_to_skip, back_up = FALSE){
+format_weather_data <- function(weather_file = "monterey.txt", 
+                                path_to_weather_data = "data/uc_ipm/",
+                                lines_to_skip = 55, back_up = FALSE){
+  
+  library(dplyr)
+  library(lubridate)
   
   weather <- read.csv(file = paste(path_to_weather_data, weather_file, sep = ""), 
                       skip = lines_to_skip, header = TRUE, stringsAsFactors = FALSE)
@@ -37,3 +37,8 @@ format_weather_data <- function(path, weather_file,
   return(weather2)
   
 }
+
+# monterey <- format_weather_data(weather_file = "monterey.txt", 
+#                                 path_to_weather_data = "data/uc_ipm/", 
+#                                 lines_to_skip = 55, back_up = FALSE) 
+

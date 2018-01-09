@@ -81,6 +81,22 @@ dat3 %>%
 
 ggsave("figs_ms/plot_size_frequency_density.pdf", height = 3.5, width = 7)  
 
+## Boxplot
+dat3 %>% 
+  ggplot(aes(era, size1mm, color = era)) + 
+  #geom_violin(alpha = 0.5) + 
+  geom_boxplot() + 
+  facet_wrap( ~ species) + 
+  scale_fill_manual(values = c("red", "black")) + 
+  xlab("") + 
+  ylab("Size (mm)") + 
+  theme(legend.position = "none") + 
+  geom_text(data = facet_panels, aes(0, 0.15, label = facet_labels), 
+            inherit.aes = FALSE, size = 6, nudge_x = 1, nudge_y = 0.01) + 
+  geom_text(data = facet_panels, aes(15, 0.115, label = past_text), 
+            inherit.aes = FALSE, size = 4, nudge_x = 1, nudge_y = 0.01, color = "red", hjust = 0) + 
+  geom_text(data = facet_panels, aes(15, 0.1, label = present_text), 
+            inherit.aes = FALSE, size = 4, nudge_x = 1, nudge_y = 0.01, color = "black", hjust = 0) 
 
 ##### SEPARATE PANEL WITH MULTIPLOT #####
 
