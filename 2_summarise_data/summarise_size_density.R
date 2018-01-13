@@ -132,10 +132,10 @@ datMeans4$species <- species
 
 # Log-transform data
 datMeans4 <- datMeans4 %>% 
-  mutate(dens_log = log10(density_m2), 
-         mass_log = log10(mass_mean_mg), 
+  mutate(dens_log = log(density_m2), 
+         mass_log = log(mass_mean_mg), 
          size1mm = size_mm, 
-         size_log = log10(size_mm))
+         size_log = log(size_mm))
 
 ##### SUMMARISE SIZE-DENSITY RAW #####
 ## Summarise Wara density data to area B and D
@@ -179,9 +179,9 @@ dat_dens <- dat_dens %>%
   mutate(mass_mg = ifelse(sp == "CHFU", chfu_mmTOmg(size1mm), 
                           ifelse(sp == "LODI", lodi_mmTOmg(size1mm), 
                                  like_mmTOmg(size1mm))), 
-         mass_log = log10(mass_mg), 
-         dens_log = log10(density_m2), 
-         size_log = log10(size1mm))
+         mass_log = log(mass_mg), 
+         dens_log = log(density_m2), 
+         size_log = log(size1mm))
 
 
 dat_dens %>% filter(era == "present" & sp == "LODI") %>% 

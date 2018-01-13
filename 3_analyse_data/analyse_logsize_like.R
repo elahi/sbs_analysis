@@ -4,7 +4,7 @@
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
 ##' 
-##' @date 2017-12-17
+##' @date 2018-01-13
 ##' 
 ##' @log 
 ################################################################################
@@ -12,18 +12,18 @@
 ##' The goal of this script is to compare pooled vs hierarchical model for Littorina keenae
 ##' In this case, I will use 4 groups (which may be too few)
 
-
 ##### PACKAGES, DATA #####
 source("3_analyse_data/01_sbs_bayes_data.R")
 source("R/truncate_data.R")
 library(lme4)
-library(rjags)
+#library(rjags)
 library(rstan)
 library(rstanarm)
-library(brms)
+#library(brms)
 library(ggplot2)
 library(sjPlot)
 library(bayesplot)
+library(broom)
 
 ##### PREPARE DATA #####
 ##' x1 = era
@@ -32,6 +32,16 @@ library(bayesplot)
 
 ## My data
 statDat <- childsDF
+statDat <- hexDF
+
+# Subsample for Wara
+statDat <- waraDF %>% filter(sampleArea == "Wara.B" | 
+                               era == "past" & sampleArea == "Wara.D")
+
+pres_d <- waraDF %>% filter(sampleArea == "Wara.D" & era == "present") %>% 
+  sample_n(size = 1444)
+
+statDat <- rbind(statDat, pres_d)
 
 ## My quantile for size threshold
 my_quantile <- 0
@@ -40,14 +50,17 @@ statDat <- statDat %>% mutate(era01 = ifelse(era == "past", 0, 1))
 
 ## Create groups for multilevel model
 unique(statDat$nest1)
-statDat <- statDat %>% mutate(group_j = as.integer(as.factor(nest1))) #!!! CHANGE
+unique(statDat$sampleArea)
+statDat %>% count(sampleArea, era)
+
+statDat <- statDat %>% mutate(group_j = as.integer(as.factor(sampleArea))) #!!! CHANGE
 n_group_j = length(unique(statDat$group_j))
 
-## My species
-my_species <- "LIKE"
-
-## My data type
-my_data <- "raw"
+# ## My species
+# my_species <- "LIKE"
+# 
+# ## My data type
+# my_data <- "raw"
 
 # Get means and sd of continuous variables
 x2_mu <- mean(statDat$density_m2)
@@ -99,27 +112,13 @@ sjp.lmer(lmer1, type = "fe", p.kr = F)
 ##' Partially pooled model (with random intercept for each group)
 lmer2 <- lmer(size_log ~ era01 + (era01 | group_j), data = statDat)
 summary(lmer2)
-sjp.lmer(lmer1, type = "re", p.kr = F)
-sjp.lmer(lmer1, type = "fe", p.kr = F)
+sjp.lmer(lmer2, type = "re", p.kr = F)
+sjp.lmer(lmer2, type = "fe", p.kr = F)
 
 ##### RSTAN #####
 
 CORES <- 4
 SEED <- 101
-
-## A function to calculate proportional change using a stanreg object
-get_prop_change <- function(stanreg_object){
-  ## Extract draws
-  draws_era <- as.matrix(stanreg_object, pars = "era01")
-  draws_int <- as.matrix(stanreg_object, pars = "(Intercept)")
-  draws_sigma <- as.matrix(stanreg_object, pars = "sigma")
-  
-  pred_size_past <- 10^(draws_int) # back-transform
-  pred_size_present <- pred_size_past - (10^(draws_era))
-  pred_change <- as.vector((pred_size_present - pred_size_past)/pred_size_past)
-  
-  return(pred_change)
-}
 
 ## Pooled model
 stan0 <- stan_lm(size_log ~ era01, data = statDat, 
@@ -128,20 +127,22 @@ stan0 <- stan_lm(size_log ~ era01, data = statDat,
 plot(stan0)
 pp_check(stan0, plotfun = "hist", nreps = 5)
 pp_check(stan0, plotfun = "stat_2d", stat = c("mean", "sd"))
-pred_change0 <- get_prop_change(stan0)
+
+## The coefficient
+pred_change0 <- as.matrix(stan0, pars = "era01")
 
 ## Group-level intercepts
 # Increase adapt_delta from 0.95 to 0.99 to prevent divergent transitions in this dataset
 stan1 <- stan_lmer(size_log ~ era01 + (1 | group_j), data = statDat, 
                    cores = CORES, seed = SEED, adapt_delta = 0.99) 
 plot(stan1)
-pred_change1 <- get_prop_change(stan1)
+pred_change1 <- as.matrix(stan1, pars = "era01")
 
 ## Group-level intercepts and slopes
 stan2 <- stan_lmer(size_log ~ era01 + (era01 | group_j), data = statDat, 
                    cores = CORES, seed = SEED, adapt_delta = 0.99) 
 plot(stan2)
-pred_change2 <- get_prop_change(stan2)
+pred_change2 <- as.matrix(stan2, pars = "era01")
 
 ## Combine pred_change
 pred_df <- data.frame(pred_change0, pred_change1, pred_change2)
@@ -149,27 +150,40 @@ head(pred_df)
 pred_long <- gather(pred_df) %>% mutate(value = value * 100)
 head(pred_long)
 
-library(broom)
 pred_long_quantiles <- pred_long %>% 
   group_by(key) %>% 
-  do(tidy(t(quantile(.$value, probs = c(0.025, 0.25, 0.5, 0.75, 0.975))))) %>% 
+  do(tidy(t(quantile(.$value, probs = c(0.025, 0.05, 0.25, 0.5, 0.75, 0.95, 0.975))))) %>% 
   ungroup()
 
-pred_long_quantiles %>% 
-  ggplot(aes(key, X50.)) + 
-  geom_point() + 
-  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.)) + 
-  geom_hline(yintercept = 0, linetype = "dashed")
-
 ## Compare model performance
-loo_0 <- loo_predict(stan0)
+loo_0 <- loo(stan0)
+loo_1 <- loo(stan1)
+loo_2 <- loo(stan2)
+compare_models(loo_0, loo_1, loo_2)
 
+##### PLOT AND SAVE #####
 
-library(loo)
-log_lik0 <- extract_log_lik(stan0)
-(loo1<-loo(log_lik1))
-log_lik1 <- extract_log_lik(fit)
-(loo1<-loo(log_lik1))
-log_lik2 <- extract_log_lik(fit2)
-(loo2<-loo(log_lik2))
-compare(loo1,loo2)
+# plq_like <- pred_long_quantiles %>% 
+#   mutate(spp = "Littorina keenae")
+# 
+# plq_lodi <- pred_long_quantiles %>% 
+#   mutate(spp = "Lottia digitalis")
+
+plq_chfu <- pred_long_quantiles %>% 
+  mutate(spp = "Chlorostoma funebralis")
+
+plq <- rbind(plq_like, plq_lodi, plq_chfu)
+
+write.csv(plq, "output/analyse_logsize_like_170113.csv")
+
+plq %>% 
+  ggplot(aes(key, X50.)) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  geom_errorbar(aes(ymin = X5., ymax = X95.), width = 0, size = 1) + 
+  geom_errorbar(aes(ymin = X25., ymax = X75.), width = 0, size = 2) + 
+  geom_point(size = 2, pch = 21, fill = "white") + 
+  labs(x = "Model", 
+       y = "Change in body size (%)") + 
+  facet_wrap(~ spp)
+
+ggsave("figs_ms/stan_models_like.pdf", height = 3.5, width = 7)
