@@ -265,7 +265,7 @@ stat_dat
 stan1 <- stan_lmer(lrr ~ year_z * size_z + (1|spp/quadrat_factor), 
               data = stat_dat, cores = CORES, seed = SEED)
 summary(stan1)
-bayesplot::pl
+plot(stan1, pars = c("(Intercept)", "size_z", "year_z", "year_z:size_z"))
 
 ## Make predictions
 pred_lin <- posterior_linpred(stan1, newdata = pred_df)

@@ -112,6 +112,7 @@ sjp.lmer(lmer1, type = "fe", p.kr = F)
 ##' Partially pooled model (with random intercept for each group)
 lmer2 <- lmer(size_log ~ era01 + (era01 | group_j), data = statDat)
 summary(lmer2)
+coef(lmer2)
 sjp.lmer(lmer2, type = "re", p.kr = F)
 sjp.lmer(lmer2, type = "fe", p.kr = F)
 
