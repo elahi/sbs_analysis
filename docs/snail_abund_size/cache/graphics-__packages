@@ -1,0 +1,9 @@
+base
+dplyr
+tidyr
+readr
+readxl
+ggplot2
+cowplot
+knitr
+bindrcpp

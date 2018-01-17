@@ -154,4 +154,5 @@ plot_dat %>%
   theme(#axis.title.y = element_blank(),
         axis.text.y = element_blank(),
         axis.ticks.y = element_blank())
-ggsave("figs_ms/plot_size_change_lmer.pdf", height = 3.5, width = 3.5)
+
+##ggsave("figs_ms/plot_size_change_lmer.pdf", height = 3.5, width = 3.5)

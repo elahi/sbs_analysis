@@ -72,5 +72,5 @@ annual_df_long %>%
              data = hew_yrs, alpha = 1, size = 1.5, shape = 8) + 
   scale_shape_manual(values = c(1, 2, 0))
   
-ggsave("figs/plot_temp_timeseries.pdf", height = 3.5, width = 7)
+ggsave("figs_ms/plot_temp_timeseries.pdf", height = 3.5, width = 7)
   

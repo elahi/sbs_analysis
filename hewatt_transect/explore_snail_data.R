@@ -20,7 +20,7 @@ theme_set(theme_bw(base_size = 12) +
             theme(strip.background = element_blank(), 
                   panel.grid = element_blank()))
 
-source("load_snail_size_data.R")
+source("hewatt_transect/load_snail_size_data.R")
 
 ## Load all data for exploration
 dat <- load_snail_size_data(remove_rare = FALSE)
@@ -255,7 +255,10 @@ save_plot("figs/lrr_herb_size_glmm_2panel.pdf", plot = plot2,
           base_aspect_ratio = 1.1)
 
 ## Plot the raw data that went into the analysis
-
+theme_set(theme_bw(base_size = 12) + 
+            theme(strip.background = element_blank(), 
+                  panel.grid = element_blank(),
+                  strip.text = element_text(face = "italic")))
 dat2 %>%
   filter(trophic.level == "Herbivore") %>% 
   ggplot(aes(year, abundance + 1)) +
@@ -264,9 +267,9 @@ dat2 %>%
   facet_wrap(~ spp, ncol = 3) +
   scale_y_log10() +
   theme(legend.position = "bottom") +
-  labs(x = "Year", y = "Abundance")
+  labs(x = "Year", y = "Abundance + 1")
 
-ggsave("figs/abund_year_raw_subset_herb.pdf", height = 9, width = 7)
+ggsave("figs_ms/abund_year_raw_subset_herb.pdf", height = 9, width = 7)
 
 ##### PLOT YEAR EFFECT #####
 #https://stackoverflow.com/questions/14358811/extract-prediction-band-from-lme-fit

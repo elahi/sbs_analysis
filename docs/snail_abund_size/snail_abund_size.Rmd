@@ -1,0 +1,81 @@
+---
+title: Historical declines in snail body size at population and assemblage scales
+author: Robin Elahi
+date: 2018-01-16
+fontfamily: mathpazo
+fontsize: 11pt
+geometry: margin=1in
+output:
+  pdf_document:
+    fig_caption: no
+    latex_engine: pdflatex
+    keep_tex: true
+  word_document: default
+---
+
+```{r setup, include = FALSE, cache = FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE, 
+                      fig.path = 'figs/', cache.path = 'cache/graphics-', 
+                      fig.align = 'center', fig.width = 5, fig.height = 5, 
+                      fig.show = 'hold', cache = TRUE, par = TRUE)
+knitr::opts_knit$set(root.dir = "../../")
+```
+
+```{r r_packages}
+# tidyverse
+library(dplyr);  library(tidyr); library(readr); library(readxl)
+# plotting
+library(ggplot2); library(cowplot)
+theme_set(theme_bw(base_size = 12))
+library(knitr)
+```
+
+## Abstract
+
+Reductions in body size have been proposed recently to be a universal consequence of climate warming. We tested this prediction at the population and assemblage scales using a suite of herbivorous snails on a rocky shore in central California. At the population scale, we tested for changes in the body size of three species (*Chlorostoma funebralis*, *Lottia digitalis*, *Littorina keenae*) using size-frequency data at two time points separated by six decades. At the assemblage scale, we tested whether maximum body size predicted the abundance trends of 11 herbivorous snails over nine decades on the same rocky shore. In general, declines in body size were apparent at both scales and coincided with a period of warming seawater temperatures. 
+
+\newpage
+## Figures
+![](../../figs_ms/plot_temp_timeseries.pdf)
+Figure 1. Air temperatures (A) from a weather station in Monterey (36.6 N, 121.9 E; 2.44km south of the sampling sites; 117m above sea level), and seawater temperatures (B) from Hopkins Marine Station, Pacific Grove. Asterisks adjacent to the x-axis represent the temporal samples used in the 'assemblage' test; the open symbols represent the temporal samples used in the 'population' tests of the body size reduction hypothesis (circle, *Chlorostoma funebralis*; square, *Lottia digitalis*, triangle, *Littorina keenae*). 
+
+**Need to decide on the statistical tests of temperature - regression, or ANOVA using two time periods. For example, for the Littorina keenae data, do I use a regression of annual means from 1947-2015, or use an ANOVA to test for a difference in temperature between 1938-1947 vs 2006-2015?**
+
+\newpage
+![](../../figs_ms/plot_size_frequncy_density_4panel.pdf)
+Figure 2. Population-scale reductions in body size were observed for three intertidal gastropods. Size distributions in the past and present are presented for *Chlorostoma funebralis* (A), *Lottia digitalis* (B), and *Littorina keenae* (C), as well as the proportional reduction in average body size estimated from statistical models (D). For *Chlorostoma*, *Lottia*, and *Littorina*, snails were measured in 2, 8, and 4 discrete sampling areas, respectively (see Methods). Therefore, we fit a linear model to each sampling area for *Chlorostoma* (pink points in (D)), and a hierarchical linear model across all sampling areas for *Lottia* and *Littorina* (green points in (D). In (D), the numbers represent the number of sampling areas used in each model. 
+
+\newpage  
+![](../../figs_ms/lrr_herb_size_glmm_2panel.pdf){width=100%}
+Figure 3. Assemblage-scale reductions in body size were observed across a suite of 11 herbivorous gastropod species between the past (1931) and present (1993-2015). Relative to 1931, larger snails were less abundant and smaller snails more abundant. In (A), the fixed effects of size, year, and their interaction on log change in abundance are presented with 95% confidence intervals. In (B), log change in abundance is plotted against size, with the statistical relationship derived from the hierarchical linear model. The standard error (in blue) and 95% confidence interval (in red) is displayed for the fixed effect of size (but does not include variation due to the random components of species or quadrats nested within species). 
+
+\newpage 
+## Supplemental Information
+
+Table S1. Maximum length (mm) of herbivorous snails observed on the Hewatt-Sagarin transect. Only 11 species were included in the analysis (rare species were removed, i.e., those with present in less than 5% of samples (n = 228 sampled quadrats)).
+```{r spp_size_table}
+
+snail_df <- read_excel("output/snail_df.xlsx")
+
+snail_size <- snail_df %>% 
+  filter(trophic.level == "Herbivore") %>% 
+  arrange(size1) %>% 
+  select(spp, size1, size1_source) %>% 
+  rename(Species = spp, Size_mm = size1, Source = size1_source)
+
+kable(snail_size, caption = NULL)
+      #caption = "Maximum length (mm) of herbivorous snails observed on the Hewatt-Sagarin transect. Only 11 species were included in the analysis (rare species were removed).")
+
+```
+
+\newpage
+![](../../figs_ms/plot_size_frequency.pdf){width=100%}
+Figure S1. Size frequency distributions of three intertidal gastropods sampled in the past (A, C, E) and present (B, D, F).
+
+\newpage
+![](../../figs_ms/plot_size_era_tide_means.pdf)
+Figure S2. Body size (mean +- SD) of three intertidal gastropods plotted against tidal height. In general, mean body size has declined over six decades. However, the present size of *L. keenae* (C) has remained similar, and even larger, in the high intertidal (> 5m above mean lower low water). 
+
+\newpage
+![](../../figs_ms/abund_year_raw_subset_herb.pdf){width=100%}
+Figure S3. Time-series of abundances for herbivorous snails in each of 19 quadrats on the Hewatt-Sagarin transect. These 11 species were used in the analysis; snails are arranged in order of increasing size.
