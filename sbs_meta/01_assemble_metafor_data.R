@@ -28,13 +28,20 @@ hay_king <- read_csv("sbs_meta/output/dfMeta_Hayford-King_2017.csv")
 
 ## Fisher summary data is based on the mean sizes from 19 sites on Mount Desert Island
 fisher <- read_csv("sbs_meta/output/dfMeta_Fisher2009_MDI.csv")
-# roy <- read_csv("sbs_meta/output/dfMeta_Roy2003.csv")
 
-dat <- rbind(elahi, gall_frank, gall_tren, hay_king, fisher) 
+## Wilson-Brodie 2017
+wilson <- read_csv("sbs_meta/output/dfMeta_Wilson-Brodie_2017.csv")
+
+## Select first museum sample and field for Roy
+roy <- read_csv("sbs_meta/output/dfMeta_Roy2003.csv")
+
+## Compile
+dat <- rbind(elahi, gall_frank, gall_tren, hay_king, fisher, wilson) 
 
 ## For metafor, I want the data in wide format
 names(dat)
-dat2 <- dat %>% select(study, species, era, size_rep, size_error, sample_size) %>% 
+dat2 <- dat %>% 
+  select(study, species, museum, latitude, era, size_rep, size_error, sample_size) %>% 
   rename(size_n = sample_size)
 dat2
 
@@ -46,7 +53,7 @@ datM <- dat2 %>%
 ## Try metafor
 library(metafor)
 names(datM)
-names(datM) <- c("study", "species", "sd2i", "n2i", "m2i", "sd1i", "n1i", "m1i")
+names(datM) <- c("study", "species", "museum", "latitude", "sd2i", "n2i", "m2i", "sd1i", "n1i", "m1i")
 datM
 
 ### calculate log ratio of means and corresponding sampling variances
@@ -60,6 +67,10 @@ datM <- datM %>%
          upper = yi + 2*sei, 
          lower = yi - 2*sei)
 
+### Re-order by latitude
+datM <- datM %>% 
+  mutate(species = reorder(species, latitude))
+
 ### Plot this
 ggplot(datM, aes(x = yi, y = species, color = study)) +
   geom_segment(aes(x = lower, xend = upper, y = species, yend = species)) +
@@ -67,7 +78,21 @@ ggplot(datM, aes(x = yi, y = species, color = study)) +
   geom_vline(xintercept = 0, linetype = "dashed", color = "gray") + 
   labs(x = "Proportional change in body size", 
        y = "") + 
-  scale_color_viridis_d()
+  theme(legend.position = "right")
+
+my_dodge <- 0.5
+
+datM %>% 
+  ggplot(aes(species, yi, color = study)) + 
+  geom_point(position = position_dodge(my_dodge)) + 
+  geom_errorbar(aes(ymin = lower, ymax = upper), 
+                position = position_dodge(my_dodge), 
+                width = my_dodge/2) + 
+  coord_flip() + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  labs(y = "Proportional change in body size", 
+       x = "")
+ggsave("sbs_meta/meta_figs/meta_lrr_field.pdf", height = 5, width = 7)
 
 ### meta-analysis of log ratio of means using a random-effects model
 res <- rma(yi, vi, method = "DL", data = datM)
