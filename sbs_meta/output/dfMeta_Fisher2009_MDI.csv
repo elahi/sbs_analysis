@@ -1,0 +1,3 @@
+"","study","studySub","fig_table","species","site","size_original","size_rep","size_units","size_error","size_error_type","time_rep","time_error","era","year","year_error","year_error_type","sample_size","sample_size_units","museum","size_threshold_mm","latitude","longitude"
+"1","Fisher_2009",NA,"Figure_1","Nucella lapillus","Mount Desert Island, Maine","mean",23.7815937334211,"mm",2.50545026584567,"SD",NA,NA,"past",1918.01724137931,NA,NA,19,"Number of sites",TRUE,0,44.2553654,-68.3696056842105
+"2","Fisher_2009",NA,"Figure_1","Nucella lapillus","Mount Desert Island, Maine","mean",29.1313489278947,"mm",3.66085070718358,"SD",NA,NA,"present",2007,NA,NA,19,"Number of sites",TRUE,0,44.2553654,-68.3696056842105

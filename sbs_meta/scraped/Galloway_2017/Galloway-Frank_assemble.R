@@ -16,6 +16,7 @@ library(dplyr)
 library(tidyr)
 library(readr)
 library(ggplot2)
+source("R/convert_histo_to_raw.R")
 
 frank <- read_csv("sbs_meta/scraped/Galloway_2017/SouthCove_Tegula-Size-Counts_Spring2017_AG-Shared_2017-10-13_size.csv") # snail size
 

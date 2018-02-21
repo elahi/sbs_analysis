@@ -140,9 +140,24 @@ year
 
 df2$year <- year
 
+
+## This back-calculation of the error is wrong
+## I need to correct this
+
+## See this post
+## https://stats.stackexchange.com/questions/123514/calculating-standard-error-after-a-log-transform
 df3 <- df2 %>%
   mutate(size_rep = exp(length_mean),
-         size_error = exp(diffMean))
+         size_error = exp(diffMean), 
+         size_upper = exp(upperSE), 
+         size_lower = exp(lowerSE))
+
+df3 %>%
+  ggplot(aes(year, length_mean, color = site)) + geom_point() + 
+  facet_wrap(~ species, scales = "free_y") + 
+  # facet_wrap(~ species) + 
+  geom_errorbar(aes(ymin = length_mean - diffMean, 
+                    ymax = length_mean + diffMean))
 
 df3 %>%
   ggplot(aes(year, size_rep, color = site)) + geom_point() + 

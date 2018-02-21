@@ -80,9 +80,17 @@ unique(exposure)
 
 siteDat$exposure <- exposure
 
+siteDat %>%
+  ggplot(aes(Nc)) + 
+  geom_histogram(binwidth = 5)
+
+siteDat %>%
+  ggplot(aes(Nf)) + 
+  geom_histogram(binwidth = 5)
+
 # mean lat long by exposure
 ll_exposure <- siteDat %>% 
-  group_by(exposure) %>% 
+  #group_by(exposure) %>% 
   summarise(lat_mean = mean(lat), long_mean = mean(long))
 
 # mean sample sizes by exposure category
@@ -118,8 +126,7 @@ fisherDat %>%
 
 ##### DEAL WITH SAMPLE SIZES #####
 
-### Fisher does not provide sample sizes for each point, so I have to calculate average number of samples per exposure category, and merge that with the body size data
-
+### Fisher does not provide sample sizes for each point, 
 head(sampleSizeDat)
 
 fisherDat$exposure
@@ -143,11 +150,14 @@ head(fisherDatL)
 mean(siteDat$Year, na.rm = TRUE)
 weighted.mean(siteDat$Year, siteDat$Nc, na.rm = TRUE)
 
-yearDat <- siteDat %>% group_by(exposure) %>%
+yearDat <- siteDat %>% 
+  #group_by(exposure) %>%
   summarise(yearColton = weighted.mean(Year, Nc, na.rm = TRUE))
 
 fisherDatL <- yearDat %>% 
   inner_join(., fisherDatL, by = "exposure")
+
+fisherDatL$yearColton <- yearDat$yearColton
 
 head(fisherDatL)
 
@@ -168,6 +178,10 @@ fisherDatL2 <- sampleSizeDat2 %>% select(exposure, time_rep, n_total) %>%
   rename(sample_size = n_total) %>% 
   mutate(sample_size_units = "total number of snails by exposure") 
 
+# Get era
+fisherDatL2 <- fisherDatL2 %>% 
+  mutate(era = ifelse(yearFinal > 2000, "present", "past"))
+
 ##### SUMMARISE BY EXPOSURE #####
 
 fisher_summary <- fisherDatL2 %>% 
@@ -178,6 +192,19 @@ fisher_summary <- fisherDatL2 %>%
 
 fisher_summary <- inner_join(fisher_summary, ll_exposure, by = "exposure")
 
+##### SUMMARISE ACROSS SITES #####
+
+fisher_summary <- fisherDatL2 %>% 
+  group_by(era, yearFinal) %>% 
+  summarise(size_mean = mean(length_mean),  
+            size_sd = sd(length_mean), 
+            sample_size = n(), 
+            sample_size_units = "Number of sites") %>% 
+  ungroup()
+fisher_summary
+
+#fisher_summary <- inner_join(fisher_summary, ll_exposure, by = "exposure")
+
 ##### FORMAT TABLE FOR META-ANALYSIS #####
 names(fisher_summary)
 
@@ -185,11 +212,11 @@ df_final <- fisher_summary %>%
   mutate(size_rep = size_mean, 
          size_error = size_sd, 
          year = yearFinal, 
-         site = exposure, 
+         site = "Mount Desert Island, Maine", 
          size_original = "mean", 
          time_rep = NA, 
-         era = ifelse(year > 2000, "present", "past"), 
-         species = "Nucella_lapillus") %>%
+         #era = ifelse(year > 2000, "present", "past"), 
+         species = "Nucella lapillus") %>%
   arrange(site, year)
 
 head(df_final)
@@ -216,10 +243,10 @@ dfMeta <- data.frame(
   sample_size_units = df_final$sample_size_units, 
   museum = TRUE, 
   size_threshold_mm = 0, 
-  latitude = lat_mean, 
-  longitude = long_mean
+  latitude = ll_exposure$lat_mean, 
+  longitude = ll_exposure$long_mean
 )
 
 dfMeta
 
-write.csv(dfMeta, "sbs_meta/output/dfMeta_Fisher2009.csv")
+write.csv(dfMeta, "sbs_meta/output/dfMeta_Fisher2009_MDI.csv")

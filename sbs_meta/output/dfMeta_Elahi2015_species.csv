@@ -1,0 +1,7 @@
+"","study","studySub","fig_table","species","site","size_original","size_rep","size_units","size_error","size_error_type","time_rep","time_error","era","year","year_error","year_error_type","sample_size","sample_size_units","museum","size_threshold_mm","latitude","longitude"
+"1","Elahi_2015",NA,"various","Chlorostoma.funebralis","Hopkins Marine Station","raw",17.1080783353733,"mm",5.42230400650444,"SD",NA,NA,"past",1963,NA,NA,817,"number of snails",FALSE,0,36.6214398623853,-121.903792304164
+"2","Elahi_2015",NA,"various","Chlorostoma.funebralis","Hopkins Marine Station","raw",13.8194296847326,"mm",3.41290829912087,"SD",NA,NA,"present",2014,NA,NA,5646,"number of snails",FALSE,0,36.6214398623853,-121.903792304164
+"3","Elahi_2015",NA,"various","Littorina.keenae","Hopkins Marine Station","raw",11.05,"mm",2.58567299669061,"SD",NA,NA,"past",1947,NA,NA,682,"number of snails",FALSE,0,36.62183,-121.90516
+"4","Elahi_2015",NA,"various","Littorina.keenae","Hopkins Marine Station","raw",8.55514324693042,"mm",4.40958514305188,"SD",NA,NA,"present",2014,NA,NA,733,"number of snails",FALSE,0,36.62183,-121.90516
+"5","Elahi_2015",NA,"various","Lottia.digitalis","Hopkins Marine Station","raw",13.0511156186613,"mm",3.25496240484131,"SD",NA,NA,"past",1950,NA,NA,493,"number of snails",FALSE,0,36.6219552823315,-121.905085856102
+"6","Elahi_2015",NA,"various","Lottia.digitalis","Hopkins Marine Station","raw",10.1181818181818,"mm",2.34729659917602,"SD",NA,NA,"present",2015,NA,NA,605,"number of snails",FALSE,0,36.6219552823315,-121.905085856102

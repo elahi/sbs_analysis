@@ -110,7 +110,7 @@ dfMeta <- data.frame(
   sample_size = df_final$sample_size, 
   sample_size_units = df_final$sample_size_units, 
   museum = FALSE, 
-  size_threshold_mm = 5, 
+  size_threshold_mm = min_threshold, 
   latitude = lat_mean, 
   longitude = long_mean
 )
