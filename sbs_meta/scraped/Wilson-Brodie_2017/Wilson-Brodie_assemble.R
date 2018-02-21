@@ -76,7 +76,9 @@ df_final <- dat_summary %>%
          size_original = "raw", 
          time_rep = NA, 
          species = "Nucella lapillus", 
-         sample_size_units = "total number of snails") %>%
+         sample_size_units = "total number of snails", 
+         min_threshold = 30, 
+         size_max = c(43, 62)) %>%
   arrange(site, year)
 
 head(df_final)
@@ -102,7 +104,8 @@ dfMeta <- data.frame(
   sample_size = df_final$sample_size, 
   sample_size_units = df_final$sample_size_units, 
   museum = TRUE, 
-  size_threshold_mm = 0, 
+  size_threshold_mm = df_final$min_threshold,
+  size_max = df_final$size_max, 
   latitude = ll_dat$lat_mean, 
   longitude = ll_dat$long_mean
 )
