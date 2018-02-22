@@ -16,9 +16,9 @@ library(dplyr)
 library(tidyr)
 library(readr)
 library(ggplot2)
-
-# Functions to convert histogram data to vector of raw sizes
 source("R/convert_histo_to_raw.R")
+source("R/choose_size_threshold.R")
+
 remove_last_char <- function(t) substr(t, 1, nchar(t)-1)
 
 ackerman <- read_csv("sbs_meta/scraped/HayfordKing_2017/biogeo_size_change - size_raw_HHWK.csv")
@@ -65,16 +65,35 @@ ackerman2 <- ackerman2 %>%
   mutate(lat = as.numeric(remove_last_char(as.character(lat))), 
          long = -as.numeric(remove_last_char(as.character(long))))
 
-##### SUMMARISE DATA #####
-## Get means for entire site
+# Size threshold for museum comparison
+dat <- ackerman2 %>% mutate(size_threshold = 0)
+dat_sub <- choose_size_threshold_general(dat, era = "combined", my_quantile = 0.5)
 
-ack_summary <- ackerman2 %>% 
-  group_by(species, sp, site, era, year) %>% 
+dat %>% count(species, era)
+dat_sub %>% count(species, era)
+
+##### SUMMARISE #####
+
+## Summarise across sample areas
+dat_summary_all <- dat %>% 
+  group_by(species, sp, year, era, size_threshold, site) %>% 
   summarise(size1mm_mean = mean(size1mm, na.rm = TRUE), 
             size1mm_sd = sd(size1mm, na.rm = TRUE), 
             sample_size = n()) %>%
-  ungroup() 
-ack_summary
+  ungroup() %>% 
+  mutate(studySub = "threshold_none", 
+         museum = FALSE)
+
+dat_summary_sub <- dat_sub %>% 
+  group_by(species, sp, year, era, size_threshold, site) %>% 
+  summarise(size1mm_mean = mean(size1mm, na.rm = TRUE), 
+            size1mm_sd = sd(size1mm, na.rm = TRUE), 
+            sample_size = n()) %>%
+  ungroup() %>% 
+  mutate(studySub = "threshold_median", 
+         museum = TRUE)
+
+dat_summary <- rbind(dat_summary_all, dat_summary_sub)
 
 ##### GET LAT LONGS #####
 ll_dat <- ackerman2 %>% 
@@ -83,9 +102,7 @@ ll_dat <- ackerman2 %>%
             long_mean = mean(long))
 
 ##### FORMAT TABLE FOR META-ANALYSIS #####
-ack_summary
-
-df_final <- ack_summary %>% 
+df_final <- dat_summary %>% 
   mutate(size_rep = size1mm_mean, 
          size_error = size1mm_sd, 
          size_original = "raw", 
@@ -99,8 +116,8 @@ df_final <- ack_summary %>%
 names(df_final)
 
 dfMeta <- data.frame(
-  study = "Hayford-King_2017", 
-  studySub = NA, 
+  study = "Hayford_2017", 
+  studySub = df_final$studySub, 
   fig_table = NA, 
   species = df_final$species, 
   site = df_final$site, 
@@ -117,8 +134,8 @@ dfMeta <- data.frame(
   year_error_type = NA, 
   sample_size = df_final$sample_size, 
   sample_size_units = df_final$sample_size_units, 
-  museum = FALSE, 
-  size_threshold_mm = 0, 
+  museum = df_final$museum, 
+  size_threshold_mm = df_final$size_threshold, 
   latitude = df_final$lat, 
   longitude = df_final$long
 )

@@ -85,7 +85,7 @@ head(df_final)
 
 
 dfMeta <- data.frame(
-  study = "Wilson-Brodie 2017", 
+  study = "WilsonBrodie_2017", 
   studySub = NA, 
   fig_table = "Figure 2", 
   species = df_final$species, 
@@ -105,7 +105,6 @@ dfMeta <- data.frame(
   sample_size_units = df_final$sample_size_units, 
   museum = TRUE, 
   size_threshold_mm = df_final$min_threshold,
-  size_max = df_final$size_max, 
   latitude = ll_dat$lat_mean, 
   longitude = ll_dat$long_mean
 )

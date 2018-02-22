@@ -1,3 +1,3 @@
 "","study","studySub","fig_table","species","site","size_original","size_rep","size_units","size_error","size_error_type","time_rep","time_error","era","year","year_error","year_error_type","sample_size","sample_size_units","museum","size_threshold_mm","latitude","longitude"
-"1","Wilson-Brodie 2017",NA,"Figure 2","Nucella lapillus","Southern UK","raw",32.2264653641208,"mm",2.08018770799383,"SD",NA,NA,"present","2014-2016",NA,NA,563,"total number of snails",TRUE,0,50.508,-1.705
-"2","Wilson-Brodie 2017",NA,"Figure 2","Nucella lapillus","Southern UK","raw",37.4959459459459,"mm",6.73176259653241,"SD",NA,NA,"past","pre-1922-1997",NA,NA,740,"total number of snails",TRUE,0,50.508,-1.705
+"1","WilsonBrodie_2017",NA,"Figure 2","Nucella lapillus","Southern UK","raw",32.2264653641208,"mm",2.08018770799383,"SD",NA,NA,"present","2014-2016",NA,NA,563,"total number of snails",TRUE,30,50.508,-1.705
+"2","WilsonBrodie_2017",NA,"Figure 2","Nucella lapillus","Southern UK","raw",37.4959459459459,"mm",6.73176259653241,"SD",NA,NA,"past","pre-1922-1997",NA,NA,740,"total number of snails",TRUE,30,50.508,-1.705

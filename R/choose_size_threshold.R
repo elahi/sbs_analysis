@@ -9,6 +9,7 @@
 ##' @log 
 ################################################################################
 
+#### SPECIFIC TO ELAHI DATA #####
 
 choose_size_threshold <- function(x, era = "past", my_quantile = 0.05, filter_data = TRUE){
   
@@ -64,5 +65,41 @@ choose_size_threshold <- function(x, era = "past", my_quantile = 0.05, filter_da
   x2 <- rbind(dat_past2, dat_pres)
   
   return(x2)
+  
+}
+
+
+#### GENERIC FUNCTION FOR ONE SPECIES #####
+
+choose_size_threshold_general <- function(x, era = "past", my_quantile = 0.05, filter_data = TRUE){
+  
+  if(era == "past"){
+    # Get size thresholds from past data only
+    size_threshold_df <- x %>% filter(era == "past") %>% 
+      summarise(size_threshold = quantile(size1mm, probs = my_quantile))
+    
+    x <- inner_join(x, size_threshold_df, by = c("species"))
+  }
+  
+  if(era == "separate"){
+    # Get size thresholds for each species x era combination
+    x <- x %>% 
+      group_by(era) %>% 
+      mutate(size_threshold = quantile(size1mm, probs = my_quantile, na.rm = TRUE)) %>% 
+      ungroup()
+  }
+  
+  if(era == "combined"){
+    # Get size thresholds for each species, across both eras
+    x <- x %>% 
+      mutate(size_threshold = quantile(size1mm, probs = my_quantile, na.rm = TRUE)) %>% 
+      ungroup()
+  }
+  
+  if(filter_data == TRUE){
+    x <- x %>% filter(size1mm >= size_threshold)
+  }
+  
+  return(x)
   
 }

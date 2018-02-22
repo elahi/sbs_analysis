@@ -1,3 +1,5 @@
 "","study","studySub","fig_table","species","site","size_original","size_rep","size_units","size_error","size_error_type","time_rep","time_error","era","year","year_error","year_error_type","sample_size","sample_size_units","museum","size_threshold_mm","latitude","longitude"
-"1","Hayford-King_2017",NA,NA,"Nucella lamellosa","False Bay, WA","raw",36.927135678392,"mm",6.85012032376505,"SD",NA,NA,"past",1964,NA,NA,398,"total number of snails",FALSE,0,48.481781,-123.068522
-"2","Hayford-King_2017",NA,NA,"Nucella lamellosa","False Bay, WA","raw",26.17475,"mm",11.4007688892313,"SD",NA,NA,"present",2017,NA,NA,400,"total number of snails",FALSE,0,48.481781,-123.068522
+"1","Hayford_2017","threshold_none",NA,"Nucella lamellosa","False Bay, WA","raw",36.927135678392,"mm",6.85012032376505,"SD",NA,NA,"past",1964,NA,NA,398,"total number of snails",FALSE,0,48.481781,-123.068522
+"2","Hayford_2017","threshold_median",NA,"Nucella lamellosa","False Bay, WA","raw",40.9543726235741,"mm",4.1339464498146,"SD",NA,NA,"past",1964,NA,NA,263,"total number of snails",TRUE,33.3,48.481781,-123.068522
+"3","Hayford_2017","threshold_none",NA,"Nucella lamellosa","False Bay, WA","raw",26.17475,"mm",11.4007688892313,"SD",NA,NA,"present",2017,NA,NA,400,"total number of snails",FALSE,0,48.481781,-123.068522
+"4","Hayford_2017","threshold_median",NA,"Nucella lamellosa","False Bay, WA","raw",38.8328467153285,"mm",3.94318305077501,"SD",NA,NA,"present",2017,NA,NA,137,"total number of snails",TRUE,33.3,48.481781,-123.068522

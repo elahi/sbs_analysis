@@ -17,6 +17,7 @@ library(tidyr)
 library(readr)
 library(ggplot2)
 source("R/convert_histo_to_raw.R")
+source("R/choose_size_threshold.R")
 
 frank <- read_csv("sbs_meta/scraped/Galloway_2017/SouthCove_Tegula-Size-Counts_Spring2017_AG-Shared_2017-10-13_size.csv") # snail size
 
@@ -37,7 +38,7 @@ frank <- left_join(frank, frank_transects, by = "Transect#")
 frank_present <- data.frame(
   study = "Galloway", 
   studySub = NA, 
-  species = "Chlorostoma.funebralis", 
+  species = "Tegula funebralis", 
   sp = "CHFU", 
   site = "SouthCove",
   era = "present", 
@@ -88,7 +89,7 @@ hist(frank_past_size_unif, breaks = 25)
 frank_past <- data.frame(
   study = "Galloway", 
   studySub = NA, 
-  species = "Chlorostoma.funebralis", 
+  species = "Tegula funebralis", 
   sp = "CHFU", 
   site = "SouthCove",
   era = "past", 
@@ -116,16 +117,36 @@ frank2 <- frank2 %>%
 frank2 %>% count(era)
 with(frank2, plot(size1mm, size1mm_rand))
 
-##### SUMMARISE DATA #####
-## Get means for entire site
+# Size threshold for museum comparison
+dat <- frank2 %>% mutate(size_threshold = 0)
 
-frank_summary <- frank2 %>% 
-  group_by(species, sp, site, era, year) %>% 
+dat_sub <- choose_size_threshold_general(dat, era = "combined", my_quantile = 0.5)
+
+dat %>% count(species, era)
+dat_sub %>% count(species, era)
+
+##### SUMMARISE #####
+
+## Summarise across sample areas
+dat_summary_all <- dat %>% 
+  group_by(species, sp, year, era, size_threshold) %>% 
   summarise(size1mm_mean = mean(size1mm, na.rm = TRUE), 
             size1mm_sd = sd(size1mm, na.rm = TRUE), 
             sample_size = n()) %>%
-  ungroup() 
+  ungroup() %>% 
+  mutate(studySub = "threshold_none", 
+         museum = FALSE)
 
+dat_summary_sub <- dat_sub %>% 
+  group_by(species, sp, year, era, size_threshold) %>% 
+  summarise(size1mm_mean = mean(size1mm, na.rm = TRUE), 
+            size1mm_sd = sd(size1mm, na.rm = TRUE), 
+            sample_size = n()) %>%
+  ungroup() %>% 
+  mutate(studySub = "threshold_median", 
+         museum = TRUE)
+
+dat_summary <- rbind(dat_summary_all, dat_summary_sub)
 
 ##### GET LAT LONGS #####
 str(frank2)
@@ -133,19 +154,17 @@ str(frank2)
 remove_last_char <- function(t) substr(t, 1, nchar(t)-1)
 remove_last_char(frank2$lat)
 
-frank2 <- frank2 %>% 
+ll_dat <- frank2 %>% 
+  filter(era == "present") %>% 
   mutate(lat = as.numeric(remove_last_char(as.character(lat))), 
          long = -as.numeric(remove_last_char(as.character(long))))
 
-ll_dat <- frank2 %>% 
-  filter(era == "present") %>% 
+ll_dat <- ll_dat %>% 
   summarise(lat_mean = mean(lat), 
             long_mean = mean(long))
 
 ##### FORMAT TABLE FOR META-ANALYSIS #####
-names(frank2)
-
-df_final <- frank_summary %>% 
+df_final <- dat_summary %>% 
   mutate(size_rep = size1mm_mean, 
          size_error = size1mm_sd, 
          size_original = "raw", 
@@ -153,14 +172,15 @@ df_final <- frank_summary %>%
          time_rep = NA, 
          sample_size_units = "total number of snails", 
          lat = ll_dat$lat_mean, 
-         long = ll_dat$long_mean) %>%
+         long = ll_dat$long_mean, 
+         site = "South Cove") %>%
   arrange(species, year)
 
 names(df_final)
 
 dfMeta <- data.frame(
-  study = "Galloway-Frank_2017", 
-  studySub = NA, 
+  study = "Galloway_2017", 
+  studySub = df_final$studySub, 
   fig_table = "Table_4", 
   species = df_final$species, 
   site = df_final$site, 
@@ -177,8 +197,8 @@ dfMeta <- data.frame(
   year_error_type = NA, 
   sample_size = df_final$sample_size, 
   sample_size_units = df_final$sample_size_units, 
-  museum = FALSE, 
-  size_threshold_mm = 0, 
+  museum = df_final$museum, 
+  size_threshold_mm = df_final$size_threshold, 
   latitude = df_final$lat, 
   longitude = df_final$long
 )

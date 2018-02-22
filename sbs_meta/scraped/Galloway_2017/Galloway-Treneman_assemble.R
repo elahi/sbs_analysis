@@ -85,14 +85,16 @@ df_final <- tren_meta %>%
          sample_size = n) %>%
   mutate(species = gsub(species, pattern = "\\.", replacement = " "), 
          time_rep = NA, 
-         sample_size_units = "mean size of snails by tidal height") %>%
+         sample_size_units = "mean size of snails by tidal height", 
+         museum = FALSE, 
+         studySub = NA) %>%
   arrange(species, year)
 
 head(df_final)
 
 dfMeta <- data.frame(
-  study = "Galloway-Treneman_2017", 
-  studySub = NA, 
+  study = "Galloway_2017", 
+  studySub = df_final$studySub, 
   fig_table = "Figure_2", 
   species = df_final$species, 
   site = df_final$site, 
@@ -109,7 +111,7 @@ dfMeta <- data.frame(
   year_error_type = NA, 
   sample_size = df_final$sample_size, 
   sample_size_units = df_final$sample_size_units, 
-  museum = FALSE, 
+  museum = df_final$museum, 
   size_threshold_mm = min_threshold, 
   latitude = lat_mean, 
   longitude = long_mean

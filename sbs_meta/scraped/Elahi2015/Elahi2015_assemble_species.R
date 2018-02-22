@@ -23,6 +23,7 @@ library(lubridate)
 
 # Function to load cleaned data
 source("R/choose_size_data.R")
+source("R/choose_size_threshold.R")
 
 # load data - approximated sizes
 dat <- choose_size_data(method = "uniform")
@@ -34,40 +35,43 @@ unique(dat$site)
 dat <- dat %>% 
   mutate(site = ifelse(sp == "LIKE", as.character(sampleArea), site))
 
-# Exclude smallest snails?
-dat %>% 
-  ggplot(aes(size1mm, fill = era)) + 
-  geom_histogram(binwidth = 1) + 
-  facet_wrap(~ species) + 
-  geom_vline(xintercept = 5)
+# Size threshold for museum comparison
+dat_sub <- choose_size_threshold(dat, era = "combined", my_quantile = 0.5)
+dat <- dat %>% mutate(size_threshold = 0)
 
-min_threshold <- 0
-
-dat2 <- dat %>% filter(size1mm >= min_threshold)
+dat %>% count(species, era)
+dat_sub %>% count(species, era)
 
 ##### SUMMARISE #####
 
 ## Summarise across sample areas
-dat_summary <- dat2 %>% 
-  group_by(species, sp, year, era) %>% 
+dat_summary_all <- dat %>% 
+  group_by(species, sp, year, era, size_threshold) %>% 
   summarise(size1mm_mean = mean(size1mm, na.rm = TRUE), 
             size1mm_sd = sd(size1mm, na.rm = TRUE), 
             sample_size = n()) %>%
-  ungroup() 
+  ungroup() %>% 
+  mutate(studySub = "threshold_none", 
+         museum = FALSE)
 
-dat_summary
+dat_summary_sub <- dat_sub %>% 
+  group_by(species, sp, year, era, size_threshold) %>% 
+  summarise(size1mm_mean = mean(size1mm, na.rm = TRUE), 
+            size1mm_sd = sd(size1mm, na.rm = TRUE), 
+            sample_size = n()) %>%
+  ungroup() %>% 
+  mutate(studySub = "threshold_median", 
+         museum = TRUE)
+
+dat_summary <- rbind(dat_summary_all, dat_summary_sub)
 
 #### LAT LONG ####
 
 ll_dat <- dat %>% 
   filter(!is.na(lat)) %>% 
-  group_by(species) %>% 
   summarise(lat_mean = mean(lat), 
-            long_mean = mean(long)) %>% 
-  ungroup()
+            long_mean = mean(long))
 ll_dat
-
-dat_summary <- left_join(dat_summary, ll_dat, by = c("species"))
 
 ##### FORMAT TABLE FOR META-ANALYSIS #####
 names(dat_summary)
@@ -78,15 +82,16 @@ df_final <- dat_summary  %>%
          sample_size_units = "number of snails", 
          time_rep = NA,          
          size_original = "raw", 
-         site = "Hopkins Marine Station") %>% 
+         site = "Hopkins Marine Station", 
+         lat_mean = ll_dat$lat_mean, 
+         long_mean = ll_dat$long_mean) %>% 
   arrange(species, site, year)
 
 head(df_final)
 
-
 dfMeta <- data.frame(
   study = "Elahi_2015", 
-  studySub = NA, 
+  studySub = df_final$studySub, 
   fig_table = "various", 
   species = df_final$species, 
   site = df_final$site, 
@@ -103,8 +108,8 @@ dfMeta <- data.frame(
   year_error_type = NA, 
   sample_size = df_final$sample_size, 
   sample_size_units = df_final$sample_size_units, 
-  museum = FALSE, 
-  size_threshold_mm = 0, 
+  museum = df_final$museum, 
+  size_threshold_mm = df_final$size_threshold, 
   latitude = df_final$lat_mean, 
   longitude = df_final$long_mean
 )

@@ -122,7 +122,7 @@ df_final <- df %>%
 names(df_final)
 
 dfMeta <- data.frame(
-  study = "Roy 2003", 
+  study = "Roy_2003", 
   studySub = df_final$temporalBin2, 
   fig_table = "Figure_2", 
   species = df_final$species, 
