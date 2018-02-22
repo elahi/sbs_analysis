@@ -31,6 +31,9 @@ fisher <- read_csv("sbs_meta/output/dfMeta_Fisher2009_MDI.csv")
 ## Wilson-Brodie 2017
 wilson <- read_csv("sbs_meta/output/dfMeta_Wilson-Brodie_2017.csv")
 
+## Sagarin 2010
+sagarin <- read_csv("sbs_meta/output/dfMeta_Sagarin_2010.csv")
+
 ## Select first museum sample and field for Roy
 roy <- read_csv("sbs_meta/output/dfMeta_Roy2003.csv") %>% filter(studySub != "Baseline_2")
 
@@ -89,9 +92,6 @@ datM <- datM %>%
          lower = yi - 2*sei)
 
 ##### PLOT #####
-
-my_dodge <- 0
-
 spp_df <- datM %>% distinct(species2, study)
 
 my_axis_labels <- paste(datM$species)
@@ -102,17 +102,20 @@ rev(my_axis_labels)
 datM_royCNM <- datM %>% filter(study == "Roy_2003-Protected")
 datM_sub <- datM %>% filter(study != "Roy_2003-Protected")
 
-
+## Plotting deets
 theme_set(theme_bw(base_size = 12) + 
             theme(panel.grid = element_blank(), 
                   strip.background = element_blank())) 
+my_dodge <- 0
+my_point_size <- 2
+my_bar_width <- 0
 
 datM_sub %>% 
   ggplot(aes(species2, yi, fill = study, shape = museum)) + 
-  geom_point(position = position_dodge(my_dodge), size = 3) + 
   geom_errorbar(aes(ymin = lower, ymax = upper), 
                 position = position_dodge(my_dodge), 
-                width = 0.25) + 
+                width = my_bar_width) + 
+  geom_point(position = position_dodge(my_dodge), size = my_point_size) + 
   coord_flip() + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
   labs(y = "Proportional change in body size", 
@@ -121,11 +124,11 @@ datM_sub %>%
   theme(legend.position = "none") + 
   #scale_x_discrete("", labels = rev(my_axis_labels)) + 
   theme(axis.text.y = element_text(face = "italic")) + 
-  geom_point(data = datM_royCNM, position = position_dodge(my_dodge), size = 3, 
-             fill = "white") + 
   geom_errorbar(data = datM_royCNM, aes(ymin = lower, ymax = upper), 
                 position = position_dodge(my_dodge), 
-                width = 0.25) 
+                width = my_bar_width) +
+  geom_point(data = datM_royCNM, position = position_dodge(my_dodge), 
+             size = my_point_size, fill = "gray")
 
 ggsave("sbs_meta/meta_figs/meta_lrr.pdf", height = 3.5, width = 4.5)
 
