@@ -14,196 +14,116 @@
 
 library(dplyr)
 library(tidyr)
+library(readr)
 library(ggplot2)
 
-# Function to take the scraped data and assemble into a single dataframe
-
-path <- "sbs_meta/scraped/Roy2003/"
-
-# Get list of files
-fileNames <- dir(path = path, recursive = TRUE, 
-                 pattern = ".csv")
-
-fileNames
-
-# Set up the first dataframe
-
-paste(path, fileNames[1], sep = "")
-
-i = 1
-
-df <- read.csv(file = paste(path, fileNames[i], sep = ""), 
-               header = FALSE)
-
-df <- df %>% rename(length_ln = V2) %>%
-  mutate(temporalBin = c(rep("Pre-1960", 3), rep("1961-1980", 3), 
-                         rep("Field", 3), rep("CNM", 3)), 
-         csvFile = fileNames[i])
-
+df <- read_csv("sbs_meta/scraped/Roy2003/Roy2003_processed.csv")
 df
 
-# Get the remaining species
-for(i in 2:length(fileNames)) { 
-    
-    df.i <- read.csv(file = paste(path, fileNames[i], sep = ""), 
-                   header = FALSE)
-    
-    df.i <- df.i %>% rename(length_ln = V2) %>%
-      mutate(temporalBin = c(rep("Pre-1960", 3), rep("1961-1980", 3), 
-                             rep("Field", 3), rep("CNM", 3)), 
-             csvFile = fileNames[i])
-    
-    # Add to existing dataframe
-    df <- rbind(df, df.i)
-  }
-
-df
-
-##### RENAME SITES AND TIMES #####
-
-# Get sites
-df <- df %>% 
-  mutate(site = ifelse(test = (temporalBin == "Pre-1960" |
-                         temporalBin == "1961-1980"), yes = "Museum", 
-         no = temporalBin), 
-         time_rep = ifelse(test = (temporalBin == "Pre-1960" |
-                                 temporalBin == "1961-1980"), yes = temporalBin, 
-                       no = "2001"), 
-         time_rep = gsub(pattern = "Pre-1960", time_rep, 
-                         replacement = "1885-1960"))
-
-head(df)
-
-##### SPECIES NAMES #####
-# Get species names using string split
-csvList <- strsplit(df$csvFile, split = "_")
-
-csv_df <- data.frame(matrix(unlist(csvList), nrow = 48, byrow = TRUE), 
-                     stringsAsFactors = FALSE) 
-csv_df
-
-sppList <- strsplit(csv_df$X3, split = "[.]")
-
-spp_df <- data.frame(matrix(unlist(sppList), nrow = 48, byrow = TRUE), 
-                     stringsAsFactors = FALSE) 
-
-df$species <- spp_df$X1
-
-# Get species names by hand
-df$species <- c(rep("Acanthinucella spirata", 12), rep("Fissurella volcano", 12), 
-             rep("Lottia gigantea", 12), rep("Tegula aureotincta", 12))
-
-##### CALCULATE MEAN SE #####
-
-# Assign the upper, mean, and lower error bars
-df$value <- rep(c("upperSE", "length_mean", "lowerSE"), 16)
-
-# Get wide format for error values
-df2 <- df %>% select(- V1) %>%
-  spread(., key = value, value = length_ln)
-head(df2)
-
-# Get the mean SE
-df2 <- df2 %>% 
-  mutate(diffLower = length_mean - lowerSE, 
-         diffUpper = upperSE - length_mean, 
-         diffMean = (diffLower + diffUpper)/2)
-
-head(df2)
-
-##### ASSIGN TIMES #####
-
-### From Roy 2003:
-# These data provide a historical time series extending 
-# from 1869 to 1981 for F. volcano, 
-# 1896–1975 for T. aureotincta,
-# 1869–1960 for L. gigantea 
-# and 1903–1985 for A. spirata. 
-
-# Pre-1960 times = earliest date, 1959
-Fvolcano1 <- mean(c(1869, 1959))
-Taureotincta1 <- mean(c(1896, 1959))
-Lgigantea1 <- mean(c(1869, 1959))
-Aspirata1 <- mean(c(1903, 1959))
-
-# 1961-1980 times = earliest date, 1959
-Fvolcano2 <- mean(c(1961, 1980))
-Taureotincta2 <- mean(c(1961, 1975))
-Lgigantea2 <- NA
-Aspirata2 <- mean(c(1961, 1980))
-
-with(df2, cbind(temporalBin, species))
-year <- c(Aspirata2, Fvolcano2, Lgigantea2, Taureotincta2, 
-          rep(2001, 8), 
-          Aspirata1, Fvolcano1, Lgigantea1, Taureotincta1)
-year
-
-df2$year <- year
-
-
-## This back-calculation of the error is wrong
-## I need to correct this
-
-## See this post
-## https://stats.stackexchange.com/questions/123514/calculating-standard-error-after-a-log-transform
-df3 <- df2 %>%
-  mutate(size_rep = exp(length_mean),
-         size_error = exp(diffMean), 
-         size_upper = exp(upperSE), 
-         size_lower = exp(lowerSE))
-
-df3 %>%
-  ggplot(aes(year, length_mean, color = site)) + geom_point() + 
+df %>%
+  ggplot(aes(year, length_mean, color = temporalBin)) + geom_point() + 
   facet_wrap(~ species, scales = "free_y") + 
-  # facet_wrap(~ species) + 
   geom_errorbar(aes(ymin = length_mean - diffMean, 
-                    ymax = length_mean + diffMean))
+                    ymax = length_mean + diffMean), 
+                width = 0.5)
 
-df3 %>%
+##### BRIEF INTERLUDE - BACK TRANSFORMATION FOR LOG ERRORS #####
+
+## Illustrating the problem
+## https://stats.stackexchange.com/questions/123514/calculating-standard-error-after-a-log-transform
+
+x <- rnorm(n = 1000, mean = 10, sd = 1)
+se <- function(x) {sd(x) / sqrt(length(x))}
+mean(x)
+sd(x)
+se(x)
+hist(x)
+
+z <- log(x)
+mean(z)
+sd(z)
+se(z)
+
+exp(mean(z)) # close to 10
+exp(se(z)) # 1 - not close to 0.03!
+
+# Instead, I need to do this:
+log_mean <- mean(z)
+log_sd <- sd(z)
+exp(log_mean) # ok
+exp(log_mean) * log_sd # ok!
+
+exp(log_mean) * log_sd
+
+# For the mean:
+exp(log_mean) * (1 + (log_sd^2)/2)
+
+##### BACK TRANSFORM TO MM #####
+
+#' Roy reports confidence intervals
+#' Change to standard error by dividing by 1.96
+#' Change to standard deviation by multiplying SE by the square root of N
+#' Exponentiate as above
+
+df %>% distinct(site, temporalBin,  temporalBin2)
+
+## I need the sample sizes for each mean
+## From Roy 2003 Table 1
+n_spp <- df %>% distinct(species) %>% 
+  mutate(n_museum_field = c(1675, 322, 570, 610), 
+         Museum = c(1456, 238, 91, 497), 
+         Baseline_1 = Museum / 2, # Assumes equal N for two museum periods
+         Baseline_2 = Museum / 2, # Assumes equal N for two museum periods 
+         Present = n_museum_field - Museum, 
+         Present_CNM = rep(100, 4), 
+         size_threshold = c(20, 20, 50, 20))
+n_spp 
+
+n_spp_long <- n_spp %>% select(-c(n_museum_field, Museum)) %>% 
+  gather(key = temporalBin2, value = sample_size, Baseline_1:Present_CNM)
+n_spp_long
+
+## Join with df
+df <- inner_join(df, n_spp_long, by = c("species", "temporalBin2"))
+df
+
+## Back transform
+exp(log_mean) * log_sd # sd
+exp(log_mean) * (1 + (log_sd^2)/2) # mean
+
+names(df)
+df <- df %>%
+  mutate(logsize_se = diffMean/2, 
+         logsize_sd = logsize_se * sqrt(sample_size), 
+         size_sd = exp(length_mean) * logsize_sd, 
+         size_rep = exp(length_mean) * (1 + (logsize_sd^2)/2) , 
+         size_upper = size_rep + size_sd, 
+         size_lower = size_rep - size_sd)
+
+df %>%
   ggplot(aes(year, size_rep, color = site)) + geom_point() + 
   facet_wrap(~ species, scales = "free_y") + 
-  # facet_wrap(~ species) + 
-  geom_errorbar(aes(ymin = size_rep - size_error, 
-                    ymax = size_rep + size_error))
+  geom_errorbar(aes(ymin = size_lower, 
+                    ymax = size_upper))
 
 ##### FORMAT TABLE FOR META-ANALYSIS #####
 
-df_final <- df3 %>% 
+df_final <- df %>% 
   filter(!is.na(length_mean)) %>% 
   arrange(species, year, site) %>%
   mutate(size_original = "mean", 
-         sample_size = NA, 
-         sample_size_units = NA, 
+         sample_size_units = "Total number of snails", 
          lat = 33.555, 
          long = -117.816, 
-         era = ifelse(year < 2000, "past", "present"))
+         era = ifelse(year < 2000, "past", "present"), 
+         museum = TRUE, 
+         size_error = size_sd)
 
 names(df_final)
 
 dfMeta <- data.frame(
-  study = "Roy2003", 
-  studySub = NA, 
-  fig_table = "Figure_2", 
-  species = df_final$species, 
-  site = df_final$site, 
-  size_rep = df_final$size_rep, 
-  size_units = "mm", 
-  size_error = df_final$size_error, 
-  size_error_type = "CI", 
-  time_rep = df_final$time_rep, 
-  time_error = NA, 
-  year = df_final$year, 
-  year_error = NA, 
-  year_error_type = NA, 
-  sample_size = NA, 
-  sample_size_units = NA
-)
-
-names(df_final)
-
-dfMeta <- data.frame(
-  study = "Roy_2003", 
-  studySub = NA, 
+  study = "Roy 2003", 
+  studySub = df_final$temporalBin2, 
   fig_table = "Figure_2", 
   species = df_final$species, 
   site = df_final$site, 
@@ -211,7 +131,7 @@ dfMeta <- data.frame(
   size_rep = df_final$size_rep, 
   size_units = "mm", 
   size_error = df_final$size_error, 
-  size_error_type = "CI", 
+  size_error_type = "SD", 
   time_rep = df_final$time_rep, 
   time_error = NA, 
   era = df_final$era, 
@@ -220,8 +140,8 @@ dfMeta <- data.frame(
   year_error_type = NA, 
   sample_size = df_final$sample_size, 
   sample_size_units = df_final$sample_size_units, 
-  museum = TRUE, 
-  size_threshold_mm = 0, 
+  museum = df_final$museum, 
+  size_threshold_mm = df_final$size_threshold, 
   latitude = df_final$lat, 
   longitude = df_final$long
 )

@@ -9,7 +9,7 @@ library(dplyr)
 library(readr)
 library(tidyr)
 library(ggplot2)
-theme_set(theme_bw(base_size = 12) + 
+theme_set(theme_bw(base_size = 16) + 
             theme(panel.grid = element_blank(), 
                   strip.background = element_blank())) 
 library(viridis)
@@ -33,10 +33,16 @@ fisher <- read_csv("sbs_meta/output/dfMeta_Fisher2009_MDI.csv")
 wilson <- read_csv("sbs_meta/output/dfMeta_Wilson-Brodie_2017.csv")
 
 ## Select first museum sample and field for Roy
-roy <- read_csv("sbs_meta/output/dfMeta_Roy2003.csv")
+roy <- read_csv("sbs_meta/output/dfMeta_Roy2003.csv") %>% filter(studySub != "Baseline_2")
+roy
+
+roy_present <- roy %>% filter(studySub != "Present_CNM") %>% 
+  mutate(study = "Roy 2003 - Unprotected")
+roy_presentCNM <- roy %>% filter(studySub != "Present") %>% 
+  mutate(study = "Roy 2003 - Protected")
 
 ## Compile
-dat <- rbind(elahi, gall_frank, gall_tren, hay_king, fisher, wilson) 
+dat <- rbind(elahi, gall_frank, gall_tren, hay_king, fisher, wilson, roy_present, roy_presentCNM) 
 
 ## For metafor, I want the data in wide format
 names(dat)
@@ -53,7 +59,7 @@ datM <- dat2 %>%
 ## Try metafor
 library(metafor)
 names(datM)
-names(datM) <- c("study", "species", "museum", "latitude", "sd2i", "n2i", "m2i", "sd1i", "n1i", "m1i")
+names(datM) <- c("study","species", "museum", "latitude", "sd2i", "n2i", "m2i", "sd1i", "n1i", "m1i")
 datM
 
 ### calculate log ratio of means and corresponding sampling variances
@@ -72,27 +78,20 @@ datM <- datM %>%
   mutate(species = reorder(species, latitude))
 
 ### Plot this
-ggplot(datM, aes(x = yi, y = species, color = study)) +
-  geom_segment(aes(x = lower, xend = upper, y = species, yend = species)) +
-  geom_point() + 
-  geom_vline(xintercept = 0, linetype = "dashed", color = "gray") + 
-  labs(x = "Proportional change in body size", 
-       y = "") + 
-  theme(legend.position = "right")
-
 my_dodge <- 0.5
 
 datM %>% 
-  ggplot(aes(species, yi, color = study)) + 
-  geom_point(position = position_dodge(my_dodge)) + 
+  ggplot(aes(species, yi, fill = study, shape = museum)) + 
+  geom_point(position = position_dodge(my_dodge), size = 3) + 
   geom_errorbar(aes(ymin = lower, ymax = upper), 
                 position = position_dodge(my_dodge), 
-                width = my_dodge/2) + 
+                width = 0) + 
   coord_flip() + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
   labs(y = "Proportional change in body size", 
-       x = "")
-ggsave("sbs_meta/meta_figs/meta_lrr_field.pdf", height = 5, width = 7)
+       x = "") + 
+  scale_shape_manual(values = c(21, 22))
+ggsave("sbs_meta/meta_figs/meta_lrr.pdf", height = 5, width = 7)
 
 ### meta-analysis of log ratio of means using a random-effects model
 res <- rma(yi, vi, method = "DL", data = datM)

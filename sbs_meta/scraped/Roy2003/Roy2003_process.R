@@ -14,20 +14,16 @@
 
 library(dplyr)
 library(tidyr)
-library(ggplot2)
 
 # Function to take the scraped data and assemble into a single dataframe
-
 path <- "sbs_meta/scraped/Roy2003/"
 
 # Get list of files
 fileNames <- dir(path = path, recursive = TRUE, 
                  pattern = ".csv")
 
-fileNames
 
 # Set up the first dataframe
-
 paste(path, fileNames[1], sep = "")
 
 i = 1
@@ -39,8 +35,6 @@ df <- df %>% rename(length_ln = V2) %>%
   mutate(temporalBin = c(rep("Pre-1960", 3), rep("1961-1980", 3), 
                          rep("Field", 3), rep("CNM", 3)), 
          csvFile = fileNames[i])
-
-df
 
 # Get the remaining species
 for(i in 2:length(fileNames)) { 
@@ -60,7 +54,6 @@ for(i in 2:length(fileNames)) {
 df
 
 ##### RENAME SITES AND TIMES #####
-
 # Get sites
 df <- df %>% 
   mutate(site = ifelse(test = (temporalBin == "Pre-1960" |
@@ -139,6 +132,14 @@ year <- c(Aspirata2, Fvolcano2, Lgigantea2, Taureotincta2,
 year
 
 df2$year <- year
+
+df2 <- df2 %>% 
+  mutate(temporalBin2 = gsub(pattern = "1961-1980", replacement = "Baseline_2", x = temporalBin), 
+         temporalBin2 = gsub(pattern = "Pre-1960", replacement = "Baseline_1", x = temporalBin2), 
+         temporalBin2 = gsub(pattern = "CNM", replacement = "Present_CNM", x = temporalBin2), 
+         temporalBin2 = gsub(pattern = "Field", replacement = "Present", x = temporalBin2))
+
+df2 %>% count(temporalBin2)
 
 ## write this csv file
 write.csv(df2, "sbs_meta/scraped/Roy2003/Roy2003_processed.csv")
