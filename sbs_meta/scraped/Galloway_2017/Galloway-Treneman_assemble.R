@@ -32,43 +32,61 @@ tren_pres %>%
   geom_point(data = tren_past, aes(tide.ht.m, ave.size.mm), color = "red", alpha = 0.5)
 
 ##### SUMMARISE DATA #####
-## Get means by tidal height for present data
-tren_pres_summary <- tren_pres %>% 
-  group_by(species, sp, tide.ht.m, site) %>% 
-  summarise(size1mm = mean(size.mm, na.rm = TRUE)) %>%
-  ungroup() %>% 
-  mutate(year = 2017, 
-         era = "present")
-
-## format tren_past
-tren_past2 <- tren_past %>% 
-  select(species, sp, tide.ht.m, ave.size.mm, site) %>% 
-  rename(size1mm = ave.size.mm) %>% 
-  mutate(year = 1979, 
-         era = "past")
-
-## Combine mean size for past and present
-tren_summary <- rbind(tren_past2, tren_pres_summary)
-
-tren_summary %>% 
-  ggplot(aes(era, size1mm)) + 
-  geom_boxplot() + 
-  facet_wrap(~ species)
 
 ## In Treneman's original paper, she mentioned that it was difficult to identify limpet species when below 5mm
 ## Use 5mm as a threshold
-
 min_threshold <- 5
 
-## Summarize for meta-analysis
-tren_meta <- tren_summary %>% 
-  filter(!is.na(size1mm)) %>% 
+## Get means for present data
+tren_pres_summary <- tren_pres %>% 
+  rename(size1mm = size.mm) %>% 
+  filter(!is.na(size1mm)) %>%
   filter(size1mm >= min_threshold) %>% 
-  group_by(species, sp, year, era, site) %>% 
+  group_by(species, sp, site) %>% 
   summarise(size_mean = mean(size1mm), 
             size_sd = sd(size1mm), 
             n = n()) %>% 
   ungroup() %>% 
+  mutate(year = 2017, 
+         era = "present")
+tren_pres_summary
+
+## format tren_past
+tren_past_summary <- tren_past %>% 
+  rename(size1mm = ave.size.mm) %>% 
+  filter(!is.na(size1mm)) %>%
+  filter(size1mm >= min_threshold) %>% 
+  group_by(species, sp, site) %>% 
+  summarise(size_mean = mean(size1mm, na.rm = TRUE), 
+            size_sd = sd(size1mm, na.rm = TRUE), 
+            n = n()) %>%
+  ungroup() %>% 
+  mutate(year = 1979, 
+         era = "past")
+
+tren_past_summary
+
+# Replace sample size with the original number of limpets sampled in 1979
+# L. scutum = 40
+# L. persona = 61
+
+tren_past_summary <- tren_past_summary %>% 
+  mutate(n = c(40, 61))
+
+## The SD for present are larger because they are based on raw size data for individuals
+## So I will use these to be conservative
+
+tren_past_summary
+tren_pres_summary
+
+tren_past_summary <- tren_past_summary %>% 
+  mutate(size_sd = tren_pres_summary$size_sd)
+
+## Combine mean size for past and present
+tren_summary <- rbind(tren_past_summary, tren_pres_summary)
+
+## Summarize for meta-analysis
+tren_meta <- tren_summary %>% 
   mutate(size_original = "mean")
 tren_meta
 
