@@ -13,17 +13,22 @@
 ##### LOAD PACKAGES, DATA #####
 
 library(grid)
+library(viridis)
 source("R/choose_size_data.R")
 source("R/choose_size_threshold.R")
+source("R/change_chfu_to_tefu.R")
 
 # load data - approximated sizes
 dat <- choose_size_data(method = "normal")
 
 # Do not remove any data
-dat2 <- choose_size_threshold(x = dat, era = "combined", filter_data = F) %>% 
+dat2 <- choose_size_threshold(x = dat, era = "combined", filter_data = F, my_quantile = 0.5) %>% 
   filter(!is.na(size1mm))
 names(dat2)
 unique(dat2$species)
+
+# Change species names
+levels(dat2$species) <- new_species_levels
 
 # plotting functions
 source("./R/multiplotF.R")
@@ -57,29 +62,34 @@ facet_panels <- facet_panels %>%
 dat3 <- dat2 %>% 
   inner_join(., facet_panels, by = c("species"))
 
-theme_set(theme_bw(base_size = 12) + 
+theme_set(theme_bw(base_size = 20) + 
             theme(strip.background = element_blank(), 
                   panel.grid = element_blank(),
                   strip.text = element_text(face = "italic")))
 
+vir_cols <- viridis(2, begin = 0.2, end = 0.8)
+past_color <- vir_cols[1]
+present_color <- vir_cols[2]
+my_text_size <- 6
+
 dat3 %>% 
   ggplot(aes(size1mm, fill = era)) + 
-  geom_density(alpha = 0.5) + 
+  geom_density(alpha = 0.75) + 
   facet_wrap( ~ species) + 
-  scale_fill_manual(values = c("red", "black")) + 
+  scale_fill_manual(values = c(past_color, present_color)) + 
   xlab("Size (mm)") + 
   ylab("Probability density") + 
   theme(legend.position = "none") +
   geom_vline(aes(xintercept = size_threshold), 
              linetype = "dashed", color = "black", alpha = 0.65) +  
-  geom_text(data = facet_panels, aes(0, 0.15, label = facet_labels), 
-            inherit.aes = FALSE, size = 6, nudge_x = 1, nudge_y = 0.01) + 
+  # geom_text(data = facet_panels, aes(0, 0.15, label = facet_labels), 
+  #           inherit.aes = FALSE, size = 6, nudge_x = 1, nudge_y = 0.01) + 
   geom_text(data = facet_panels, aes(15, 0.115, label = past_text), 
-            inherit.aes = FALSE, size = 4, nudge_x = 1, nudge_y = 0.01, color = "red", hjust = 0) + 
+            inherit.aes = FALSE, size = my_text_size, nudge_x = 1, nudge_y = 0.01, color = past_color, hjust = 0) + 
   geom_text(data = facet_panels, aes(15, 0.1, label = present_text), 
-            inherit.aes = FALSE, size = 4, nudge_x = 1, nudge_y = 0.01, color = "black", hjust = 0) 
+            inherit.aes = FALSE, size = my_text_size, nudge_x = 1, nudge_y = 0.01, color = present_color, hjust = 0) 
 
-ggsave("figs_ms/plot_size_frequency_density.pdf", height = 3.5, width = 7)  
+ggsave("figs_ms/plot_size_frequency_density_ppt.pdf", height = 5, width = 10)  
 
 ## Boxplot
 dat3 %>% 
