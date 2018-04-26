@@ -72,6 +72,24 @@ dat_sub <- choose_size_threshold_general(dat, era = "combined", my_quantile = 0.
 dat %>% count(species, era)
 dat_sub %>% count(species, era)
 
+##### PLOT HISTOS #####
+library(ggplot2)
+theme_set(theme_bw(base_size = 12) + 
+            theme(panel.grid = element_blank(), 
+                  strip.background = element_blank())) 
+
+names(dat)
+
+dat %>% 
+  ggplot(aes(size1mm)) + 
+  geom_histogram(binwidth = 2, color = "black", fill = "gray") + 
+  facet_wrap(~ era, ncol = 1)
+
+dat %>% 
+  ggplot(aes(size1mm, fill = era)) + 
+  geom_histogram(binwidth = 2, color = "black", alpha = 0.5) 
+
+
 ##### SUMMARISE #####
 
 ## Summarise across sample areas

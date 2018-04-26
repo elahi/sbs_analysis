@@ -13,7 +13,7 @@ theme_set(theme_bw(base_size = 12) +
 library(viridis)
 
 elahi <- read_csv("sbs_meta/output/dfMeta_Elahi2015.csv")
-fisher <- read_csv("sbs_meta/output/dfMeta_Fisher2009.csv")
+fisher <- read_csv("sbs_meta/output/dfMeta_Fisher2009_original.csv")
 gall_frank <- read_csv("sbs_meta/output/dfMeta_Galloway-Frank_2017.csv")
 gall_tren <- read_csv("sbs_meta/output/dfMeta_Galloway-Treneman_2017.csv")
 hay_king <- read_csv("sbs_meta/output/dfMeta_Hayford-King_2017.csv")
