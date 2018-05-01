@@ -1,6 +1,6 @@
 
 # Function to truncate data for one species at a time
-truncate_data <- function(dat, era = "past", quant = 0.5){
+truncate_data <- function(dat, era = "past", quant = 0.5, filter_data = TRUE){
   
   my_quantile = quant
   
@@ -23,8 +23,19 @@ truncate_data <- function(dat, era = "past", quant = 0.5){
     dat <- dat %>% group_by(era) %>% 
       mutate(size_threshold = quantile(size1mm, probs = my_quantile)) %>% ungroup() 
   }
+  
+  if(era == "separate_min"){
+    # Get size thresholds for past and present data separately, then choose the smaller threshold and apply to both
+    size_threshold <- dat %>% group_by(era) %>% 
+      mutate(size_threshold = quantile(size1mm, probs = my_quantile)) %>% ungroup() %>%
+      distinct(era, size_threshold) %>% 
+      arrange(size_threshold) %>% 
+      slice(1) %>% select(size_threshold) %>% unlist(use.names = FALSE)
+    
+    dat$size_threshold <- size_threshold
+  }
 
-  if(my_quantile > 0){
+  if(filter_data == TRUE){
     dat <- dat %>% filter(size1mm >= size_threshold)
   }
   

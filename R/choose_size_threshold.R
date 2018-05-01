@@ -30,6 +30,17 @@ choose_size_threshold <- function(x, era = "past", my_quantile = 0.05, filter_da
       ungroup()
   }
   
+  if(era == "separate_min"){
+    # Get size thresholds for past and present data separately, then choose the smaller threshold and apply to both
+    size_threshold <- x %>% group_by(era) %>% 
+      mutate(size_threshold = quantile(size1mm, probs = my_quantile, na.rm = TRUE)) %>% ungroup() %>%
+      distinct(era, size_threshold) %>% 
+      arrange(size_threshold) %>% 
+      slice(1) %>% select(size_threshold) %>% unlist(use.names = FALSE)
+    
+    x$size_threshold <- size_threshold
+  }
+  
   if(era == "combined"){
     # Get size thresholds for each species, across both eras
     x <- x %>% 

@@ -21,11 +21,12 @@ source("R/change_chfu_to_tefu.R")
 # load data - approximated sizes
 dat <- choose_size_data(method = "normal")
 
-# Do not remove any data
-dat2 <- choose_size_threshold(x = dat, era = "combined", filter_data = F, my_quantile = 0.5) %>% 
+# Combined medians
+dat2 <- choose_size_threshold(x = dat, era = "past", filter_data = F, my_quantile = 0.25) %>% 
   filter(!is.na(size1mm))
 names(dat2)
 unique(dat2$species)
+dat2 %>% count(era, species)
 
 # Change species names
 levels(dat2$species) <- new_species_levels
@@ -144,7 +145,8 @@ plot_histo_panel <- function(df, bin_width = 1) {
   
 # Need to customize for each panel:
 
-theme_set(theme_bw(base_size = 10))
+theme_set(theme_bw(base_size = 10) + 
+            theme(panel.grid = element_blank())) 
 
 # theme_set(theme_bw(base_size = 10) + 
 #             theme(panel.grid = element_blank()))
@@ -156,7 +158,7 @@ fig1a <- plot_histo_panel(waraPast, bin_width = 2) +
            x = 32, y = 0.31, size = 2.2, vjust = 1, hjust = 1) +
   annotate("text", label = "A", 
            x = 2, y = 0.31, vjust = 1, hjust = -0.05) + 
-  ggtitle("Chlorostoma funebralis") + 
+  ggtitle("Tegula funebralis") + 
   theme(plot.title = element_text(size = 6, face = "italic", 
                                   hjust = 0.5, vjust = 0.9)) 
 
