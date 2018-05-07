@@ -21,7 +21,7 @@ source("R/change_chfu_to_tefu.R")
 dat <- choose_size_data(method = "normal")
 
 # Choose size threshold
-dat2 <- choose_size_threshold(x = dat, era = "separate", filter_data = F, my_quantile = 0.5) %>% 
+dat2 <- choose_size_threshold(x = dat, era = "past", filter_data = F, my_quantile = 0.05) %>% 
   filter(!is.na(size1mm))
 names(dat2)
 unique(dat2$species)

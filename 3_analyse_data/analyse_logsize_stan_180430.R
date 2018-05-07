@@ -40,10 +40,10 @@ statDat <- waraDF
 # statDat <- rbind(statDat, pres_d)
 
 ## My quantile for size threshold
-my_quantile <- 0.5
+my_quantile <- 0.05
 
 ## Plot raw data with size threshold
-statDat <- truncate_data(waraDF, era = "separate", quant = my_quantile, filter_data = FALSE)
+statDat <- truncate_data(statDat, era = "past", quant = my_quantile, filter_data = FALSE)
 statDat %>% 
   ggplot(aes(size1mm)) + 
   geom_histogram(binwidth = 1, fill = "white", color = "black") + 
@@ -51,7 +51,7 @@ statDat %>%
   geom_vline(aes(xintercept = size_threshold), color = "red")
 
 ## Choose data
-statDat <- truncate_data(childsDF, era = "separate_min", quant = my_quantile, filter_data = TRUE)
+statDat <- truncate_data(statDat, era = "past", quant = my_quantile, filter_data = TRUE)
 statDat %>% count(sampleArea, era)
 
 ##### PREP DATA FOR REGRESSION ANALYSIS #####
@@ -117,6 +117,14 @@ sjp.lmer(lmer2, type = "re", p.kr = F)
 sjp.lmer(lmer2, type = "fe", p.kr = F)
 plot(lmer2)
 
+##' Partially pooled model (with random slope and intercept for each group)
+lmer3 <- lmer(size_log ~ era01*x2z*x3z + (era01 | group_j), data = statDat)
+summary(lmer2)
+coef(lmer2)
+sjp.lmer(lmer2, type = "re", p.kr = F)
+sjp.lmer(lmer2, type = "fe", p.kr = F)
+plot(lmer2)
+
 ##### RSTAN #####
 
 CORES <- 4
@@ -126,14 +134,29 @@ SEED <- 101
 stan0 <- stan_lm(size_log ~ era01*x2z + era01*x3z, data = statDat, 
                  prior = R2(0.5, what = "median"),  
                  cores = CORES, seed = SEED)
+
+stan1 <- stan_lm(size_log ~ era01*x2z*x3z, data = statDat, 
+                 prior = R2(0.5, what = "median"),  
+                 cores = CORES, seed = SEED)
+
+plot(stan0, regex_pars = c("era01", "x"))
+plot(stan1, regex_pars = c("era01", "x"))
+
+
 stan0
+plot(stan0)
 plot(stan0, regex_pars = c("era01", "x"))
 pp_check(stan0, plotfun = "hist", nreps = 5)
 pp_check(stan0, plotfun = "stat_2d", stat = c("mean", "sd"))
 
 ## LOO - model performance
 loo_0 <- loo(stan0)
+loo_1 <- loo(stan1)
 loo_0
+loo_1
+loo::compare(loo_0, loo_1)
+#(negative 'elpd_diff' favors 1st model, positive favors 2nd) 
+
 
 ##### SUMMARISE MCMC DRAWS #####
 
