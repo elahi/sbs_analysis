@@ -1,0 +1,4 @@
+Collumn name,Description
+shell_length_mm,length of an individual Nucella lamellosa's shell in millimeters
+breeding_group,"whether the individual N. lamellosa was from a breeding group or not. 1= YES, 0= NO"
+Year,year of the survey

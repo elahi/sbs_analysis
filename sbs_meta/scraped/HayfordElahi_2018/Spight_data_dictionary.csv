@@ -1,0 +1,5 @@
+Collumn,Deifnition
+shell_length_mm,"length of shell in mm, as extracted from Spight 1974 in Ecology via webplotdigitizer"
+fequency_of_occurence,number of individuals with the associated shell length within the measured population. As extracted from figure in Spight 1974 in Ecology via webplotdigitizer.
+Year,Year population was surveyed
+breeding_group,"notates whether data is from a breeding group or non breeding group population. 1 = YES breeding group, 0 = NO."
