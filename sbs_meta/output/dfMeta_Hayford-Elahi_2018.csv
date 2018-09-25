@@ -1,0 +1,5 @@
+"","study","studySub","fig_table","species","site","size_original","size_rep","size_units","size_error","size_error_type","time_rep","time_error","era","year","year_error","year_error_type","sample_size","sample_size_units","museum","size_threshold_mm","latitude","longitude"
+"1","Hayford-Elahi_2018","threshold_none","Figure 2","Nucella lamellosa","Shady Cove","raw",29.501040943789,"mm",5.80434753478569,"SD",NA,NA,"past",1969,NA,NA,1441,"total number of snails",FALSE,0,48.552,-123.006
+"2","Hayford-Elahi_2018","threshold_median","Figure 2","Nucella lamellosa","Shady Cove","raw",34.3728,"mm",3.25422250354276,"SD",NA,NA,"past",1969,NA,NA,625,"total number of snails",FALSE,31,48.552,-123.006
+"3","Hayford-Elahi_2018","threshold_none","Figure 2","Nucella lamellosa","Shady Cove","raw",34.3774720550301,"mm",9.2600268847839,"SD",NA,NA,"present",2018,NA,NA,1163,"total number of snails",FALSE,0,48.552,-123.006
+"4","Hayford-Elahi_2018","threshold_median","Figure 2","Nucella lamellosa","Shady Cove","raw",39.2713936430318,"mm",5.49304117590203,"SD",NA,NA,"present",2018,NA,NA,818,"total number of snails",FALSE,31,48.552,-123.006
