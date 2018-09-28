@@ -36,6 +36,7 @@ roy <- rbind(acsp, logi, teau, fivo) %>%
   mutate(era = case_when(Year < 1960 ~ "past", 
                          Year > 2000 ~ "present"))
 roy %>% count(species, era)
+roy %>% count(species, Period)
 
 # Note that Size is categorical
 roy %>% count(Size)
@@ -106,6 +107,22 @@ dat %>%
 
 # Save this file
 write.csv(dat, "sbs_meta/scraped/Roy2003_raw/Roy_raw.csv")
+
+## Compare size threshold with max size
+roy_max_size <- dat %>% 
+  filter(!is.na(era)) %>% 
+  group_by(species, sp) %>% 
+  summarise(size_max = max(size1mm, na.rm = TRUE)) %>% 
+  ungroup()
+
+## Add the size threshold used in Roy 2003
+roy_max_size <- roy_max_size %>% 
+  mutate(size_threshold = ifelse(sp == "LOGI", 50, 20), 
+         size_threshold_percent = size_threshold / size_max * 100) 
+
+roy_max_size 
+
+write.csv(roy_max_size, "sbs_meta/output/max_size_roy.csv")
 
 ##### SUMMARISE #####
 

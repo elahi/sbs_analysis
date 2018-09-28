@@ -81,6 +81,22 @@ dat %>%
   geom_histogram(binwidth = 1) + 
   facet_wrap(~ era, scales = "free_y")
 
+## Compare size threshold with max size
+df_max_size <- dat %>% 
+  filter(!is.na(era)) %>% 
+  group_by(species, sp) %>% 
+  summarise(size_max = max(size1mm, na.rm = TRUE)) %>% 
+  ungroup()
+
+## Add the size threshold used in Roy 2003
+df_max_size <- df_max_size %>% 
+  mutate(size_threshold = 30, 
+         size_threshold_percent = size_threshold / size_max * 100) 
+
+df_max_size 
+
+write.csv(df_max_size, "sbs_meta/output/max_size_wilson.csv")
+
 ##### SUMMARISE DATA #####
 ## Get means for entire site
 

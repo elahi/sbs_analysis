@@ -24,8 +24,8 @@ elahi <- elahi %>%
 gall_frank <- read_csv("sbs_meta/output/dfMeta_Galloway-Frank_2017.csv") %>% 
   mutate(museum = "field")
 
-gall_tren <- read_csv("sbs_meta/output/dfMeta_Galloway-Treneman_2017.csv") %>%
-  mutate(museum = "field", studySub = "threshold_none")
+gall_tren <- read_csv("sbs_meta/output/dfMeta_Galloway-Treneman_2017.csv") %>% 
+  mutate(museum = "field")
 
 hay_king <- read_csv("sbs_meta/output/dfMeta_Hayford-King_2017.csv") %>% 
   mutate(museum = "field")
@@ -45,26 +45,27 @@ wilson <- read_csv("sbs_meta/output/dfMeta_Wilson-Brodie_2017.csv") %>%
 
 ## Sagarin 2010
 sagarin <- read_csv("sbs_meta/output/dfMeta_Sagarin_2010.csv") %>% 
-  mutate(museum = "museum") 
-
-## Select first museum sample and field for Roy (using raw data now)
-roy <- read_csv("sbs_meta/output/dfMeta_Roy2003_raw.csv") %>% 
   mutate(museum = "museum")
 
+## Select first museum sample and field for Roy
+roy <- read_csv("sbs_meta/output/dfMeta_Roy2003.csv") %>% filter(studySub != "Baseline_2") %>% 
+  mutate(museum = "museum")
+
+roy_present <- roy %>% filter(studySub != "Present_CNM") %>% 
+  mutate(study = "Roy_2003-Unprotected", studySub = "Unprotected")
+roy_presentCNM <- roy %>% filter(studySub != "Present") %>% 
+  mutate(study = "Roy_2003-Protected", studySub = "Protected")
+
 ## Compile
-dat <- rbind(elahi, gall_frank, hay_king, hay_elahi, gall_tren, 
-             fisher, wilson, roy, sagarin) 
+dat <- rbind(elahi, gall_frank, gall_tren, hay_king, hay_elahi, 
+             fisher, wilson, roy_present, roy_presentCNM, sagarin) 
 
 ### Add UK to lapillus
 dat <- dat %>% 
   mutate(species2 = ifelse(study == "WilsonBrodie_2017", 
                            paste(species, "(UK)", sep = " "), species), 
          species2 = ifelse(study == "Galloway_2017" & species == "Tegula funebralis", 
-                           paste(species, "(OR)", sep = " "), species2), 
-         species2 = ifelse(study == "Hayford-Elahi_2018", 
-                           paste(species, "(SC)", sep = " "), species2), 
-         species2 = ifelse(study == "Hayford_2017", 
-                           paste(species, "(FB)", sep = " "), species2))
+                           paste(species, "(OR)", sep = " "), species2))
 
 ##### PREP FOR METAFOR #####
 ## For metafor, I want the data in wide format
@@ -110,30 +111,3 @@ res <- rma(yi, vi, method = "DL", data = datM)
 res
 forest(res)
 
-#### CALCULATE LOG RATIO OF MEANS BY STUDIES #####
-
-## For museum specimens
-datM_museum <- datM %>% 
-  filter(museum == "museum") %>% 
-  mutate(studySub = ifelse(is.na(studySub), "threshold_half_max", studySub)) %>% 
-  filter(studySub != "threshold_median")
-res_museum <- rma(yi, vi, method = "DL", data = datM_museum)
-forest(res_museum)
-
-## For field - all snails
-datM_field_all <- datM %>% 
-  filter(museum == "field" & studySub == "threshold_none")
-res_field <- rma(yi, vi, method = "DL", data = datM_field_all)
-forest(res_field)
-
-## For field - with size threshold
-datM_field_threshold <- datM %>% 
-  filter(museum == "field" & studySub == "threshold_median")
-res_field_sub <- rma(yi, vi, method = "DL", data = datM_field_threshold)
-forest(res_field_sub)
-
-## Most appropriate subset
-#' Data, as is
-datM_final <- rbind(datM_museum, datM_field_all)
-res_final <- rma(yi, vi, method = "DL", data = datM_final)
-forest(res_final)
