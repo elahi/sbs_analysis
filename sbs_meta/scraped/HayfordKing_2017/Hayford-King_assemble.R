@@ -1,5 +1,5 @@
 ################################################################################
-##' @title Assembling scraped data, Galloway-Frank 2017
+##' @title Assembling scraped data, Hayford-King 2017
 ##'
 ##' @author Robin Elahi
 ##' @contact elahi.robin@gmail.com
@@ -64,6 +64,11 @@ ackerman2 %>% count(era)
 ackerman2 <- ackerman2 %>% 
   mutate(lat = as.numeric(remove_last_char(as.character(lat))), 
          long = -as.numeric(remove_last_char(as.character(long))))
+
+# Save this file
+dat <- ackerman2 %>% 
+  mutate(study = "Hayford-King")
+write.csv(dat, "sbs_meta/scraped/HayfordKing_2017/Hayford-King_raw.csv")
 
 # Size threshold for museum comparison
 dat <- ackerman2 %>% mutate(size_threshold = 0)

@@ -117,6 +117,9 @@ frank2 <- frank2 %>%
 frank2 %>% count(era)
 with(frank2, plot(size1mm, size1mm_rand))
 
+# Save this file
+write.csv(frank2, "sbs_meta/scraped/Galloway_2017/Galloway-Frank_raw.csv")
+
 # Size threshold for museum comparison
 dat <- frank2 %>% mutate(size_threshold = 0)
 

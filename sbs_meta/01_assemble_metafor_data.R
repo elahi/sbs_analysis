@@ -15,6 +15,7 @@ library(ggplot2)
 
 ### Field data
 elahi <- read_csv("sbs_meta/output/dfMeta_Elahi2015_species.csv") # averaged across sample areas
+
 elahi <- elahi %>% 
   mutate(species = gsub(x = species, pattern = "\\.", replacement = " ")) %>% 
   mutate(species = ifelse(species == "Chlorostoma funebralis", "Tegula funebralis", species)) %>% 
@@ -27,6 +28,9 @@ gall_tren <- read_csv("sbs_meta/output/dfMeta_Galloway-Treneman_2017.csv") %>%
   mutate(museum = "field")
 
 hay_king <- read_csv("sbs_meta/output/dfMeta_Hayford-King_2017.csv") %>% 
+  mutate(museum = "field")
+
+hay_elahi <- read_csv("sbs_meta/output/dfMeta_Hayford-Elahi_2018.csv") %>% 
   mutate(museum = "field")
 
 ### Museum data
@@ -53,7 +57,8 @@ roy_presentCNM <- roy %>% filter(studySub != "Present") %>%
   mutate(study = "Roy_2003-Protected", studySub = "Protected")
 
 ## Compile
-dat <- rbind(elahi, gall_frank, gall_tren, hay_king, fisher, wilson, roy_present, roy_presentCNM, sagarin) 
+dat <- rbind(elahi, gall_frank, gall_tren, hay_king, hay_elahi, 
+             fisher, wilson, roy_present, roy_presentCNM, sagarin) 
 
 ### Add UK to lapillus
 dat <- dat %>% 

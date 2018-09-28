@@ -40,10 +40,42 @@ dat_past <- repeat_sizes(size_bin_vector = fig2c$size_bin, count_vector = fig2c$
 hist(dat_past, breaks = 30)
 n_past <- length(dat_past)
 
-dat <- data_frame(era = c(rep("past", n_past), rep("present", n_present)), 
-                  size1mm = c(dat_past, dat_present))
+df_past <- data_frame(era = rep("past", n_past), size1mm = dat_past)
+df_present <- data_frame(era = rep("present", n_present), size1mm = dat_present)
+df <- rbind(df_past, df_present)
+
+dat <- data.frame(
+  study = "Wilson-Brodie", 
+  studySub = NA, 
+  species = "Nucella lapillus", 
+  sp = "NULP", 
+  site = "Southern UK",
+  era = df$era, 
+  date = NA, 
+  nest1 = NA, 
+  nest2 = NA, 
+  nest3 = NA, 
+  nest3note = NA, 
+  sampleUnit = NA, 
+  size1mm = df$size1mm,  
+  size1mm_rand = df$size1mm,
+  habitat = NA, 
+  tideHTm = NA, 
+  lat = NA,   
+  long = NA, 
+  Shaw_hab = NA, 
+  notes = "", 
+  notes2 = ""
+)
 
 dat %>% count(era)
+
+dat <- dat %>%
+  mutate(year = ifelse(era == "past", 1950, 2015))
+
+# Save this file
+write.csv(dat, "sbs_meta/scraped/Wilson-Brodie_2017/Wilson-Brodie_raw.csv")
+
 dat %>% 
   ggplot(aes(size1mm, fill = era)) + 
   geom_histogram(binwidth = 1) + 

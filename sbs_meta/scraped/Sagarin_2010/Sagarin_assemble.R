@@ -41,22 +41,50 @@ hist_pres <- hist_pres %>% filter(count > 0)
 
 ## Get raw sizes (use repeat sizes)
 dat_past <- repeat_sizes(size_bin_vector = hist_past$size_bin, count_vector = hist_past$count)
-hist(dat_past, breaks = 30)
 n_past <- length(dat_past)
+df_past <- data_frame(era = rep("past", n_past), size1mm = dat_past)
 
 dat_present <- repeat_sizes(size_bin_vector = hist_pres$size_bin, count_vector = hist_pres$count)
-hist(dat_present)
 n_present <- length(dat_present)
+df_present <- data_frame(era = rep("present", n_present), size1mm = dat_present)
 
-## Compile dataset
-dat <- data_frame(era = c(rep("past", n_past), rep("present", n_present)), 
-                  size1mm = c(dat_past, dat_present))
+df <- rbind(df_past, df_present)
+
+dat <- data.frame(
+  study = "Sagarin", 
+  studySub = NA, 
+  species = "Plicopurpura columellaris", 
+  sp = "PLCO", 
+  site = "Baja",
+  era = df$era, 
+  date = NA, 
+  nest1 = NA, 
+  nest2 = NA, 
+  nest3 = NA, 
+  nest3note = NA, 
+  sampleUnit = NA, 
+  size1mm = df$size1mm,  
+  size1mm_rand = df$size1mm,
+  habitat = NA, 
+  tideHTm = NA, 
+  lat = NA,   
+  long = NA, 
+  Shaw_hab = NA, 
+  notes = "", 
+  notes2 = ""
+)
 
 dat %>% count(era)
 dat %>% 
   ggplot(aes(size1mm, fill = era)) + 
   geom_histogram(binwidth = 3.3) + 
   facet_wrap(~ era)
+
+dat <- dat %>%
+  mutate(year = ifelse(era == "past", 1930, 2005))
+
+# Save this file
+write.csv(dat, "sbs_meta/scraped/Sagarin_2010/Sagarin_raw.csv")
 
 # Size threshold for museum comparison
 dat <- dat %>% mutate(size_threshold = 0)
