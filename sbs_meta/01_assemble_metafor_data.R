@@ -14,7 +14,7 @@ library(metafor)
 library(ggplot2)
 
 ### Field data
-elahi <- read_csv("sbs_meta/output/dfMeta_Elahi2015_species.csv") # averaged across sample areas
+elahi <- read_csv("sbs_meta/output/dfMeta_Elahi2015_species.csv") 
 
 elahi <- elahi %>% 
   mutate(species = gsub(x = species, pattern = "\\.", replacement = " ")) %>% 
@@ -37,11 +37,11 @@ hay_elahi <- read_csv("sbs_meta/output/dfMeta_Hayford-Elahi_2018.csv") %>%
 
 ## Fisher summary data is based on the mean sizes from 19 sites on Mount Desert Island
 fisher <- read_csv("sbs_meta/output/dfMeta_Fisher2009_MDI.csv") %>% 
-  mutate(museum = "museum")
+  mutate(museum = "museum", studySub = "threshold_none")
 
 ## Wilson-Brodie 2017
 wilson <- read_csv("sbs_meta/output/dfMeta_Wilson-Brodie_2017.csv") %>% 
-  mutate(museum = "museum")
+  mutate(museum = "museum", studySub = "threshold_half_max")
 
 ## Sagarin 2010
 sagarin <- read_csv("sbs_meta/output/dfMeta_Sagarin_2010.csv") %>% 
@@ -49,13 +49,13 @@ sagarin <- read_csv("sbs_meta/output/dfMeta_Sagarin_2010.csv") %>%
 
 ## Select first museum sample and field for Roy (using raw data now)
 roy <- read_csv("sbs_meta/output/dfMeta_Roy2003_raw.csv") %>% 
-  mutate(museum = "museum")
+  mutate(museum = "museum", studySub = "threshold_half_max")
 
 ## Compile
 dat <- rbind(elahi, gall_frank, hay_king, hay_elahi, gall_tren, 
              fisher, wilson, roy, sagarin) 
 
-### Add UK to lapillus
+### Modify species names
 dat <- dat %>% 
   mutate(species2 = ifelse(study == "WilsonBrodie_2017", 
                            paste(species, "(UK)", sep = " "), species), 
@@ -105,6 +105,9 @@ datM <- datM %>%
          upper = yi + 2*sei, 
          lower = yi - 2*sei)
 
+datM <- datM %>% 
+  mutate(museum01 = ifelse(museum == "museum", 0, 1))
+
 ### meta-analysis of log ratio of means using a random-effects model
 res <- rma(yi, vi, method = "DL", data = datM)
 res
@@ -115,7 +118,6 @@ forest(res)
 ## For museum specimens
 datM_museum <- datM %>% 
   filter(museum == "museum") %>% 
-  mutate(studySub = ifelse(is.na(studySub), "threshold_half_max", studySub)) %>% 
   filter(studySub != "threshold_median")
 res_museum <- rma(yi, vi, method = "DL", data = datM_museum)
 forest(res_museum)
@@ -133,7 +135,24 @@ res_field_sub <- rma(yi, vi, method = "DL", data = datM_field_threshold)
 forest(res_field_sub)
 
 ## Most appropriate subset
-#' Data, as is
-datM_final <- rbind(datM_museum, datM_field_all)
-res_final <- rma(yi, vi, method = "DL", data = datM_final)
-forest(res_final)
+# Data, as is
+datM_final <- rbind(datM_museum, datM_field_all) %>% 
+  arrange(desc(latitude))
+res <- rma(yi, vi, method = "DL", data = datM_final, 
+           slab = paste(species2, study, sep = ", "))
+res
+
+### Forest plot
+### decrease margins so the full space is used
+par(mar=c(4,4,1,2), mfrow = c(1,1))
+forest(res)
+
+### set up 2x2 array for plotting
+par(mfrow=c(2,2))
+
+### draw funnel plots
+funnel(res, main="Standard Error")
+funnel(res, yaxis="vi", main="Sampling Variance")
+funnel(res, yaxis="seinv", main="Inverse Standard Error")
+funnel(res, yaxis="vinv", main="Inverse Sampling Variance")
+
