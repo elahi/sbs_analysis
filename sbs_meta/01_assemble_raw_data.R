@@ -1,13 +1,9 @@
 #################################################
 # Author: Robin Elahi
-# Date: 171018
-
+# Date: 180929
 # Analysis of historical and modern gastropod body sizes
-# Hopkins Marine Station
-
 # Prepare gastropod size-freq distributions for
 # plotting and analysis
-# I will use a normal distribution to expand size-frequency data from old studies
 #################################################
 
 library(dplyr)
@@ -32,10 +28,14 @@ roy %>% count(species, era)
 roy <- roy %>% filter(!is.na(era))
 
 ## Compile
-master <- rbind(hay_king, hay_elahi, gall_frank, sag, wilson, fisher, roy)
+museum_dat <- rbind(sag, wilson, fisher, roy) %>% mutate(museum = "museum")
+field_dat <- rbind(hay_king, hay_elahi, gall_frank) %>% mutate(museum = "field")
+master <- rbind(museum_dat, field_dat) %>% 
+  mutate(lat = as.numeric(lat))
 master %>% count(study, era)
+str(master)
 
-##### Integrate Elahi data #####
+##### Elahi 2015 data #####
 
 # Function to load cleaned data
 source("R/choose_size_data.R")
@@ -43,12 +43,20 @@ source("R/choose_size_data.R")
 # load data - approximated sizes
 dat <- choose_size_data(method = "uniform")
 
+dat <- dat %>% 
+  mutate(species = gsub(x = species, pattern = "\\.", replacement = " ")) %>% 
+  mutate(species = ifelse(species == "Chlorostoma funebralis", "Tegula funebralis", species))
+
+unique(dat$species)
+
 dat2 <- dat %>% 
   select(-c(habitat, tideHTm_orig, sample_area_tidal_ht, 
             size_prop, LL, Shaw_hab)) %>% 
   mutate(study = "Elahi2015", 
          studySub = NA, 
-         size1mm_rand = size1mm)
+         size1mm_rand = size1mm, 
+         museum = "field")
+unique(dat2$lat)
 
 master2 <- master %>% 
   mutate(year = lubridate::year(mdy(date)), 
@@ -57,40 +65,23 @@ master2 <- master %>%
 
 df <- rbind(master2, dat2)
 
-##### PRELIM ANALYSIS #####
-library(lme4)
-names(df)
-df %>% count(study, species, era) %>% print(n = 200)
+## Get latitude of study x species, create labels for plotting
+df_plot <- df %>% 
+  group_by(study, species) %>% 
+  summarise(lat_study_sp = round(mean(lat, na.rm = TRUE), 2)) %>% 
+  ungroup() %>% 
+  arrange(desc(lat_study_sp)) %>% 
+  mutate(fig_legend = letters[seq(1:13)])
 
-mod1 <- lmer(log(size1mm) ~ era + (1 | species), data = df)
-summary(mod1)
+## Combine with df
+df <- df %>% left_join(., df_plot, by = c("study", "species"))
+df
 
-
-##### PRELIM PLOTS #####
-
-df %>% 
-  ggplot(aes(era, size1mm_rand)) + 
-  geom_violin() + 
-  facet_wrap(~ species + study)
-
-df %>% 
-  ggplot(aes(size1mm_rand, fill = era)) + 
-  geom_density(alpha = 0.5) + 
-  facet_wrap(~ study + species, scales = "free_y") + 
-  xlab("Size (mm)") + 
-  ylab("Probability density") + 
-  theme(legend.position = "top")
-
-ggsave("sbs_meta/meta_figs/meta_density_era.pdf", height = 5, width = 7)
-
-df %>% 
-  ggplot(aes(size1mm_rand, fill = era, color = era)) + 
-  geom_histogram(alpha = 0.5, binwidth = 2, 
-                 aes(y = ..density..), position = "identity") + 
-  facet_wrap(~ study + species, scales = "free_y", ncol = 3) + 
-  xlab("Size (mm)") + 
-  ylab("Density") + 
-  theme(legend.position = "top")
-
-ggsave("sbs_meta/meta_figs/meta_hist_era.pdf", height = 7, width = 7)
+# ##### PRELIM ANALYSIS #####
+# library(lme4)
+# names(df)
+# df %>% count(study, species, era) %>% print(n = 200)
+# 
+# mod1 <- lmer(log(size1mm) ~ era + (1 | species), data = df)
+# summary(mod1)
 

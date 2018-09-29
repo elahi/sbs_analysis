@@ -19,6 +19,8 @@ library(ggplot2)
 source("R/convert_histo_to_raw.R")
 source("R/choose_size_threshold.R")
 
+remove_last_char <- function(t) substr(t, 1, nchar(t)-1)
+
 frank <- read_csv("sbs_meta/scraped/Galloway_2017/SouthCove_Tegula-Size-Counts_Spring2017_AG-Shared_2017-10-13_size.csv") # snail size
 
 frank_counts <- read_csv("sbs_meta/scraped/Galloway_2017/SouthCove_Tegula-Size-Counts_Spring2017_AG-Shared_2017-10-13_counts.csv")
@@ -32,6 +34,10 @@ summary(frank)
 frank_transects <- frank %>% distinct(`Transect#`) %>% 
   mutate(lat = c("43.301949N", "43.302368N", "43.302711N", "43.303055N"), 
          long = c("124.39942W", "124.399239W", "124.399057W", "124.398942W"))
+
+frank_transects <- frank_transects %>% 
+  mutate(lat = as.numeric(remove_last_char(as.character(lat))), 
+         long = -as.numeric(remove_last_char(as.character(long))))
 
 frank <- left_join(frank, frank_transects, by = "Transect#")
 
@@ -152,17 +158,8 @@ dat_summary_sub <- dat_sub %>%
 dat_summary <- rbind(dat_summary_all, dat_summary_sub)
 
 ##### GET LAT LONGS #####
-str(frank2)
-
-remove_last_char <- function(t) substr(t, 1, nchar(t)-1)
-remove_last_char(frank2$lat)
-
 ll_dat <- frank2 %>% 
-  filter(era == "present") %>% 
-  mutate(lat = as.numeric(remove_last_char(as.character(lat))), 
-         long = -as.numeric(remove_last_char(as.character(long))))
-
-ll_dat <- ll_dat %>% 
+  filter(era == "present") 
   summarise(lat_mean = mean(lat), 
             long_mean = mean(long))
 

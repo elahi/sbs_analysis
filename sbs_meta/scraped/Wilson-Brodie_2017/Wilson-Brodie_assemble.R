@@ -61,8 +61,8 @@ dat <- data.frame(
   size1mm_rand = df$size1mm,
   habitat = NA, 
   tideHTm = NA, 
-  lat = NA,   
-  long = NA, 
+  lat = 50.508,   
+  long = -1.705, 
   Shaw_hab = NA, 
   notes = "", 
   notes2 = ""

@@ -22,7 +22,8 @@ source("R/choose_size_threshold.R")
 remove_last_char <- function(t) substr(t, 1, nchar(t)-1)
 
 ackerman <- read_csv("sbs_meta/scraped/HayfordKing_2017/biogeo_size_change - size_raw_HHWK.csv")
-ackerman
+ackerman <- ackerman %>% 
+  mutate(species = "Nucella lamellosa")
 names(ackerman)
 
 ackerman <- ackerman %>% mutate(Shaw_hab = NA, notes = "", notes2 = "")
