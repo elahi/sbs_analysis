@@ -114,3 +114,23 @@ choose_size_threshold_general <- function(x, era = "past", my_quantile = 0.05, f
   return(x)
   
 }
+
+
+#### HALF MAX FUNCTION #####
+
+choose_size_threshold_max <- function(x, era = "combined", my_multiplier = 0.5, filter_data = FALSE){
+  
+  if(era == "combined"){
+    # Get size thresholds, across both eras
+    x <- x %>% 
+      mutate(size_threshold = my_multiplier * max(size1mm, na.rm = TRUE)) %>% 
+      ungroup()
+  }
+  
+  if(filter_data == TRUE){
+    x <- x %>% filter(size1mm >= size_threshold)
+  }
+  
+  return(x)
+  
+}

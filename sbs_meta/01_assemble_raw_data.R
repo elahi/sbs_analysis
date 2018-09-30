@@ -8,6 +8,7 @@
 
 library(dplyr)
 library(readr)
+source("R/choose_size_threshold.R")
 
 ## Field surveys
 hay_king <- read_csv("sbs_meta/scraped/HayfordKing_2017/Hayford-King_raw.csv")
@@ -77,11 +78,34 @@ df_plot <- df %>%
 df <- df %>% left_join(., df_plot, by = c("study", "species"))
 df
 
-# ##### PRELIM ANALYSIS #####
-# library(lme4)
-# names(df)
-# df %>% count(study, species, era) %>% print(n = 200)
-# 
-# mod1 <- lmer(log(size1mm) ~ era + (1 | species), data = df)
-# summary(mod1)
+df %>% group_by(study, species) %>% 
+  filter(!is.na(size1mm)) %>% 
+  summarise(max(size1mm), 
+            min(size1mm))
+
+##### Get 1/2 max size thresholds #####
+
+df1 <- df %>%
+  group_by(study, species) %>% 
+  do(choose_size_threshold_max(.)) %>% 
+  ungroup() %>% 
+  filter(study != "Roy" & study != "Wilson-Brodie")
+
+df1 %>% distinct(study, species, size_threshold)
+
+df2 <- df %>%
+  group_by(study, species) %>% 
+  mutate(size_threshold = min(size1mm, na.rm = TRUE)) %>% 
+  ungroup() %>% 
+  filter(study == "Roy" | study == "Wilson-Brodie")
+
+df2 %>% distinct(study, species, size_threshold)
+
+## Rejoin data
+df3 <- rbind(df1, df2)
+
+dfsub <- df3 %>% filter(size1mm >= size_threshold)
+dfsub %>% group_by(study, species) %>% 
+  summarise(max(size1mm), 
+            min(size1mm))
 

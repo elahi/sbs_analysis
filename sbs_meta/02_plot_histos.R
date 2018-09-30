@@ -2,7 +2,7 @@
 # Author: Robin Elahi
 # Date: 180929
 # Analysis of historical and modern gastropod body sizes
-# Plot gastropod size-freq distributions for
+# Plot gastropod size-freq distributions
 #################################################
 
 source("sbs_meta/01_assemble_raw_data.R")
