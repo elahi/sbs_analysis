@@ -8,11 +8,6 @@
 source("sbs_meta/01_assemble_raw_data.R")
 library(nlme)
 library(broom)
-
-theme_set(theme_bw(base_size = 14) + 
-            theme(panel.grid = element_blank(), 
-                  strip.background = element_blank()))
-
 library(viridis)
 
 ###### ALL DATA #####
@@ -83,7 +78,13 @@ effects_table <- effects_table %>%
 
 ## Plot
 my_dodge <- -0.5
-  
+
+theme_set(theme_bw(base_size = 14) + 
+            theme(panel.grid.major.y = element_blank(), 
+                  panel.grid.major.x = element_line(size = 0.25), 
+                  panel.grid.minor = element_blank(), 
+                  strip.background = element_blank()))
+
 p1 <- effects_table %>% 
   filter(Param != "Intercept") %>% 
   ggplot(aes(Param, Value, fill = dataset)) + 
@@ -95,10 +96,11 @@ p1 <- effects_table %>%
   labs(x = "", y = "Model coefficient") + 
   scale_fill_viridis_d(begin = 0.25, end = 0.75) + 
   theme(legend.title = element_blank(), 
-        legend.position = c(0.95, 0.95), 
-        legend.justification = c(0.95, 0.95)) + 
+        legend.position = c(0.95, 0.99), 
+        legend.justification = c(0.95, 0.99)) + 
   scale_size_continuous(range = c(2,4), guide = FALSE) + 
-  guides(fill = guide_legend(override.aes = list(size = c(4, 2)))) 
+  guides(fill = guide_legend(override.aes = list(size = c(4, 2)))) + 
+  scale_y_continuous(breaks = seq(-0.25, 1.00, 0.25))
 
 p1
 

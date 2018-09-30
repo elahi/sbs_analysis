@@ -15,16 +15,16 @@ library(viridis)
 
 ##### HISTO PLOTS #####
 
-df %>% 
+df3 %>% 
   ggplot(aes(size1mm_rand, fill = era)) + 
-  geom_rect(data = subset(df, museum == "museum"), fill = "gray90", 
+  geom_rect(data = subset(df3, museum == "museum"), fill = "gray90", 
             xmin = -Inf, xmax = Inf,
             ymin = -Inf, ymax = Inf, alpha = 0.3) +
-  #geom_density(alpha = 0.25, aes(fill = NULL, color = era)) + 
   geom_histogram(alpha = 0.75, center = 0,  bins = 25,
                  aes(y = ..density..), 
                  color = 'black', size = 0.2, 
                  position = "identity") + 
+  geom_vline(data = df_size_threshold, aes(xintercept = size_threshold), linetype = "solid") + 
   facet_wrap(fig_legend ~ species, ncol = 3, scales = "free",  
              labeller = label_wrap_gen(multi_line = FALSE)) + 
   xlab("Size (mm)") + 

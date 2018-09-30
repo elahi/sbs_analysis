@@ -83,11 +83,12 @@ df %>% group_by(study, species) %>%
   summarise(max(size1mm), 
             min(size1mm))
 
-##### Get 1/2 max size thresholds #####
+##### Get size thresholds #####
 
 df1 <- df %>%
   group_by(study, species) %>% 
-  do(choose_size_threshold_max(.)) %>% 
+  #do(choose_size_threshold_max(.), filter_data = FALSE) %>% 
+  do(choose_size_threshold_general(., era = "combined", my_quantile = 0.5, filter_data = FALSE)) %>% 
   ungroup() %>% 
   filter(study != "Roy" & study != "Wilson-Brodie")
 
@@ -97,15 +98,20 @@ df2 <- df %>%
   group_by(study, species) %>% 
   mutate(size_threshold = min(size1mm, na.rm = TRUE)) %>% 
   ungroup() %>% 
-  filter(study == "Roy" | study == "Wilson-Brodie")
+  filter(study == "Roy" | study == "Wilson-Brodie") %>% 
+  mutate(size_threshold = ifelse(study == "Roy", size_threshold, 30))
 
 df2 %>% distinct(study, species, size_threshold)
 
 ## Rejoin data
 df3 <- rbind(df1, df2)
+df3 %>% distinct(study, species, size_threshold)
 
 dfsub <- df3 %>% filter(size1mm >= size_threshold)
 dfsub %>% group_by(study, species) %>% 
   summarise(max(size1mm), 
             min(size1mm))
+
+df_size_threshold <- df3 %>% distinct(study, species, fig_legend, size_threshold)
+df_size_threshold
 
