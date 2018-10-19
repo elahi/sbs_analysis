@@ -35,9 +35,9 @@ hay_elahi <- read_csv("sbs_meta/output/dfMeta_Hayford-Elahi_2018.csv") %>%
 
 ### Museum data
 
-## Fisher summary data is based on the mean sizes from 19 sites on Mount Desert Island
-fisher <- read_csv("sbs_meta/output/dfMeta_Fisher2009_MDI.csv") %>% 
-  mutate(museum = "museum", studySub = "threshold_none")
+## Fisher summary data is based on raw data extracted from histograms
+fisher <- read_csv("sbs_meta/output/dfMeta_Fisher2009_raw.csv") %>% 
+  mutate(museum = "museum")
 
 ## Wilson-Brodie 2017
 wilson <- read_csv("sbs_meta/output/dfMeta_Wilson-Brodie_2017.csv") %>% 
@@ -52,7 +52,7 @@ roy <- read_csv("sbs_meta/output/dfMeta_Roy2003_raw.csv") %>%
   mutate(museum = "museum", studySub = "threshold_half_max")
 
 ## Compile
-dat <- rbind(elahi, gall_frank, hay_king, hay_elahi, gall_tren, 
+dat <- rbind(elahi, gall_frank, hay_king, hay_elahi, #gall_tren, 
              fisher, wilson, roy, sagarin) 
 
 ### Modify species names
@@ -66,12 +66,15 @@ dat <- dat %>%
          species2 = ifelse(study == "Hayford_2017", 
                            paste(species, "(FB)", sep = " "), species2))
 
+dat <- dat %>% 
+  mutate(threshold = ifelse(studySub == "threshold_none", "no", "yes"))
+
 ##### PREP FOR METAFOR #####
 ## For metafor, I want the data in wide format
 names(dat)
 
 dat2 <- dat %>% 
-  select(study, studySub, species, species2, museum, latitude, era, 
+  select(study, studySub, threshold, species, species2, museum, latitude, era, 
          size_rep, size_error, sample_size) %>% 
   rename(size_n = sample_size)
 dat2
@@ -90,7 +93,7 @@ datM <- datM %>%
 
 ## Column names for metafor
 names(datM)
-names(datM) <- c("study", "studySub", "species", "species2", "museum", "latitude", 
+names(datM) <- c("study", "studySub", "threshold", "species", "species2", "museum", "latitude", 
                  "sd2i", "n2i", "m2i", "sd1i", "n1i", "m1i")
 datM
 
@@ -115,44 +118,46 @@ forest(res)
 
 #### CALCULATE LOG RATIO OF MEANS BY STUDIES #####
 
-## For museum specimens
-datM_museum <- datM %>% 
-  filter(museum == "museum") %>% 
-  filter(studySub != "threshold_median")
-res_museum <- rma(yi, vi, method = "DL", data = datM_museum)
-forest(res_museum)
-
-## For field - all snails
-datM_field_all <- datM %>% 
-  filter(museum == "field" & studySub == "threshold_none")
-res_field <- rma(yi, vi, method = "DL", data = datM_field_all)
-forest(res_field)
-
-## For field - with size threshold
-datM_field_threshold <- datM %>% 
-  filter(museum == "field" & studySub == "threshold_median")
-res_field_sub <- rma(yi, vi, method = "DL", data = datM_field_threshold)
-forest(res_field_sub)
-
-## Most appropriate subset
-# Data, as is
-datM_final <- rbind(datM_museum, datM_field_all) %>% 
-  arrange(desc(latitude))
-res <- rma(yi, vi, method = "DL", data = datM_final, 
-           slab = paste(species2, study, sep = ", "))
+## For mean size
+datM_mean <- datM %>% 
+  filter(threshold == "no")
+res <- rma(yi, vi, method = "DL", data = datM_mean)
 res
 
-### Forest plot
-### decrease margins so the full space is used
-par(mar=c(4,4,1,2), mfrow = c(1,1))
-forest(res)
+# Create results dataframe
+res_df_mean <- data.frame(yi = res$b, 
+                     upper = res$ci.ub, 
+                     lower = res$ci.lb, 
+                     size_cat = "Sizes - complete (mean)", 
+                     n = dim(datM_mean)[1])
 
-### set up 2x2 array for plotting
-par(mfrow=c(2,2))
+## For max size
+datM_max <- datM %>% 
+  filter(threshold == "yes")
+res <- rma(yi, vi, method = "DL", data = datM_max)
+res
 
-### draw funnel plots
-funnel(res, main="Standard Error")
-funnel(res, yaxis="vi", main="Sampling Variance")
-funnel(res, yaxis="seinv", main="Inverse Standard Error")
-funnel(res, yaxis="vinv", main="Inverse Sampling Variance")
+# Create results dataframe
+res_df_max <- data.frame(yi = res$b, 
+                          upper = res$ci.ub, 
+                          lower = res$ci.lb, 
+                          size_cat = "Sizes - upper (max)", 
+                         n = dim(datM_max)[1])
 
+## Results, as is
+datM_asis <- datM %>% 
+  filter(study == "Roy_2003" | study == "WilsonBrodie_2017")
+datM_asis <- rbind(datM_asis, datM_mean)
+res <- rma(yi, vi, method = "DL", data = datM_asis)
+res
+
+# Create results dataframe
+res_df_asis <- data.frame(yi = res$b, 
+                         upper = res$ci.ub, 
+                         lower = res$ci.lb, 
+                         size_cat = NA, 
+                         n = dim(datM_max)[1])
+
+
+res_df <- rbind(res_df_asis, res_df_max, res_df_mean) 
+res_df

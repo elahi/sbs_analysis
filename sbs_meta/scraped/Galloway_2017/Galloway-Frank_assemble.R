@@ -159,7 +159,7 @@ dat_summary <- rbind(dat_summary_all, dat_summary_sub)
 
 ##### GET LAT LONGS #####
 ll_dat <- frank2 %>% 
-  filter(era == "present") 
+  filter(era == "present") %>% 
   summarise(lat_mean = mean(lat), 
             long_mean = mean(long))
 

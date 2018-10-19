@@ -159,7 +159,7 @@ head(df_final)
 
 dfMeta <- data.frame(
   study = "Fisher_2009", 
-  studySub = NA, 
+  studySub = df_final$studySub, 
   fig_table = "Figure_1", 
   species = df_final$species, 
   site = df_final$site, 
