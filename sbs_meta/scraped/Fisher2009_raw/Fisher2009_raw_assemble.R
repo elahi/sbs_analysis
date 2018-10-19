@@ -18,6 +18,7 @@ library(readr)
 library(ggplot2)
 
 source("R/convert_histo_to_raw.R")
+source("R/choose_size_threshold.R")
 
 fig2a <- read_csv("sbs_meta/scraped/Fisher2009_raw/Fisher_2009_fig2a.csv") %>% 
   mutate(figure = "fig2a",
@@ -100,5 +101,89 @@ dat <- data.frame(
 # Save this file
 write.csv(dat, "sbs_meta/scraped/Fisher2009_raw/Fisher_raw.csv")
 
+# Size threshold for museum comparison
+dat <- dat %>% mutate(size_threshold = 0)
+dat_sub <- choose_size_threshold_general(dat, era = "combined", my_quantile = 0.5)
+
+dat %>% count(era)
+dat_sub %>% count(era)
+
+##### SUMMARISE #####
+
+## Summarise across sample areas
+dat_summary_all <- dat %>% 
+  group_by(era, size_threshold) %>% 
+  summarise(size1mm_mean = mean(size1mm, na.rm = TRUE), 
+            size1mm_sd = sd(size1mm, na.rm = TRUE), 
+            sample_size = n()) %>%
+  ungroup() %>% 
+  mutate(studySub = "threshold_none", 
+         museum = TRUE)
+
+dat_summary_sub <- dat_sub %>% 
+  group_by(era, size_threshold) %>% 
+  summarise(size1mm_mean = mean(size1mm, na.rm = TRUE), 
+            size1mm_sd = sd(size1mm, na.rm = TRUE), 
+            sample_size = n()) %>%
+  ungroup() %>% 
+  mutate(studySub = "threshold_median", 
+         museum = TRUE)
+
+dat_summary <- rbind(dat_summary_all, dat_summary_sub)
+dat_summary
+
+##### GET LAT LONGS #####
+
+ll_dat <- dat %>% summarise(lat_mean = mean(lat), 
+                            long_mean = mean(long))
+
+year_dat <- dat %>% 
+  group_by(era) %>% 
+  summarise(year_mean = mean(year))
+
+##### FORMAT TABLE FOR META-ANALYSIS #####
+names(dat_summary)
+
+df_final <- dat_summary %>% 
+  mutate(size_rep = size1mm_mean, 
+         size_error = size1mm_sd, 
+         year = rep(c(1918, 2007), 2),  
+         site = "Mount Desert Island, Maine", 
+         size_original = "raw", 
+         time_rep = NA, 
+         species = "Nucella lapillus", 
+         sample_size_units = "total number of snails") %>%
+  arrange(site, year)
+
+head(df_final)
+
+dfMeta <- data.frame(
+  study = "Fisher_2009", 
+  studySub = NA, 
+  fig_table = "Figure_1", 
+  species = df_final$species, 
+  site = df_final$site, 
+  size_original = df_final$size_original, 
+  size_rep = df_final$size_rep, 
+  size_units = "mm", 
+  size_error = df_final$size_error, 
+  size_error_type = "SD", 
+  time_rep = df_final$time_rep, 
+  time_error = NA, 
+  era = df_final$era, 
+  year = df_final$year, 
+  year_error = NA, 
+  year_error_type = NA, 
+  sample_size = df_final$sample_size, 
+  sample_size_units = df_final$sample_size_units, 
+  museum = TRUE, 
+  size_threshold_mm = df_final$size_threshold,
+  latitude = ll_dat$lat_mean, 
+  longitude = ll_dat$long_mean
+)
+
+dfMeta
+
+write.csv(dfMeta, "sbs_meta/output/dfMeta_Fisher2009_raw.csv")
 
 

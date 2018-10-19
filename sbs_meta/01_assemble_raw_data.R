@@ -83,14 +83,25 @@ df %>% group_by(study, species) %>%
   summarise(max(size1mm), 
             min(size1mm))
 
+## Label studies that were truncated (Roy, Wilson-Brodie)
+df <- df %>% 
+  mutate(size_freq = ifelse(study != "Roy" & study != "Wilson-Brodie", "complete", "truncated"))
+
+## Get latitude of study
+df <- df %>% 
+  group_by(study) %>%
+  mutate(study_lat = mean(lat, na.rm = TRUE)) %>% 
+  ungroup()
+df %>% count(study_lat)
+
 ##### Get size thresholds #####
 
 df1 <- df %>%
   group_by(study, species) %>% 
-  #do(choose_size_threshold_max(.), filter_data = FALSE) %>% 
   do(choose_size_threshold_general(., era = "combined", my_quantile = 0.5, filter_data = FALSE)) %>% 
   ungroup() %>% 
-  filter(study != "Roy" & study != "Wilson-Brodie")
+  #filter(study != "Roy" & study != "Wilson-Brodie")
+  filter(size_freq == "complete")
 
 df1 %>% distinct(study, species, size_threshold)
 
@@ -98,7 +109,8 @@ df2 <- df %>%
   group_by(study, species) %>% 
   mutate(size_threshold = min(size1mm, na.rm = TRUE)) %>% 
   ungroup() %>% 
-  filter(study == "Roy" | study == "Wilson-Brodie") %>% 
+  #filter(study == "Roy" | study == "Wilson-Brodie") %>% 
+  filter(size_freq == "truncated") %>% 
   mutate(size_threshold = ifelse(study == "Roy", size_threshold, 30))
 
 df2 %>% distinct(study, species, size_threshold)
@@ -114,4 +126,3 @@ dfsub %>% group_by(study, species) %>%
 
 df_size_threshold <- df3 %>% distinct(study, species, fig_legend, size_threshold)
 df_size_threshold
-
