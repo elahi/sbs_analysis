@@ -10,6 +10,9 @@ library(nlme)
 library(broom)
 library(viridis)
 
+library(lme4)
+library(sjPlot)
+
 ###### ALL DATA #####
 
 stat_dat <- df
@@ -22,7 +25,7 @@ stat_dat <- stat_dat %>%
 
 ## Let intercepts vary by species nested within study
 fit1 <- lme(size_log ~ era * museum,
-            random = ~ 1 | species / study,
+            random = ~ 1 | species2 / study,
             data = stat_dat)
 
 ## Let intercepts vary by species 
@@ -193,4 +196,47 @@ p1 <- effects_table %>%
 
 p1
 
+##### LMER AND SJPLOT #####
 
+stat_dat <- df
+stat_dat <- dfsub
+
+stat_dat <- stat_dat %>% 
+  filter(!is.na(size1mm)) %>% 
+  mutate(size_log = log(size1mm), 
+         species2 = paste(species, fig_legend, sep = "_"))
+
+## Let intercepts vary by species nested within study
+fit1 <- lmer(size_log ~ era * museum + (1 | species / study), 
+             data = stat_dat)
+
+## Let intercepts vary by species 
+fit2 <- lmer(size_log ~ era * museum + (1 | species2), 
+             data = stat_dat)
+
+## Let intercepts vary by species, and slopes vary by era
+fit3 <- lmer(size_log ~ era * museum + (era | species2), 
+             data = stat_dat)
+
+fit4 <- lmer(size_log ~ era * museum + (era | species / study), 
+             data = stat_dat)
+
+AIC(fit1, fit2, fit3, fit4)
+
+my_fit <- fit3
+summary(my_fit)
+
+## These are the predicted coefficients, incorporating both fixed and random effects
+coef(my_fit)$species2
+
+coef(summary(my_fit))[ , "Estimate"]
+confint(my_fit)
+confint(my_fit, method = "Wald")
+
+## Random effects (the adjustments to each from the estimated mean intercept and slope)
+ranef(my_fit)$species2
+
+colMeans(ranef(my_fit)$species2)
+
+sjp.lmer(my_fit, type = "re", facet.grid = TRUE, sort.coef = "era")
+sjp.lmer(my_fit, type = "fe", p.kr = FALSE)

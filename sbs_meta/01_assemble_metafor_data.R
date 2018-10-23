@@ -89,7 +89,9 @@ datM
 
 ### Re-order by latitude
 datM <- datM %>% 
-  mutate(species2 = reorder(species2, latitude))
+  mutate(species2 = reorder(species2, latitude)) %>% 
+  arrange(desc(latitude))
+datM
 
 ## Column names for metafor
 names(datM)
@@ -111,18 +113,13 @@ datM <- datM %>%
 datM <- datM %>% 
   mutate(museum01 = ifelse(museum == "museum", 0, 1))
 
-### meta-analysis of log ratio of means using a random-effects model
-res <- rma(yi, vi, method = "DL", data = datM)
-res
-forest(res)
-
 #### CALCULATE LOG RATIO OF MEANS BY STUDIES #####
 
 ## For mean size
 datM_mean <- datM %>% 
   filter(threshold == "no")
-res <- rma(yi, vi, method = "DL", data = datM_mean)
-res
+res <- rma(yi, vi, method = "DL", data = datM_mean, slab = datM_mean$species2)
+forest(res)
 
 # Create results dataframe
 res_df_mean <- data.frame(yi = res$b, 
@@ -134,8 +131,8 @@ res_df_mean <- data.frame(yi = res$b,
 ## For max size
 datM_max <- datM %>% 
   filter(threshold == "yes")
-res <- rma(yi, vi, method = "DL", data = datM_max)
-res
+res <- rma(yi, vi, method = "DL", data = datM_max, slab = datM_max$species2)
+forest(res)
 
 # Create results dataframe
 res_df_max <- data.frame(yi = res$b, 
@@ -147,9 +144,13 @@ res_df_max <- data.frame(yi = res$b,
 ## Results, as is
 datM_asis <- datM %>% 
   filter(study == "Roy_2003" | study == "WilsonBrodie_2017")
-datM_asis <- rbind(datM_asis, datM_mean)
-res <- rma(yi, vi, method = "DL", data = datM_asis)
+datM_asis <- rbind(datM_asis, datM_mean) %>% 
+  arrange(desc(latitude))
+res <- rma(yi, vi, method = "REML", data = datM_asis, slab = datM_asis$species2)
 res
+forest(res)
+funnel(res)
+ranef(res)
 
 # Create results dataframe
 res_df_asis <- data.frame(yi = res$b, 
@@ -158,6 +159,47 @@ res_df_asis <- data.frame(yi = res$b,
                          size_cat = NA, 
                          n = dim(datM_max)[1])
 
+## Our results only (field)
+datM_field <- datM %>% 
+  filter(museum == "field" & threshold == "no")
+# datM_field <- datM %>% 
+#   filter(museum == "field" & threshold == "yes")
+res <- rma(yi, vi, method = "DL", data = datM_field, slab = datM_field$species2)
+res
+forest(res)
 
-res_df <- rbind(res_df_asis, res_df_max, res_df_mean) 
+## Museum results only
+datM_field <- datM %>% 
+  filter(museum == "field" & threshold == "no")
+res <- rma(yi, vi, method = "DL", data = datM_field, slab = datM_asis$species2)
+res
+plot(res)
+
+# Create results dataframe
+res_df_field <- data.frame(yi = res$b, 
+                          upper = res$ci.ub, 
+                          lower = res$ci.lb, 
+                          size_cat = NA, 
+                          n = dim(res_df_field)[1])
+
+## West coast results only; max size
+datM_west_max <- datM %>% 
+  filter(study != "Fisher_2009" & study != "WilsonBrodie_2017") %>% 
+  filter(threshold == "yes")
+datM_west_max
+res <- rma(yi, vi, method = "REML", data = datM_west_max, slab = datM_west_max$species2)
+res
+forest(res)
+
+## West coast results only; as is
+datM_roy <- datM %>% filter(study == "Roy_2003")
+datM_west <- rbind(datM_mean, datM_roy) %>% arrange(desc(latitude))
+res <- rma(yi, vi, method = "REML", data = datM_west, slab = datM_west$species2)
+res
+forest(res)
+
+##### COMBINE RESULTS ####
+
+
+res_df <- rbind(res_df_asis, res_df_max, res_df_mean, res_df_field) 
 res_df
