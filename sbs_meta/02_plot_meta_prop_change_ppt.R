@@ -1,6 +1,6 @@
 #################################################
 # Author: Robin Elahi
-# Date: 180227
+# Date: 181026
 # Plot for paper
 #################################################
 
@@ -48,7 +48,7 @@ datM %>%
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
   coord_flip() + 
   scale_fill_viridis_d(begin = 0.5, end = 1) + 
-  labs(y = "Proportional change in body size", 
+  labs(y = "Log ratio of body size", 
        x = "") + 
   scale_shape_manual(values = c(21, 22)) + 
   guides(shape = guide_legend(title = "", direction = "vertical", 
@@ -64,7 +64,7 @@ datM %>%
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray", size = my_error_thickness) + 
   coord_flip() + 
   scale_fill_viridis_d(begin = 0.5, end = 1) + 
-  labs(y = "Proportional change in body size", 
+  labs(y = "Log ratio of body size", 
        x = "") + 
   scale_shape_manual(values = c(21, 22)) + 
   guides(shape = guide_legend(title = "", direction = "vertical", 
@@ -87,7 +87,7 @@ datM %>%
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray", size = my_error_thickness) + 
   coord_flip() + 
   scale_fill_viridis_d(begin = 0.5, end = 1) + 
-  labs(y = "Proportional change in body size", 
+  labs(y = "Log ratio of body size", 
        x = "") + 
   scale_shape_manual(values = c(21, 22)) + 
   guides(shape = guide_legend(title = "", direction = "vertical", 
@@ -109,13 +109,13 @@ datM %>%
 
 ggsave("sbs_meta/meta_figs/meta_lrr_ppt_02.pdf", height = 8, width = 10)
 
-## 3. Add Hayford data points (All field points)
+## 3. Add Nucella lamellosa (Hayford-King; Hayford-Elahi) data points (All field points)
 datM %>% 
   ggplot(aes(species2, yi, fill = size_cat, shape = museum)) + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray", size = my_error_thickness) + 
   coord_flip() + 
   scale_fill_viridis_d(begin = 0.5, end = 1) + 
-  labs(y = "Proportional change in body size", 
+  labs(y = "Log ratio of body size", 
        x = "") + 
   scale_shape_manual(values = c(21, 22)) + 
   guides(shape = guide_legend(title = "", direction = "vertical", 
@@ -138,7 +138,7 @@ datM %>%
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray", size = my_error_thickness) + 
   coord_flip() + 
   scale_fill_viridis_d(begin = 0.5, end = 1) + 
-  labs(y = "Proportional change in body size", 
+  labs(y = "Log ratio of body size", 
        x = "") + 
   scale_shape_manual(values = c(21, 22)) + 
   guides(shape = guide_legend(title = "", direction = "vertical", 
@@ -155,20 +155,35 @@ datM %>%
 
 ggsave("sbs_meta/meta_figs/meta_lrr_ppt_04.pdf", height = 8, width = 10)
 
-## 5. Add meta results
-res_df %>% 
-  ggplot(aes(size_cat, yi, fill = size_cat)) + 
+##### Overall meta results
+res_df
+res_df_plot <- res_df %>% slice(1:2) %>% 
+  mutate(xlabel = c("All data, as is", "All data, max size"), 
+         xlabel = as.factor(xlabel))
+
+## Plotting deets
+theme_set(theme_bw(base_size = 24) + 
+            theme(panel.grid = element_blank(), 
+                  strip.background = element_blank()) + 
+            theme(legend.position = "bottom", 
+                  legend.title = element_blank(), 
+                  legend.box.spacing = unit(x = 1, units = "lines"))) 
+
+res_df_plot %>% 
+  ggplot(aes(xlabel, yi, fill = size_cat)) + 
   geom_hline(yintercept = 0, linetype = "dashed", color = "gray", size = my_error_thickness) + 
   coord_flip() + 
   scale_fill_viridis_d(begin = 0.5, end = 1, na.value = "black") + 
-  labs(y = "Proportional change in body size", 
+  labs(y = "Log ratio of body size", 
        x = "") + 
   scale_y_continuous(limits = c(-0.5, 0.5)) + 
-  geom_errorbar(data = res_df, aes(ymin = lower, ymax = upper), 
+  geom_errorbar(data = res_df_plot, aes(ymin = lower, ymax = upper), 
                 position = position_dodge(my_dodge), 
                 width = my_bar_width, size = my_error_thickness) +
-  geom_point(data = res_df, position = position_dodge(my_dodge), 
-             size = my_point_size, pch = 23)
+  geom_point(data = res_df_plot, position = position_dodge(my_dodge), 
+             size = my_point_size, pch = 23) + 
+  theme(legend.position = "none") + 
+  scale_x_discrete(limits = rev(levels(res_df_plot$xlabel)))
 
-ggsave("sbs_meta/meta_figs/meta_lrr_ppt_05.pdf", height = 4, width = 10)
+ggsave("sbs_meta/meta_figs/meta_lrr_ppt_overall.pdf", height = 3, width = 10)
 

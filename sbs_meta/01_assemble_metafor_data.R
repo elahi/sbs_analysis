@@ -120,12 +120,12 @@ datM_mean <- datM %>%
   filter(threshold == "no")
 res <- rma(yi, vi, method = "DL", data = datM_mean, slab = datM_mean$species2)
 forest(res)
-
 # Create results dataframe
 res_df_mean <- data.frame(yi = res$b, 
                      upper = res$ci.ub, 
                      lower = res$ci.lb, 
-                     size_cat = "Sizes - complete (mean)", 
+                     size_cat = "mean",
+                     data = "complete size-freq only", 
                      n = dim(datM_mean)[1])
 
 ## For max size
@@ -133,12 +133,19 @@ datM_max <- datM %>%
   filter(threshold == "yes")
 res <- rma(yi, vi, method = "DL", data = datM_max, slab = datM_max$species2)
 forest(res)
+ranef(res)
+funnel(res)
+
+pdf(file = "sbs_meta/meta_figs/forest_max.pdf", width = 7, height = 7)
+forest(res)
+dev.off()
 
 # Create results dataframe
-res_df_max <- data.frame(yi = res$b, 
-                          upper = res$ci.ub, 
-                          lower = res$ci.lb, 
-                          size_cat = "Sizes - upper (max)", 
+res_df_max <- data.frame(yi = res$b,
+                         upper = res$ci.ub, 
+                         lower = res$ci.lb, 
+                         size_cat = "max", 
+                         data = "all data", 
                          n = dim(datM_max)[1])
 
 ## Results, as is
@@ -148,58 +155,53 @@ datM_asis <- rbind(datM_asis, datM_mean) %>%
   arrange(desc(latitude))
 res <- rma(yi, vi, method = "REML", data = datM_asis, slab = datM_asis$species2)
 res
-forest(res)
+forest(res, alim = c(-0.5, 0.5))
 funnel(res)
 ranef(res)
+
+pdf(file = "sbs_meta/meta_figs/forest_asis.pdf", width = 7, height = 7)
+forest(res)
+dev.off()
 
 # Create results dataframe
 res_df_asis <- data.frame(yi = res$b, 
                          upper = res$ci.ub, 
                          lower = res$ci.lb, 
                          size_cat = NA, 
-                         n = dim(datM_max)[1])
+                         data = "all data", 
+                         n = dim(datM_asis)[1])
 
-## Our results only (field)
+## Our unpublished results only (field)
 datM_field <- datM %>% 
   filter(museum == "field" & threshold == "no")
-# datM_field <- datM %>% 
-#   filter(museum == "field" & threshold == "yes")
+datM_field
 res <- rma(yi, vi, method = "DL", data = datM_field, slab = datM_field$species2)
 res
 forest(res)
-
-## Museum results only
-datM_field <- datM %>% 
-  filter(museum == "field" & threshold == "no")
-res <- rma(yi, vi, method = "DL", data = datM_field, slab = datM_asis$species2)
-res
-plot(res)
 
 # Create results dataframe
 res_df_field <- data.frame(yi = res$b, 
                           upper = res$ci.ub, 
                           lower = res$ci.lb, 
-                          size_cat = NA, 
-                          n = dim(res_df_field)[1])
+                          size_cat = "mean", 
+                          data = "field", 
+                          n = dim(datM_field)[1])
 
-## West coast results only; max size
-datM_west_max <- datM %>% 
-  filter(study != "Fisher_2009" & study != "WilsonBrodie_2017") %>% 
-  filter(threshold == "yes")
-datM_west_max
-res <- rma(yi, vi, method = "REML", data = datM_west_max, slab = datM_west_max$species2)
+## Published results only (museum); as is
+datM_museum <- datM_asis %>% 
+  filter(museum == "museum")
+datM_museum 
+res <- rma(yi, vi, method = "DL", data = datM_museum, slab = datM_museum$species2)
 res
 forest(res)
-
-## West coast results only; as is
-datM_roy <- datM %>% filter(study == "Roy_2003")
-datM_west <- rbind(datM_mean, datM_roy) %>% arrange(desc(latitude))
-res <- rma(yi, vi, method = "REML", data = datM_west, slab = datM_west$species2)
-res
-forest(res)
+# Create results dataframe
+res_df_museum <- data.frame(yi = res$b, 
+                           upper = res$ci.ub, 
+                           lower = res$ci.lb, 
+                           size_cat = NA, 
+                           data = "museum", 
+                           n = dim(datM_museum)[1])
 
 ##### COMBINE RESULTS ####
-
-
-res_df <- rbind(res_df_asis, res_df_max, res_df_mean, res_df_field) 
+res_df <- rbind(res_df_asis, res_df_max, res_df_mean, res_df_field, res_df_museum) 
 res_df
