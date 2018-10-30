@@ -190,3 +190,42 @@ dev.off()
 png("figs_ms/plot_size_frequency.png", width = 7, height = 3.5, units = "in", res = 300)
 multiplot(fig1a, fig1b, fig1c, fig1d, fig1e, fig1f, cols = 3)
 dev.off()	
+
+##### LITTORINA ONLY #####
+
+# Basic function to plot histogram for any subset of data
+
+plot_histo_panel <- function(df, bin_width = 1) {
+  
+  p <- ggplot(df,  aes(x = size1mm)) +
+    geom_histogram(aes(y = ..count../sum(..count..)), binwidth = bin_width, 
+                   color = "white", fill = "black") +
+    xlab("Size (mm)") + ylab("Proportion") 
+  
+  return(p)
+  
+}
+
+# Need to customize for each panel:
+
+theme_set(theme_bw(base_size = 18) + 
+            theme(strip.background = element_blank(), 
+                  panel.grid = element_blank(),
+                  strip.text = element_text(face = "italic")))
+
+fig1e <- plot_histo_panel(childsPast) + 
+  scale_x_continuous(limits = c(1, 21)) + 
+  scale_y_continuous(limits = c(0, 0.2)) + 
+  annotate("text", label = "1947\nn = 682", 
+           x = 21, y = 0.2, size = 4.2, vjust = 1, hjust = 1)
+
+fig1f <- plot_histo_panel(childsPres) + 
+  scale_x_continuous(limits = c(1, 21)) + 
+  scale_y_continuous(limits = c(0, 0.2)) + 
+  annotate("text", label = "2014\nn = 733", 
+           x = 21, y = 0.2, size = 4.2, vjust = 1, hjust = 1) 
+
+# save as 7 x 3.5 pdf
+pdf("figs_ms/plot_size_frequency_littorina.pdf", width = 3.5, height = 7)
+multiplot(fig1e, fig1f, cols = 1)
+dev.off()	

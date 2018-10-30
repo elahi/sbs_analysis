@@ -102,3 +102,23 @@ coda_df_all %>%
   scale_color_manual(values = c("black", "red")) 
 ggsave("figs_ms/plot_prop_change_like.pdf", height = 3.5, width = 3.5)
 
+## Plot Littorina, without density
+coda_df_all %>% 
+  filter(param == "prop_change") %>% 
+  filter(sp == "LIKE") %>% 
+  filter(model == "With density") %>% 
+  ggplot(aes(quant, X50.)) + 
+  geom_point() + 
+  #geom_line() + 
+  geom_errorbar(aes(ymin = X2.5., ymax = X97.5.), width = 0.025) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray") + 
+  ylab("Proportional change in size") + 
+  xlab("Size threshold for inclusion\n (quantile of past size)") + 
+  theme(legend.title = element_blank()) +
+  theme(legend.position = c(0.99, 0.01), legend.justification = c(0.99, 0.01)) + 
+  #coord_cartesian(ylim = c(-0.4, 0.4)) + 
+  facet_wrap(~ species) 
+
+ggsave("figs_ms/plot_prop_change_like_wo_density.pdf", height = 3.5, width = 3.5)
+
+

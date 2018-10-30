@@ -25,24 +25,34 @@ stat_dat <- stat_dat %>%
 
 ## Let intercepts vary by species nested within study
 fit1 <- lme(size_log ~ era * museum,
-            random = ~ 1 | species2 / study,
+            random = ~ 1 | study / species,
             data = stat_dat)
 
-## Let intercepts vary by species 
+## Let intercepts vary by each species (coded to distinguish same species but different study)
 fit2 <- lme(size_log ~ era * museum,
             random = ~ 1 | species2,
             data = stat_dat)
+AIC(fit1, fit2)
 
 ## Let intercepts vary by species, and slopes vary by era
 fit3 <- lme(size_log ~ era * museum,
             random = ~ era | species2,
             data = stat_dat)
 
+## Let intercepts vary by species nested within study, and slopes vary by era
+ctrl <- lmeControl(opt='optim');
+fit4 <- lme(size_log ~ era * museum,
+            random = ~ era | study / species,
+            control = ctrl, 
+            data = stat_dat)
+
 AIC(fit1, fit2, fit3)
+AIC(fit1, fit2, fit3, fit4)
 
 my_fit <- fit1
 my_fit <- fit2
 my_fit <- fit3
+my_fit <- fit4
 
 summary(my_fit)
 plot(my_fit, resid(., type = "p") ~ fitted(.), abline = 0)
@@ -82,7 +92,7 @@ effects_table <- effects_table %>%
 ## Plot
 my_dodge <- -0.5
 
-theme_set(theme_bw(base_size = 14) + 
+theme_set(theme_bw(base_size = 18) + 
             theme(panel.grid.major.y = element_blank(), 
                   panel.grid.major.x = element_line(size = 0.25), 
                   panel.grid.minor = element_blank(), 

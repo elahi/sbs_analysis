@@ -136,6 +136,12 @@ forest(res)
 ranef(res)
 funnel(res)
 
+## Studies as random effect
+res <- rma.mv(yi = yi, V = vi, 
+              data = datM_max, 
+              slab = datM_max$species2, 
+              random = ~ 1 | study)
+
 pdf(file = "sbs_meta/meta_figs/forest_max.pdf", width = 7, height = 7)
 forest(res)
 dev.off()
@@ -154,6 +160,10 @@ datM_asis <- datM %>%
 datM_asis <- rbind(datM_asis, datM_mean) %>% 
   arrange(desc(latitude))
 res <- rma(yi, vi, method = "REML", data = datM_asis, slab = datM_asis$species2)
+res <- rma.mv(yi = yi, V = vi, 
+              data = datM_asis, 
+              slab = datM_asis$species2, 
+              random = ~ 1 | study)
 res
 forest(res, alim = c(-0.5, 0.5))
 funnel(res)
