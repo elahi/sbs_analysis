@@ -164,6 +164,9 @@ res <- rma.mv(yi = yi, V = vi,
               data = datM_asis, 
               slab = datM_asis$species2, 
               random = ~ 1 | study)
+
+write.csv(datM_asis, "sbs_meta/output/datM_asis.csv")
+
 res
 forest(res, alim = c(-0.5, 0.5))
 funnel(res)

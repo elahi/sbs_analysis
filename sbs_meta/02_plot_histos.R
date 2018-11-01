@@ -37,3 +37,40 @@ df3 %>%
 
 ggsave("sbs_meta/meta_figs/meta_hist_era.pdf", height = 7, width = 5)
 
+df3 %>% 
+  ggplot(aes(size1mm_rand, fill = era)) + 
+  geom_rect(data = subset(df3, museum == "museum"), fill = "gray90", 
+            xmin = -Inf, xmax = Inf,
+            ymin = -Inf, ymax = Inf, alpha = 0.3) +
+  geom_density(alpha = 0.75, color = 'black') + 
+  geom_vline(data = df_size_threshold, aes(xintercept = size_threshold), linetype = "solid") + 
+  facet_wrap(fig_legend ~ species, ncol = 3, scales = "free",  
+             labeller = label_wrap_gen(multi_line = FALSE)) + 
+  xlab("Size (mm)") + 
+  ylab("Probability density") + 
+  theme(legend.justification  = c(0.5, 0), 
+        legend.position = c(0.5, 0), 
+        legend.title = element_blank(), 
+        strip.text = element_text(size = 8)) + 
+  scale_fill_viridis_d()
+
+ggsave("sbs_meta/meta_figs/meta_density_era.pdf", height = 7, width = 5)
+
+
+# df4 <- df3 %>% 
+#   group_by(era) %>% 
+#   mutate(weight = 1 / n()) %>% 
+#   ungroup()
+# 
+# df3 %>% 
+#   group_by(era) %>% 
+#   mutate(weight = 1 / n()) %>% 
+#   ungroup() %>% 
+#   ggplot(aes(x = size1mm_rand, fill = era)) + 
+#   geom_histogram(aes(weight = weight), stat = 'count', position = 'dodge', bins = 25) + 
+#   geom_vline(data = df_size_threshold, aes(xintercept = size_threshold), linetype = "solid") + 
+#   facet_wrap(fig_legend ~ species, ncol = 3, scales = "free",  
+#              labeller = label_wrap_gen(multi_line = FALSE))
+# 
+# 
+
