@@ -14,7 +14,8 @@
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-theme_set(theme_bw(base_size = 12))
+#theme_set(theme_bw(base_size = 12))
+theme_set(theme_dark(base_size = 12))
 library(lubridate)
 
 # Load size data (only to get species codes)
@@ -34,7 +35,6 @@ sizeLL %>% select(sampleArea, position) %>% distinct()
 #   rename(sp = code) %>% tbl_df
 # save(rawDat, file = "output/temp_raw_iButton.RData")
 load("output/temp_raw_iButton.RData")
-rawDat
 
 # Fix tidal heights
 unique(rawDat$position)
@@ -47,6 +47,7 @@ tail(rawDat2)
 rawDat2 <- loggerPositions %>% select(position, tidalHT) %>% 
   inner_join(rawDat2, ., by = "position")
 names(rawDat2)
+unique(rawDat2$position)
 
 rawDat2 <- inner_join(rawDat2, spCodes, by = "sp")
 names(rawDat2)
@@ -58,6 +59,11 @@ rawDat2 %>% select(position, tidalHT, tidalHT_old) %>% distinct() %>%
 # Add category for crevice or not
 rawDat2$microhabitat <- ifelse(grepl("Crack", rawDat2$position) == TRUE, 
                                "crevice", "face")
+
+# Fix dates
+rawDat2 <- rawDat2 %>% 
+  mutate(date_time = ymd_hms(dateR), 
+         date = ymd(day))
 
 ##### MAKE DF LINKING POSITIONS TO SAMPLE AREA FOR SIZE CHANGE ANALYSIS #####
 
@@ -88,7 +94,7 @@ sizeLL2 <-  sizeLL %>% #filter(species != "Chlorostoma funebralis") %>%
 ##### DAILY SUMMARY PER POSITION #####
 
 position_daily <- rawDat2 %>%
-  group_by(position, sp, day, nest1, nest2, tidalHT, 
+  group_by(position, sp, day, date, nest1, nest2, tidalHT, 
            aspect, slope, lon, lat, microhabitat) %>%
   summarise(daily_mean = mean(tempC), 
             daily_med = median(tempC), 
@@ -129,7 +135,7 @@ unique(rawDat3$position)
 head(rawDat3)
 
 sample_area_daily <- rawDat3 %>%
-  group_by(sampleArea, species, day) %>%
+  group_by(sampleArea, species, day, date) %>%
   summarise(daily_mean = mean(tempC), 
             daily_med = median(tempC), 
             daily_max = max(tempC),
@@ -152,3 +158,26 @@ sadL_means <- sadL %>%
             se = sd/sqrt(n), 
             CI = qt(0.975, df = n - 1) * se) %>% 
   ungroup()
+
+##### TIME SERIES - MEAN OF EACH TIME POINT PER POSITION #####
+
+## Summarising this to inform placement of loggers on Hewatt Transect
+
+names(rawDat2)
+head(rawDat2)
+unique(rawDat2$position)
+
+rawDat2 %>% 
+  filter(position == "WaraB_hi") %>%
+  ggplot(aes(date_time, tempC, color = iButtonID)) + 
+  geom_line() + 
+  theme(legend.position = "none")
+
+rawDat2 %>% 
+  filter(position == "A_Face") %>%
+  ggplot(aes(date_time, tempC, color = iButtonID)) + 
+  geom_line() + 
+  theme(legend.position = "none")
+
+
+
