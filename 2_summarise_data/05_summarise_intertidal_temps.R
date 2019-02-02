@@ -9,8 +9,6 @@
 ##' @log 
 ################################################################################
 
-# rm(list=ls(all=TRUE)) 
-
 ##### LOAD PACKAGES, DATA #####
 
 library(dplyr)
@@ -19,15 +17,13 @@ library(ggplot2)
 theme_set(theme_bw(base_size = 12))
 library(lubridate)
 
-# Load size data
-source("03_identify_size_cutoff.R")
-head(dat4)
-spCodes <- dat4 %>% select(species, sp) %>% distinct()
+# Load size data (only to get species codes)
+source("R/choose_size_data.R")
+size_dat <- choose_size_data()
+spCodes <- size_dat %>% select(species, sp) %>% distinct()
 
 # load lat long info with positions of nearest loggers
 sizeLL <- read.csv("output/sizeLL_edit.csv")
-head(sizeLL)
-
 sizeLL %>% select(sampleArea, position) %>% distinct()
 
 ##### RAW IBUTTON DATA #####
@@ -69,7 +65,7 @@ lodi <- sizeLL %>% filter(species == "Lottia digitalis") %>%
   select(sampleArea, position) %>% distinct()
 lodi
 
-sampleAreas <- dat4 %>% filter(species != "Lottia digitalis") %>% 
+sampleAreas <- size_dat %>% filter(species != "Lottia digitalis") %>% 
   select(sampleArea) %>% distinct() %>% unlist(use.names = FALSE)
 
 loggerPositions <- rawDat %>% filter(sp != "LODI") %>% 

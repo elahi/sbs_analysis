@@ -23,7 +23,7 @@ theme_set(theme_bw(base_size = 12))
 library(lubridate)
 
 # load cleaned up data
-source("02_sbs_size_dataPrep2.R")
+source("1_prepare_data/02_sbs_size_dataPrep2.R")
 
 ##### IDENTIFY SIZE CUT-OFF #####
 

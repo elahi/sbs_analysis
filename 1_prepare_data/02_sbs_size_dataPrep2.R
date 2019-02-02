@@ -20,7 +20,7 @@ library(readr)
 library(lubridate)
 
 # Get tidal correction
-source("R/buttonPositions.R")
+#source("R/buttonPositions.R")
 
 # load data - repeated size bins
 source("R/choose_size_data.R")
