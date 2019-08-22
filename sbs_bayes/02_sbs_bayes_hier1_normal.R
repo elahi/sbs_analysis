@@ -27,7 +27,7 @@ n.update <- 1000
 n.iter <- 1000
 
 # Number of chains
-n_chains <- 2
+n_chains <- 1
 
 ##### LOTTIA #####
 dat <- hexDF 

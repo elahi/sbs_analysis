@@ -20,12 +20,11 @@ library(readr)
 library(lubridate)
 
 # Get tidal correction
-#source("R/buttonPositions.R")
+source("R/buttonPositions.R")
 
 # load data - repeated size bins
 source("R/choose_size_data.R")
-# dat <- choose_size_data(method = "approximated")
-# dat <- choose_size_data()
+dat <- choose_size_data(method = "uniform")
 
 summary(dat)
 unique(dat$date)
@@ -116,8 +115,8 @@ tidalHTdf %>%
 # # replace in df
 # tidalHTdf$sample_area_tidal_ht <- new_tidal_ht
 
-dat2 <- tidalHTdf %>% select(sampleArea, sample_area_tidal_ht) %>% 
-  inner_join(dat2, ., by = "sampleArea")
+dat2 <- dat2 %>% select(-sample_area_tidal_ht) %>% 
+  inner_join(., tidalHTdf, by = "sampleArea")
 
 ##### TRANSFORM SIZES TO PERCENTAGE OF MAXIMUM SIZE BY SPECIES #####
 

@@ -16,7 +16,7 @@
 load_sbs_data <- function(min_cutoff = FALSE){
   
   # load data
-  source("03_identify_size_cutoff.R")
+  source("1_prepare_data/03_identify_size_cutoff.R")
   
   # Remove snails below 5%ile threshold (from historic samples)
   if(min_cutoff != FALSE){

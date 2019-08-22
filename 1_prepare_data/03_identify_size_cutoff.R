@@ -56,3 +56,4 @@ dat4$species <- species
 
 # Create subset of data above size threshold
 dat5 <- dat4 %>% filter(size_threshold == "keep")
+
