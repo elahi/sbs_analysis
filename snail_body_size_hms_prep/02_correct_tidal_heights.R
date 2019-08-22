@@ -16,12 +16,16 @@ mod <- mod %>%
   mutate(tideHTm_orig = tideHTm/3.28084, 
          tideHTm = tideHTm_orig * coef(mod1)[2] + coef(mod1)[1])
 
+hexPast <- hexPast %>% 
+  mutate(tideHTm_orig = tideHTm/3.28084, 
+         tideHTm = tideHTm_orig * coef(mod1)[2] + coef(mod1)[1])
+
 summary(mod)
 summary(hexPast)
 
 ##### WRITE THE MODERN AND LOTTIA DATA TO OUTPUT #####
 
-# Write the modern and Lottia data to output
+hexPast <- hexPast %>% select(-tideHTm_orig)
 write.csv(hexPast, "./data/hexter_raw.csv")
 
 mod <- mod %>% select(-tideHTm_orig)

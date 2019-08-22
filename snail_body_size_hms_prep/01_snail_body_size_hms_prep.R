@@ -20,8 +20,7 @@ mod %>% filter(sp == "LODI" & era == "past")
 hexPast <- mod %>% filter(era == "past") %>% 
   mutate(date = "7/1/1950") %>% 
   mutate(date = mdy(date), 
-         year = lubridate::year(date), 
-         tideHTm = NA)
+         year = lubridate::year(date))
 hexPast %>% distinct(era, year, date)
 
 hexPast$row <- seq(1:length(hexPast$sp))
@@ -57,9 +56,3 @@ mod <- droplevels(mod)
 unique(mod$notes)
 with(mod, table(notes))
 mod$row <- seq(1:length(mod$sp))
-
-# ##### WRITE THE MODERN AND LOTTIA DATA TO OUTPUT #####
-# 
-# # Write the modern and Lottia data to output
-# write.csv(hexPast, "./data/hexter_raw.csv")
-# write.csv(mod, './output/snail_body_size_hms_modern.csv')
