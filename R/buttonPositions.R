@@ -174,6 +174,8 @@ loggerPositions_fixed <- loggerPositions %>%
                           tidalHT))
 loggerPositions_fixed
 
+write.csv(loggerPositions_fixed, "output/buttonPositions.csv")
+
 ggplot(data = loggerPositions2, aes(tidalHT_old, tidalHT, color = code)) + 
   geom_point() + 
   geom_smooth(method = "lm", aes(color = NULL)) + 
